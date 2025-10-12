@@ -23,10 +23,17 @@ const Register = () => {
       return;
     }
 
-    // Save user to localStorage
+    // Save user to localStorage (for login later)
     const users = JSON.parse(localStorage.getItem("users")) || [];
     users.push(formData);
     localStorage.setItem("users", JSON.stringify(users));
+
+    // ✅ Also save name & email for Profile page
+    const userData = {
+      name: formData.fullName,
+      email: formData.email,
+    };
+    localStorage.setItem("userData", JSON.stringify(userData));
 
     alert("Registration successful!");
     navigate("/login");
@@ -40,7 +47,7 @@ const Register = () => {
       >
         <h2 className="text-2xl font-bold mb-4">Register</h2>
 
-        {/* Role first */}
+        {/* Role */}
         <select
           name="role"
           value={formData.role}
