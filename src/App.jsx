@@ -1,24 +1,18 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
-import LandingPage from "./pages/LandingPage";
+import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
-
-// Import menu pages
+import LandingPage from "./pages/LandingPage";
 import AboutSchool from "./menu/AboutSchool";
 import DutyRoster from "./menu/DutyRoster";
 import Timetable from "./menu/Timetable";
 import Contact from "./menu/Contact";
 import ELibrary from "./menu/ELibrary";
 import TopStudents from "./menu/TopStudents";
-
-// Import auth pages
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
-function App() {
+export default function App() {
   return (
-    <Router>
+    <>
       <Navbar />
       <Routes>
         <Route path="/" element={<LandingPage />} />
@@ -31,8 +25,6 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
       </Routes>
-    </Router>
+    </>
   );
 }
-
-export default App;
