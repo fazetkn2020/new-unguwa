@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
 
   const menuItems = [
-    "About School",
-    "Duty Roster",
-    "Timetable",
-    "Contact",
-    "ELibrary",
-    "Top Students"
+    { name: "About School", path: "/about-school" },
+    { name: "Duty Roster", path: "/duty-roster" },
+    { name: "Timetable", path: "/timetable" },
+    { name: "Contact", path: "/contact" },
+    { name: "ELibrary", path: "/elibrary" },
+    { name: "Top Students", path: "/top-students" },
   ];
 
   return (
@@ -22,14 +23,19 @@ const Navbar = () => {
         </div>
         <ul className="hidden md:flex space-x-6">
           {menuItems.map((item) => (
-            <li key={item} className="hover:text-yellow-400 cursor-pointer">{item}</li>
+            <li key={item.name} className="hover:text-yellow-400 cursor-pointer">
+              <Link to={item.path}>{item.name}</Link>
+            </li>
           ))}
         </ul>
       </div>
+      {/* Mobile Menu */}
       {open && (
         <ul className="md:hidden flex flex-col space-y-2 p-4 bg-gray-800">
           {menuItems.map((item) => (
-            <li key={item} className="hover:text-yellow-400 cursor-pointer">{item}</li>
+            <li key={item.name} className="hover:text-yellow-400 cursor-pointer">
+              <Link to={item.path}>{item.name}</Link>
+            </li>
           ))}
         </ul>
       )}
