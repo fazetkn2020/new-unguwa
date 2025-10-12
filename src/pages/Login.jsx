@@ -15,7 +15,7 @@ const Login = () => {
       localStorage.setItem("currentUser", JSON.stringify(user));
       setError("");
       alert("Login successful!");
-      navigate("/"); // Redirect to landing or dashboard
+      navigate("/dashboard"); // ✅ Redirect to Dashboard
     } else {
       setError("Invalid email or password");
     }
@@ -50,7 +50,10 @@ const Login = () => {
 
       {error && <p className="text-red-600 mt-2">{error}</p>}
 
-      <p className="mt-4 text-blue-600 cursor-pointer" onClick={() => alert("Forgot Password placeholder")}>
+      <p
+        className="mt-4 text-blue-600 cursor-pointer"
+        onClick={() => alert("Forgot Password placeholder")}
+      >
         Forgot Password?
       </p>
     </div>

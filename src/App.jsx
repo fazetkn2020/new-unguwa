@@ -9,12 +9,14 @@ import ELibrary from "./menu/ELibrary";
 import TopStudents from "./menu/TopStudents";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import DashboardLayout from "./pages/Dashboard/DashboardLayout"; // ✅ Add this
 
 export default function App() {
   return (
     <>
       <Navbar />
       <Routes>
+        <Route path="/dashboard" element={<DashboardLayout />} />
         <Route path="/" element={<LandingPage />} />
         <Route path="/about-school" element={<AboutSchool />} />
         <Route path="/duty-roster" element={<DutyRoster />} />
