@@ -1,6 +1,5 @@
 import React from "react";
 import Header from "../components/Header";
-import Navbar from "../components/Navbar";
 import bgImage from "../assets/rimi.jpg";
 import { useNavigate } from "react-router-dom";
 
@@ -9,9 +8,6 @@ const LandingPage = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Navbar */}
-      <Navbar />
-
       {/* Header */}
       <Header />
 
@@ -22,17 +18,17 @@ const LandingPage = () => {
       ></div>
 
       {/* Buttons Section */}
-      <div className="flex flex-col items-center justify-center bg-gray-100 bg-opacity-90 py-4">
+      <div className="flex flex-col items-center justify-center py-12 bg-white">
         <div className="flex space-x-4">
           <button
             onClick={() => navigate("/login")}
-            className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold py-2 px-6 rounded"
+            className="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-2 rounded-full font-semibold"
           >
             Login
           </button>
           <button
             onClick={() => navigate("/register")}
-            className="bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 px-6 rounded"
+            className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-2 rounded-full font-semibold"
           >
             Register
           </button>
@@ -41,7 +37,7 @@ const LandingPage = () => {
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white text-center py-4">
-        @2025 Faruk Bashir | fazetdev
+        ©2025 Faruk Bashir | fazetdev
       </footer>
     </div>
   );

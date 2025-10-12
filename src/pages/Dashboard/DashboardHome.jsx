@@ -1,53 +1,41 @@
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 export default function DashboardHome() {
-  const { user } = useAuth() || {}; // ✅ protect from undefined context
+  const navigate = useNavigate();
+  const { user } = useAuth() || {};
 
-  if (!user) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <p className="text-gray-600 animate-pulse">Loading user data...</p>
+  const name = user?.fullName || user?.name || "User";
+
+  return (
+    <div className="flex flex-col items-center text-center">
+      {/* Welcome */}
+      <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+        Welcome, <span className="text-blue-600">{name}</span>
+      </h1>
+
+      {/* small role line (optional) */}
+      {user?.role && (
+        <p className="text-sm text-gray-500 mt-2">{user.role} Dashboard</p>
+      )}
+
+      {/* Buttons */}
+      <div className="mt-10 flex gap-6 justify-center">
+        <button
+          onClick={() => navigate("/dashboard/exam-bank")}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-10 rounded-lg shadow"
+        >
+          Exam Bank
+        </button>
+
+        <button
+          onClick={() => navigate("/dashboard/elib")}
+          className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-10 rounded-lg shadow"
+        >
+          E-Library
+        </button>
       </div>
-    );
-  }
-
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Welcome, {user.fullName}</h1>
-      <p className="text-gray-700 mb-4">
-        Role: <strong>{user.role}</strong>
-      </p>
-
-      {/* ✅ Role-based cards */}
-      {user.role === "Form Master" && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Card title="Manage Students" desc="Add and view students in your class." />
-          <Card title="Exam Bank" desc="Enter CA and Exam scores." />
-        </div>
-      )}
-
-      {user.role === "Exam Officer" && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Card title="Generate Reports" desc="View and print student reports." />
-          <Card title="Top Achievers" desc="View best performing students." />
-        </div>
-      )}
-
-      {/* ✅ Default fallback */}
-      {!["Form Master", "Exam Officer"].includes(user.role) && (
-        <div className="p-4 bg-white rounded shadow text-gray-700">
-          Dashboard features coming soon for this role.
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Card({ title, desc }) {
-  return (
-    <div className="p-4 bg-white rounded shadow hover:shadow-md transition">
-      <h2 className="text-lg font-semibold mb-1">{title}</h2>
-      <p className="text-gray-600">{desc}</p>
     </div>
   );
 }
