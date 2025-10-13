@@ -1,63 +1,84 @@
+// src/pages/Login.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+    const navigate = useNavigate();
+    const { setUser } = useAuth();
 
-  const handleLogin = () => {
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    const user = users.find(u => u.email === email && u.password === password);
+    const [formData, setFormData] = useState({
+        email: "",
+        password: "",
+    });
 
-    if (user) {
-      localStorage.setItem("currentUser", JSON.stringify(user));
-      setError("");
-      alert("Login successful!");
-      navigate("/dashboard"); // ✅ Redirect to Dashboard
-    } else {
-      setError("Invalid email or password");
-    }
-  };
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h2 className="text-3xl font-bold mb-6">Login</h2>
+    const handleSubmit = (e) => {
+        e.preventDefault();
 
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={e => setEmail(e.target.value)}
-        className="mb-4 p-2 border rounded w-72"
-      />
+        const users = JSON.parse(localStorage.getItem("users")) || [];
+        const existingUser = users.find(
+            (user) =>
+                user.email.toLowerCase() === formData.email.toLowerCase() &&
+                user.password === formData.password
+        );
 
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={e => setPassword(e.target.value)}
-        className="mb-4 p-2 border rounded w-72"
-      />
+        if (!existingUser) {
+            alert("Invalid email or password.");
+            return;
+        }
 
-      <button
-        onClick={handleLogin}
-        className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold py-2 px-6 rounded mb-2"
-      >
-        Login
-      </button>
+        // Set the current user in context & localStorage
+        setUser(existingUser);
 
-      {error && <p className="text-red-600 mt-2">{error}</p>}
+        // Redirect based on role or just to dashboard
+        navigate("/dashboard");
+    };
 
-      <p
-        className="mt-4 text-blue-600 cursor-pointer"
-        onClick={() => alert("Forgot Password placeholder")}
-      >
-        Forgot Password?
-      </p>
-    </div>
-  );
+    return (
+        <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-xl">
+            <h2 className="text-2xl font-bold mb-5 text-center">Login</h2>
+            <form onSubmit={handleSubmit}>
+                <input
+                    type="email"
+                    name="email"
+                    placeholder="Email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="border p-2 mb-3 w-full rounded"
+                    required
+                />
+                <input
+                    type="password"
+                    name="password"
+                    placeholder="Password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="border p-2 mb-3 w-full rounded"
+                    required
+                />
+                <button
+                    type="submit"
+                    className="bg-green-500 text-white p-2 rounded w-full hover:bg-green-600 mb-4"
+                >
+                    Login
+                </button>
+            </form>
+
+            <p className="text-center text-sm">
+                Don't have an account?{" "}
+                <a
+                    href="/register"
+                    className="text-blue-500 hover:text-blue-700 font-medium"
+                >
+                    Register here
+                </a>
+            </p>
+        </div>
+    );
 };
 
 export default Login;
