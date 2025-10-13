@@ -1,34 +1,51 @@
+// src/pages/Dashboard/DashboardHome.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 export default function DashboardHome() {
   const navigate = useNavigate();
+  const { user } = useAuth(); // Get current logged-in user
   const [profile, setProfile] = useState({
     fullName: "",
     email: "",
     phone: "",
-    subject: "",
     class: "",
+    subject: "",
     profilePic: "",
   });
 
-  // Load profile data from localStorage
   useEffect(() => {
-    const savedProfile = JSON.parse(localStorage.getItem("profileData")) || {};
-    setProfile(savedProfile);
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    const profileKey = `profileData_${user.email}`;
+    const savedProfile = JSON.parse(localStorage.getItem(profileKey)) || {};
+
+    setProfile({
+      fullName: user.fullName || "",
+      email: user.email || "",
+      ...savedProfile, // Merge editable fields
+    });
 
     const handleStorageChange = () => {
-      const updated = JSON.parse(localStorage.getItem("profileData")) || {};
-      setProfile(updated);
+      const updated = JSON.parse(localStorage.getItem(profileKey)) || {};
+      setProfile({ fullName: user.fullName, email: user.email, ...updated });
     };
 
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
+  }, [user, navigate]);
+
+  if (!user) {
+    return <div className="text-center mt-20 text-xl font-medium">Loading...</div>;
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
-      {/* Profile Info */}
+      {/* Profile Card */}
       <div className="bg-white shadow-md rounded-2xl p-8 w-full max-w-2xl text-center border border-gray-100 mb-8">
         <div className="w-40 h-40 mx-auto rounded-full overflow-hidden bg-gray-200 shadow-inner mb-6">
           {profile.profilePic ? (
@@ -61,23 +78,17 @@ export default function DashboardHome() {
         <div className="grid grid-cols-2 gap-6 text-left mt-4">
           <div>
             <p className="text-sm text-gray-500">Phone</p>
-            <p className="text-gray-800 font-medium">
-              {profile.phone || "Not set"}
-            </p>
+            <p className="text-gray-800 font-medium">{profile.phone || "Not set"}</p>
           </div>
 
           <div>
             <p className="text-sm text-gray-500">Class</p>
-            <p className="text-gray-800 font-medium">
-              {profile.class || "N/A"}
-            </p>
+            <p className="text-gray-800 font-medium">{profile.class || "N/A"}</p>
           </div>
 
           <div>
             <p className="text-sm text-gray-500">Subject</p>
-            <p className="text-gray-800 font-medium">
-              {profile.subject || "N/A"}
-            </p>
+            <p className="text-gray-800 font-medium">{profile.subject || "N/A"}</p>
           </div>
         </div>
 
