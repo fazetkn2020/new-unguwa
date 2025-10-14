@@ -1,11 +1,21 @@
+// micro src/pages/Dashboard/DashboardLayout.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import TopBar from "./layout/TopBar";
 import WelcomeSection from "./layout/WelcomeSection";
 import ProfileSummary from "./layout/ProfileSummary";
-import DashboardButtons from "./layout/DashboardButtons";
 import ProfileForm from "./layout/ProfileForm";
+
+// Import dashboards
+import MultiRoleDashboard from "./roles/MultiRoleDashboard";
+import PrincipalDashboard from "./roles/PrincipalDashboard";
+import FormMasterDashboard from "./roles/FormMasterDashboard";
+import SubjectTeacherDashboard from "./roles/SubjectTeacherDashboard";
+import SeniorMasterDashboard from "./roles/SeniorMasterDashboard";
+import ExamOfficerDashboard from "./roles/ExamOfficerDashboard";
+import VPAdminDashboard from "./roles/VPAdminDashboard";
+import VPAcademicDashboard from "./roles/VPAcademicDashboard";
 
 export default function DashboardLayout() {
   const { user, logout, setUser } = useAuth();
@@ -19,9 +29,8 @@ export default function DashboardLayout() {
     phone: "",
     profilePic: "",
     sex: "",
-    isFormMaster: "No",
+    roles: [], // array of roles
     formClass: "",
-    isSubjectTeacher: "No",
     subject: "",
     teachingClass: "",
   });
@@ -45,9 +54,8 @@ export default function DashboardLayout() {
       phone: saved.phone || "",
       profilePic: saved.profilePic || "",
       sex: saved.sex || "",
-      isFormMaster: saved.isFormMaster || "No",
+      roles: saved.roles || [user.role], // support multi-role
       formClass: saved.formClass || "",
-      isSubjectTeacher: saved.isSubjectTeacher || "No",
       subject: saved.subject || "",
       teachingClass: saved.teachingClass || "",
     });
@@ -56,30 +64,15 @@ export default function DashboardLayout() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setUserProfile((prev) => ({ ...prev, [name]: value }));
-
-    if (name === "isFormMaster" && value === "No")
-      setUserProfile((prev) => ({ ...prev, formClass: "" }));
-    if (name === "isSubjectTeacher" && value === "No")
-      setUserProfile((prev) => ({ ...prev, subject: "", teachingClass: "" }));
   };
 
   const handleSave = (e) => {
     e.preventDefault();
     if (!user) return;
     const key = `profileData_${user.email}`;
-    const newProfile = {
-      phone: userProfile.phone,
-      profilePic: userProfile.profilePic,
-      sex: userProfile.sex,
-      isFormMaster: userProfile.isFormMaster,
-      formClass: userProfile.formClass,
-      isSubjectTeacher: userProfile.isSubjectTeacher,
-      subject: userProfile.subject,
-      teachingClass: userProfile.teachingClass,
-    };
+    const newProfile = { ...userProfile };
     localStorage.setItem(key, JSON.stringify(newProfile));
     alert("Profile updated successfully!");
-    if (user.sex !== userProfile.sex) setUser({ ...user, sex: userProfile.sex });
     setProfilePanelOpen(false);
   };
 
@@ -100,12 +93,37 @@ export default function DashboardLayout() {
     navigate("/login");
   };
 
+  // Determine which dashboards to render
+  const renderDashboard = () => {
+    const roles = userProfile.roles.map(r => r.toLowerCase().replace(/\s/g, "_"));
+
+    if (roles.length > 1) {
+      return <MultiRoleDashboard userRoles={roles} user={user} />;
+    }
+
+    switch (roles[0]) {
+      case "principal":
+        return <PrincipalDashboard user={user} />;
+      case "form_master":
+        return <FormMasterDashboard user={user} />;
+      case "subject_teacher":
+        return <SubjectTeacherDashboard user={user} />;
+      case "senior_master":
+        return <SeniorMasterDashboard user={user} />;
+      case "exam_officer":
+        return <ExamOfficerDashboard user={user} />;
+      case "vp_admin":
+        return <VPAdminDashboard user={user} />;
+      case "vp_academic":
+        return <VPAcademicDashboard user={user} />;
+      default:
+        return <div>Dashboard not available for this role.</div>;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 relative flex flex-col">
-      <TopBar
-        userProfile={userProfile}
-        onTogglePanel={togglePanel}
-      />
+      <TopBar userProfile={userProfile} onTogglePanel={togglePanel} />
 
       <WelcomeSection userProfile={userProfile} />
 
@@ -115,7 +133,9 @@ export default function DashboardLayout() {
         toggleDetails={toggleDetails}
       />
 
-      <DashboardButtons navigate={navigate} />
+      <div className="flex-1 p-4">
+        {renderDashboard()}
+      </div>
 
       <ProfileForm
         open={profilePanelOpen}
