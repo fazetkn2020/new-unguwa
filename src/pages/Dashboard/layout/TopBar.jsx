@@ -1,17 +1,27 @@
 export default function TopBar({ userProfile, onTogglePanel }) {
+  // 💥 FIX 2: Define userProfile as an empty object if null, or use optional chaining
+  // This ensures 'userProfile' is never null when accessed.
+  const profile = userProfile || {}; 
+  
+  // Safely get initials and handle undefined cases
+  const fullName = profile.fullName || 'User';
+  
+  const initials = fullName
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   return (
     <div className="flex justify-between items-center p-4 bg-white shadow-md border-b border-gray-200">
       <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 border-2 border-blue-400 flex items-center justify-center">
-        {userProfile.profilePic ? (
-          <img src={userProfile.profilePic} alt="Profile" className="w-full h-full object-cover" />
+        {/* 💥 Use optional chaining (?) when accessing properties on 'profile' */}
+        {profile.profilePic ? (
+          <img src={profile.profilePic} alt="Profile" className="w-full h-full object-cover" />
         ) : (
           <span className="text-gray-500 font-bold text-sm">
-            {userProfile.fullName
-              .split(" ")
-              .map((n) => n[0])
-              .slice(0, 2)
-              .join("")
-              .toUpperCase()}
+            {initials}
           </span>
         )}
       </div>

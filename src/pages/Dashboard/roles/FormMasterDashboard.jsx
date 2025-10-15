@@ -1,11 +1,20 @@
-import React, { useState, useEffect } from "react";
-import { useAuth } from "../../context/AuthContext";
+// src/pages/Dashboard/roles/FormMasterDashboard.jsx
+
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../../../context/AuthContext"; 
 import StudentList from "./StudentList";
+// 💥 FIX 1: Change the import path to reference the existing DashboardLayout.jsx
+import DashboardLayout from "../DashboardLayout"; 
+import { roleMenus } from "../../../data/roleMenus"; 
 
 export default function FormMasterDashboard() {
   const { user } = useAuth(); 
-  const [className, setClassName] = useState("");
+  const [className, setClassName] = useState(user?.formClass || "");
 
+  // Use the menu items to drive the quick actions
+  const capabilities = roleMenus["Form Master"];
+
+  // Note: user.formClass should be set in ProfileCard/Registration
   useEffect(() => {
     if (user?.formClass) {
       setClassName(user.formClass); 
@@ -13,16 +22,16 @@ export default function FormMasterDashboard() {
   }, [user]);
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-semibold mb-4">Form Master Dashboard</h2>
-
+    // 💥 FIX 2: Use the imported component name, DashboardLayout
+    <DashboardLayout title="Class Management" capabilities={capabilities}>
+      {/* ... rest of the content remains the same ... */}
       {className ? (
         <StudentList className={className} />
       ) : (
-        <p className="text-red-500">
-          Please select your class in profile to manage students.
-        </p>
+        <div className="p-6 bg-red-100 border-l-4 border-red-500 rounded-lg">
+          {/* ... error message ... */}
+        </div>
       )}
-    </div>
-  );
+    </DashboardLayout>
+  ); 
 }

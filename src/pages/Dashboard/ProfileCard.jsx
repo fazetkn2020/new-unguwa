@@ -1,44 +1,41 @@
 // src/pages/Dashboard/ProfileCard.jsx
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
+// Define subjects outside the component to prevent re-creation on re-render
+const subjects = [
+    "Animal Husbandry", "Biology", "Chemistry", "Civic Education", 
+    "Economics", "English", "Geography", "Government", "Hausa", 
+    "Islamic", "Mathematics", "Physics"
+].sort();
+
 export default function ProfileCard() {
     const navigate = useNavigate();
-    const { user, logout } = useAuth(); // Get the current user from the context
-
-    const subjects = [
-        "Animal Husbandry", "Biology", "Chemistry", "Civic Education", 
-        "Economics", "English", "Geography", "Government", "Hausa", 
-        "Islamic", "Literature", "Mathematics", "Physics"
-    ].sort();
+    const { user, logout } = useAuth();
 
     const [formData, setFormData] = useState({
         fullName: "", email: "", role: "", phone: "", profilePic: "",
         isFormMaster: "No", class: "", isSubjectTeacher: "No", subject: "",
     });
 
-    // 🌟 DEBUGGING STEP
-    console.log("Current User from AuthContext:", user);
-    
     useEffect(() => {
         if (!user) {
             navigate("/login");
             return;
         }
 
-        // 1. Define the unique key using the confirmed user's email
         const profileKey = `profileData_${user.email}`;
         const savedProfile = JSON.parse(localStorage.getItem(profileKey)) || {};
 
-        // 2. Set ALL formData fields: immutable from 'user', editable from 'savedProfile'
         setFormData({
             // Immutable fields from context
             fullName: user.fullName || "",
             email: user.email || "",
             role: user.role || "",
             
-            // Editable fields from unique localStorage key
+            // Editable fields from localStorage
             phone: savedProfile.phone || "",
             profilePic: savedProfile.profilePic || "",
             isFormMaster: savedProfile.isFormMaster || "No",
@@ -68,6 +65,17 @@ export default function ProfileCard() {
         e.preventDefault();
         if (!user) return;
 
+        // Perform any client-side validation here before saving
+        if (formData.isFormMaster === "Yes" && !formData.class) {
+             alert("Please select a class for the Form Master role.");
+             return;
+        }
+        if (formData.isSubjectTeacher === "Yes" && !formData.subject) {
+             alert("Please select a subject for the Subject Teacher role.");
+             return;
+        }
+
+
         const profileDataToSave = {
             phone: formData.phone, profilePic: formData.profilePic,
             isFormMaster: formData.isFormMaster, class: formData.class,
@@ -83,88 +91,109 @@ export default function ProfileCard() {
     
     // Show a loading state if the user object hasn't been populated yet
     if (!user) {
-        return <div className="text-center mt-20 text-xl font-medium">Loading profile...</div>;
+        return <div className="text-center mt-20 text-xl font-medium text-gray-700">Loading profile...</div>;
     }
 
     // --- RENDER LOGIC ---
     return (
-        <div className="flex flex-col items-center min-h-screen bg-gray-50 px-4 py-8">
-            <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-2xl flex flex-col">
+        <div className="flex justify-center bg-gray-50 px-4 py-8">
+        {/* ^^^ KEY CHANGE: Removed min-h-screen to let the content drive the height. */}
+            
+            <div className="bg-white shadow-xl rounded-xl p-6 md:p-10 w-full max-w-xl">
                 
-                {/* 🛑 VISIBLE DEBUGGING INFO: Check this first! */}
-                <div className="bg-yellow-100 text-yellow-800 p-2 rounded mb-4 text-xs">
-                    **DEBUG: Current User Email: {user.email}**
-                </div>
-
-                <h2 className="text-3xl font-bold text-blue-700 text-center mb-6">Profile</h2>
+                <h2 className="text-4xl font-extrabold text-blue-700 text-center mb-8">
+                    My Profile
+                </h2>
                 
-                {/* ... (Rest of the JSX remains the same) ... */}
-                {/* Profile Picture */}
-                <div className="flex flex-col items-center mb-6">
-                    <div className="w-40 h-40 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center shadow-md mb-3 border-4 border-blue-200">
+                {/* Profile Picture Section */}
+                <div className="flex flex-col items-center mb-8">
+                    <div className="w-36 h-36 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center shadow-inner mb-3 border-4 border-blue-200">
                         {formData.profilePic ? (
                             <img src={formData.profilePic} alt="Profile" className="w-full h-full object-cover"/>
                         ) : (
-                            <span className="text-gray-500 text-4xl font-semibold">
+                            <span className="text-gray-500 text-5xl font-semibold">
                                 {formData.fullName.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()}
                             </span>
                         )}
                     </div>
-                    <label className="cursor-pointer text-sm text-blue-600 hover:text-blue-800 transition">
-                        Change Profile Picture
+                    <label className="cursor-pointer text-sm text-blue-600 hover:text-blue-800 transition font-medium">
+                        Click to Change Picture
                         <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden"/>
                     </label>
                 </div>
 
-                <form onSubmit={handleSave} className="space-y-4">
-                    {/* Immutable Fields (Name, Email, Role) */}
-                    <div><label className="block text-gray-700 font-medium mb-1">Full Name</label>
-                        <input type="text" name="fullName" value={formData.fullName} disabled className="w-full border p-2 rounded bg-gray-100 cursor-not-allowed"/></div>
+                <form onSubmit={handleSave} className="space-y-6">
+                    {/* Immutable Fields */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InputReadOnly label="Full Name" value={formData.fullName} />
+                        <InputReadOnly label="Email" value={formData.email} />
+                        <InputReadOnly label="Role" value={formData.role} />
+                    </div>
 
-                    <div><label className="block text-gray-700 font-medium mb-1">Email</label>
-                        <input type="email" name="email" value={formData.email} disabled className="w-full border p-2 rounded bg-gray-100 cursor-not-allowed"/></div>
-
-                    <div><label className="block text-gray-700 font-medium mb-1">Role</label>
-                        <input type="text" name="role" value={formData.role} disabled className="w-full border p-2 rounded bg-gray-100 cursor-not-allowed"/></div>
-
+                    <hr className="border-gray-200" />
+                    
                     {/* Editable Field: Phone */}
-                    <div><label className="block text-gray-700 font-medium mb-1">Phone Number</label>
-                        <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="Enter phone number" className="w-full border p-2 rounded focus:ring-blue-500 focus:border-blue-500"/></div>
+                    <InputField 
+                        label="Phone Number" 
+                        name="phone" 
+                        type="tel" 
+                        value={formData.phone} 
+                        onChange={handleChange} 
+                        placeholder="Enter phone number" 
+                    />
 
                     {/* Conditional Field: Form Master */}
-                    <div><label className="block text-gray-700 font-medium mb-1">Are you a Form Master?</label>
-                        <select name="isFormMaster" value={formData.isFormMaster} onChange={handleChange} className="w-full border p-2 rounded">
-                            <option value="No">No</option><option value="Yes">Yes</option></select></div>
+                    <SelectField 
+                        label="Are you a Form Master?" 
+                        name="isFormMaster" 
+                        value={formData.isFormMaster} 
+                        onChange={handleChange}
+                        options={["No", "Yes"]}
+                    />
 
                     {formData.isFormMaster === "Yes" && (
-                        <div><label className="block text-gray-700 font-medium mb-1">Class</label>
-                            <select name="class" value={formData.class} onChange={handleChange} className="w-full border p-2 rounded" required>
-                                <option value="">Select Class</option><option value="SS1">SS1</option>
-                                <option value="SS2">SS2</option><option value="SS3">SS3</option></select></div>
+                        <SelectField 
+                            label="Class" 
+                            name="class" 
+                            value={formData.class} 
+                            onChange={handleChange}
+                            options={["SS1", "SS2", "SS3"]}
+                            required={true}
+                            defaultOption="Select Class"
+                        />
                     )}
 
                     {/* Conditional Field: Subject Teacher */}
-                    <div><label className="block text-gray-700 font-medium mb-1">Are you a Subject Teacher?</label>
-                        <select name="isSubjectTeacher" value={formData.isSubjectTeacher} onChange={handleChange} className="w-full border p-2 rounded">
-                            <option value="No">No</option><option value="Yes">Yes</option></select></div>
+                    <SelectField 
+                        label="Are you a Subject Teacher?" 
+                        name="isSubjectTeacher" 
+                        value={formData.isSubjectTeacher} 
+                        onChange={handleChange}
+                        options={["No", "Yes"]}
+                    />
 
                     {formData.isSubjectTeacher === "Yes" && (
-                        <div><label className="block text-gray-700 font-medium mb-1">Subject</label>
-                            <select name="subject" value={formData.subject} onChange={handleChange} className="w-full border p-2 rounded" required>
-                                <option value="">Select Subject</option>
-                                {subjects.map(sub => <option key={sub} value={sub}>{sub}</option>)}</select></div>
+                        <SelectField 
+                            label="Subject" 
+                            name="subject" 
+                            value={formData.subject} 
+                            onChange={handleChange}
+                            options={subjects}
+                            required={true}
+                            defaultOption="Select Subject"
+                        />
                     )}
 
-                    {/* Save Button (Large) */}
-                    <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-blue-700 transition mt-6">
-                        Save
+                    {/* Save Button */}
+                    <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-blue-700 transition duration-200 shadow-md mt-6">
+                        Save Profile Changes
                     </button>
                 </form>
 
-                {/* Sign Out Button (Smaller, at the bottom) */}
+                {/* Sign Out Button */}
                 <button
                     onClick={() => { logout(); navigate("/login"); }}
-                    className="mt-3 w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 text-sm"
+                    className="mt-6 w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 text-sm font-medium transition duration-200"
                 >
                     Sign Out
                 </button>
@@ -172,3 +201,48 @@ export default function ProfileCard() {
         </div>
     );
 }
+
+// Helper Components for Cleaner JSX (Add these at the bottom of the file)
+const InputReadOnly = ({ label, value }) => (
+    <div>
+        <label className="block text-gray-700 text-sm font-medium mb-1">{label}</label>
+        <input 
+            type="text" 
+            value={value} 
+            disabled 
+            className="w-full border border-gray-300 p-2 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed text-sm"
+        />
+    </div>
+);
+
+const InputField = ({ label, name, type, value, onChange, placeholder }) => (
+    <div>
+        <label htmlFor={name} className="block text-gray-700 text-sm font-medium mb-1">{label}</label>
+        <input 
+            id={name}
+            type={type} 
+            name={name} 
+            value={value} 
+            onChange={onChange} 
+            placeholder={placeholder} 
+            className="w-full border border-gray-300 p-2 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+        />
+    </div>
+);
+
+const SelectField = ({ label, name, value, onChange, options, required, defaultOption }) => (
+    <div>
+        <label htmlFor={name} className="block text-gray-700 text-sm font-medium mb-1">{label}</label>
+        <select 
+            id={name}
+            name={name} 
+            value={value} 
+            onChange={onChange} 
+            className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 bg-white" 
+            required={required}
+        >
+            {defaultOption && <option value="" disabled={required}>{defaultOption}</option>}
+            {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+        </select>
+    </div>
+);

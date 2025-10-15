@@ -1,13 +1,13 @@
-// micro src/pages/Dashboard/DashboardLayout.jsx
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+
+// Layout Components
 import TopBar from "./layout/TopBar";
 import WelcomeSection from "./layout/WelcomeSection";
 import ProfileSummary from "./layout/ProfileSummary";
-import ProfileForm from "./layout/ProfileForm";
 
-// Import dashboards
+// Role Dashboards
 import MultiRoleDashboard from "./roles/MultiRoleDashboard";
 import PrincipalDashboard from "./roles/PrincipalDashboard";
 import FormMasterDashboard from "./roles/FormMasterDashboard";
@@ -18,90 +18,30 @@ import VPAdminDashboard from "./roles/VPAdminDashboard";
 import VPAcademicDashboard from "./roles/VPAcademicDashboard";
 
 export default function DashboardLayout() {
-  const { user, logout, setUser } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
-
-  const [profilePanelOpen, setProfilePanelOpen] = useState(false);
   const [detailsExpanded, setDetailsExpanded] = useState(false);
-  const [userProfile, setUserProfile] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    profilePic: "",
-    sex: "",
-    roles: [], // array of roles
-    formClass: "",
-    subject: "",
-    teachingClass: "",
-  });
 
-  const subjects = [
-    "Animal Husbandry", "Biology", "Chemistry", "Civic Education",
-    "Economics", "English", "Geography", "Government", "Hausa",
-    "Islamic", "Literature", "Mathematics", "Physics"
-  ].sort();
+  const toggleDetails = () => setDetailsExpanded((prev) => !prev);
+
+  const handleProfileNavigation = () => {
+    navigate("/dashboard/profile");
+  };
 
   useEffect(() => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-    const key = `profileData_${user.email}`;
-    const saved = JSON.parse(localStorage.getItem(key)) || {};
-    setUserProfile({
-      fullName: user.fullName || "",
-      email: user.email || "",
-      phone: saved.phone || "",
-      profilePic: saved.profilePic || "",
-      sex: saved.sex || "",
-      roles: saved.roles || [user.role], // support multi-role
-      formClass: saved.formClass || "",
-      subject: saved.subject || "",
-      teachingClass: saved.teachingClass || "",
-    });
+    if (user === null) navigate("/login");
   }, [user, navigate]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setUserProfile((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSave = (e) => {
-    e.preventDefault();
-    if (!user) return;
-    const key = `profileData_${user.email}`;
-    const newProfile = { ...userProfile };
-    localStorage.setItem(key, JSON.stringify(newProfile));
-    alert("Profile updated successfully!");
-    setProfilePanelOpen(false);
-  };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () =>
-        setUserProfile((prev) => ({ ...prev, profilePic: reader.result }));
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const togglePanel = () => setProfilePanelOpen(!profilePanelOpen);
-  const toggleDetails = () => setDetailsExpanded(!detailsExpanded);
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
-  // Determine which dashboards to render
   const renderDashboard = () => {
-    const roles = userProfile.roles.map(r => r.toLowerCase().replace(/\s/g, "_"));
+    if (!user) return null;
+    const role = user.role?.toLowerCase().replace(/\s/g, "_");
 
-    if (roles.length > 1) {
-      return <MultiRoleDashboard userRoles={roles} user={user} />;
-    }
-
-    switch (roles[0]) {
+    switch (role) {
       case "principal":
         return <PrincipalDashboard user={user} />;
       case "form_master":
@@ -117,35 +57,40 @@ export default function DashboardLayout() {
       case "vp_academic":
         return <VPAcademicDashboard user={user} />;
       default:
-        return <div>Dashboard not available for this role.</div>;
+        return <MultiRoleDashboard userRoles={[role]} user={user} />;
     }
   };
 
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        Loading Dashboard...
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 relative flex flex-col">
-      <TopBar userProfile={userProfile} onTogglePanel={togglePanel} />
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* === Top Navigation Bar === */}
+      <TopBar userProfile={user} onTogglePanel={handleProfileNavigation} />
 
-      <WelcomeSection userProfile={userProfile} />
+      {/* === Welcome Banner === */}
+      <WelcomeSection userProfile={user} />
 
+      {/* === Profile Summary Section === */}
       <ProfileSummary
-        userProfile={userProfile}
+        userProfile={user}
         detailsExpanded={detailsExpanded}
         toggleDetails={toggleDetails}
       />
 
-      <div className="flex-1 p-4">
-        {renderDashboard()}
-      </div>
+      {/* === Main Dashboard Content === */}
+      <main className="flex-1 p-4">{renderDashboard()}</main>
 
-      <ProfileForm
-        open={profilePanelOpen}
-        userProfile={userProfile}
-        handleChange={handleChange}
-        handleImageUpload={handleImageUpload}
-        handleSave={handleSave}
-        subjects={subjects}
-      />
+      {/* === Nested Routes Render Here (like /dashboard/profile) === */}
+      <Outlet />
 
+      {/* === Logout Button === */}
       <div className="fixed bottom-6 right-6 z-20">
         <button
           onClick={handleLogout}
