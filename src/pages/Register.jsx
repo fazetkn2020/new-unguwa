@@ -1,15 +1,16 @@
-// src/pages/Register.jsx
+// src/pages/Register.jsx - COMPLETE UPDATED VERSION
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { classes } from "../data/classes";
 
 const Register = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        role: "Principal",
         fullName: "",
         email: "",
         password: "",
         confirmPassword: "",
+        formClass: "" // Add form class field
     });
 
     const handleChange = (e) => {
@@ -24,7 +25,7 @@ const Register = () => {
             return;
         }
 
-        // 🌟 FIX: Prevent re-registration with same email
+        // Get users from localStorage
         const users = JSON.parse(localStorage.getItem("users")) || [];
         const existingUser = users.find(user => user.email === formData.email);
 
@@ -33,21 +34,23 @@ const Register = () => {
             return;
         }
 
-        // Save new user to localStorage
-        // Note: The 'password' should be hashed in a real app, but for local storage simulation, we store it plainly.
+        // Create new user with form class if applicable
         const newUser = {
-            role: formData.role,
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            role: "pending",
             fullName: formData.fullName,
+            name: formData.fullName,
             email: formData.email,
-            password: formData.password, // Storing password for login check
+            password: formData.password,
+            formClass: formData.formClass, // Store assigned class
+            createdAt: new Date().toISOString(),
+            status: "pending"
         };
 
         users.push(newUser);
         localStorage.setItem("users", JSON.stringify(users));
 
-        // ❌ REMOVED: The logic that saved a separate 'userData' which was causing the profile conflict.
-
-        alert("Registration successful! You can now log in.");
+        alert("Registration successful! Your account is pending admin approval.");
         navigate("/login");
     };
 
@@ -55,21 +58,6 @@ const Register = () => {
         <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-xl">
             <h2 className="text-2xl font-bold mb-5 text-center">Register</h2>
             <form onSubmit={handleSubmit}>
-                {/* Role */}
-                <select 
-                    name="role" 
-                    value={formData.role} 
-                    onChange={handleChange} 
-                    className="border p-2 mb-3 w-full rounded"
-                >
-                    <option value="Principal">Principal</option>
-                    <option value="VP Admin">VP Admin</option>
-                    <option value="VP Academic">VP Academic</option>
-                    <option value="Form Master">Form Master</option>
-                    <option value="Subject Teacher">Subject Teacher</option>
-                    <option value="Senior Master">Senior Master</option>
-                    <option value="Exam Officer">Exam Officer</option>
-                </select>
                 <input 
                     type="text" 
                     name="fullName" 
@@ -88,6 +76,20 @@ const Register = () => {
                     className="border p-2 mb-3 w-full rounded" 
                     required 
                 />
+                
+                {/* Class Assignment - Optional for Form Masters */}
+                <select 
+                    name="formClass" 
+                    value={formData.formClass} 
+                    onChange={handleChange} 
+                    className="border p-2 mb-3 w-full rounded"
+                >
+                    <option value="">Select Class (Optional)</option>
+                    {classes.map(cls => (
+                        <option key={cls} value={cls}>{cls}</option>
+                    ))}
+                </select>
+                
                 <input 
                     type="password" 
                     name="password" 
@@ -114,7 +116,6 @@ const Register = () => {
                 </button>
             </form>
             
-            {/* ✅ FIX: Add link to login page */}
             <p className="text-center text-sm">
                 Already have an account?{" "}
                 <Link to="/login" className="text-blue-500 hover:text-blue-700 font-medium">

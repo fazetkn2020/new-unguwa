@@ -1,16 +1,16 @@
-// src/context/AuthContext.jsx
-import React, { createContext, useContext, useState } from 'react';
+// src/context/AuthContext.jsx - UPDATED
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext({
   user: null,
   setUser: () => {},
   logout: () => {},
+  isAdmin: false,
 });
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  // Initialize state from localStorage
   const [user, setUserState] = useState(() => {
     try {
       const savedUser = localStorage.getItem("currentUser");
@@ -21,7 +21,13 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
-  // Set user and persist to localStorage
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    // Check if current user is admin
+    setIsAdmin(user?.role === "admin");
+  }, [user]);
+
   const setUser = (userData) => {
     setUserState(userData);
     if (userData) {
@@ -31,11 +37,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout function
-  const logout = () => setUser(null);
+  const logout = () => {
+    setUserState(null);
+    setIsAdmin(false);
+    localStorage.removeItem("currentUser");
+  };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, logout }}>
+    <AuthContext.Provider value={{ user, setUser, logout, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

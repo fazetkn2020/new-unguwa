@@ -1,23 +1,12 @@
-// src/pages/DashboardLayout.jsx (FINAL CORRECTED VERSION - FULL IMPORTS)
-
+// src/pages/Dashboard/DashboardLayout.jsx - FIXED
 import React, { useState, useEffect } from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext"; 
 
-// Layout Components - FULL NAMES
+// Layout Components
 import TopBar from "./layout/TopBar";
 import WelcomeSection from "./layout/WelcomeSection";
 import ProfileSummary from "./layout/ProfileSummary";
-
-// Role Dashboards - FULL NAMES (Assuming your files are named like PrincipalDashboard.jsx)
-import MultiRoleDashboard from "./roles/MultiRoleDashboard"; 
-import PrincipalDashboard from "./roles/PrincipalDashboard";
-import FormMasterDashboard from "./roles/FormMasterDashboard";
-import SubjectTeacherDashboard from "./roles/SubjectTeacherDashboard";
-import SeniorMasterDashboard from "./roles/SeniorMasterDashboard";
-import ExamOfficerDashboard from "./roles/ExamOfficerDashboard";
-import VPAdminDashboard from "./roles/VPAdminDashboard";
-import VPAcademicDashboard from "./roles/VPAcademicDashboard";
 
 export default function DashboardLayout() {
     const { user, logout } = useAuth();
@@ -32,7 +21,6 @@ export default function DashboardLayout() {
         navigate("/dashboard/profile");
     };
 
-    // FIX: useEffect to detect profile save signal and collapse the panel
     useEffect(() => {
         if (location.state?.profileUpdated) {
             setDetailsExpanded(false); 
@@ -44,34 +32,15 @@ export default function DashboardLayout() {
         navigate("/login");
     };
 
-    const renderDashboard = () => {
-        if (!user) return null;
-        const role = user.role?.toLowerCase().replace(/\s/g, "_");
-
-        switch (role) {
-            case "principal":
-                return <PrincipalDashboard user={user} />;
-            case "form_master":
-                return <FormMasterDashboard user={user} />;
-            case "subject_teacher":
-                return <SubjectTeacherDashboard user={user} />;
-            case "senior_master":
-                return <SeniorMasterDashboard user={user} />;
-            case "exam_officer":
-                return <ExamOfficerDashboard user={user} />;
-            case "vp_admin":
-                return <VPAdminDashboard user={user} />;
-            case "vp_academic":
-                return <VPAcademicDashboard user={user} />;
-            default:
-                return <MultiRoleDashboard userRoles={user.roles} />;
-        }
-    };
+    // ✅ FIXED: Only show role dashboard when on base dashboard path
+    const shouldShowRoleDashboard = location.pathname === "/dashboard" || 
+                                   location.pathname === "/dashboard/" ||
+                                   /\/dashboard\/(admin|principal|vp-admin|vp-academic|senior-master|exam-officer|form-master|teacher)$/.test(location.pathname);
 
     if (!user) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                Loading Dashboard.
+                Loading Dashboard...
             </div>
         );
     }
@@ -91,11 +60,11 @@ export default function DashboardLayout() {
                 toggleDetails={toggleDetails}
             />
 
-            {/* === Main Dashboard Content === */}
-            <main className="flex-1 p-4">{renderDashboard()}</main>
-
-            {/* === Nested Routes Render Here (like /dashboard/profile) === */}
-            <Outlet />
+            {/* === Main Content Area === */}
+            <main className="flex-1 p-4">
+                {/* ✅ FIXED: Only show Outlet, remove renderDashboard() */}
+                <Outlet />
+            </main>
 
             {/* === Logout Button === */}
             <div className="fixed bottom-6 right-6 z-20">
