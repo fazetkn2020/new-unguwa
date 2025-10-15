@@ -1,5 +1,7 @@
 // src/pages/Dashboard/roles/ClassListManager.jsx - UPDATED
 import React, { useState, useEffect } from "react";
+import { useExam } from "../../../context/ExamContext";
+import { subjects } from "../../../data/subjects";
 
 export default function ClassListManager({ className }) {
   const [students, setStudents] = useState([]);
@@ -9,6 +11,7 @@ export default function ClassListManager({ className }) {
     gender: "Male"
   });
   const [editingIndex, setEditingIndex] = useState(null);
+  const { initializeStudentScores } = useExam();
 
   useEffect(() => {
     loadClassList();
@@ -23,27 +26,6 @@ export default function ClassListManager({ className }) {
     const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
     classLists[className] = updatedStudents;
     localStorage.setItem('classLists', JSON.stringify(classLists));
-    
-    // Also update exam bank structure
-    updateExamBank(updatedStudents);
-  };
-
-  const updateExamBank = (studentList) => {
-    const examBank = JSON.parse(localStorage.getItem('examBank')) || {};
-    if (!examBank[className]) {
-      examBank[className] = {};
-    }
-    
-    studentList.forEach(student => {
-      if (!examBank[className][student.studentId]) {
-        examBank[className][student.studentId] = {
-          studentName: student.fullName,
-          subjects: {}
-        };
-      }
-    });
-    
-    localStorage.setItem('examBank', JSON.stringify(examBank));
   };
 
   const addStudent = () => {
@@ -62,21 +44,32 @@ export default function ClassListManager({ className }) {
       return;
     }
 
-    const updatedStudents = [...students, {
+    const studentId = `${className}_${newStudent.studentId}`;
+    const studentData = {
       ...newStudent,
-      id: Date.now().toString()
-    }];
+      id: studentId,
+      class: className
+    };
+
+    const updatedStudents = [...students, studentData];
     
     setStudents(updatedStudents);
     saveClassList(updatedStudents);
+    
+    // AUTOMATICALLY CREATE EXAM BANK SCORE SLOTS using Exam Context
+    initializeStudentScores(studentId, className, newStudent.fullName);
+    
     setNewStudent({ studentId: "", fullName: "", gender: "Male" });
+    alert(`Student ${newStudent.fullName} added successfully! Exam Bank slots created.`);
   };
 
   const removeStudent = (index) => {
-    if (window.confirm("Are you sure you want to remove this student?")) {
+    const studentToRemove = students[index];
+    if (window.confirm(`Are you sure you want to remove ${studentToRemove.fullName}?`)) {
       const updatedStudents = students.filter((_, i) => i !== index);
       setStudents(updatedStudents);
       saveClassList(updatedStudents);
+      alert("Student removed from class list.");
     }
   };
 
@@ -102,6 +95,15 @@ export default function ClassListManager({ className }) {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <h2 className="text-xl font-semibold mb-4">Manage Class List: {className}</h2>
+      
+      {/* Info Box */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <p className="text-blue-800 text-sm">
+          <strong>Automatic Exam Bank Integration:</strong> When you add a student, 
+          empty score slots are automatically created in the Exam Bank for all {className} subjects.
+          Subject Teachers can then fill in CA and Exam scores.
+        </p>
+      </div>
       
       {/* Add/Edit Student Form */}
       <div className="bg-gray-50 p-4 rounded-lg mb-6">

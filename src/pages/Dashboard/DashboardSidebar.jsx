@@ -1,9 +1,26 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { roleMenus } from "../../data/roleMenus"; // Make sure this path is correct
+import { roleMenus } from '../../data/roleMenus';
 
 export default function DashboardSidebar({ user }) {
   const location = useLocation();
+
+// In your DashboardSidebar component, add Exam Bank navigation
+
+// Use the roleMenus to dynamically generate navigation links
+{roleMenus[user?.role]?.map((item) => (
+  <Link
+    key={item.name}
+    to={item.path}
+    className={`flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 rounded ${
+      location.pathname === item.path ? 'bg-blue-100 text-blue-600' : ''
+    }`}
+  >
+    {item.name}
+  </Link>
+))}
+
 
   // Merge all menu items from all roles
   const mergedMenu = [];

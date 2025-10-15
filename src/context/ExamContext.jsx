@@ -1,4 +1,5 @@
 import { createContext, useState, useContext, useEffect } from "react";
+import { subjects } from "../data/subjects";
 
 const ExamContext = createContext();
 
@@ -16,6 +17,29 @@ export const ExamProvider = ({ children }) => {
     localStorage.setItem("examData", JSON.stringify(examData));
   }, [examData]);
 
+  // Initialize score slots for a new student
+  const initializeStudentScores = (studentId, classLevel, studentName) => {
+    const classSubjects = subjects[classLevel] || [];
+    
+    setExamData(prev => {
+      const newScores = {};
+      
+      // Create empty score slots for each subject
+      classSubjects.forEach(subject => {
+        newScores[subject] = {
+          ca: '',
+          exam: '',
+          total: 0
+        };
+      });
+
+      return {
+        ...prev,
+        [studentId]: newScores
+      };
+    });
+  };
+
   const updateScore = (studentId, subject, field, value) => {
     setExamData(prev => ({
       ...prev,
@@ -23,7 +47,7 @@ export const ExamProvider = ({ children }) => {
         ...prev[studentId],
         [subject]: {
           ...prev[studentId]?.[subject],
-          [field]: Math.min(100, Math.max(0, parseInt(value) || 0)), // Validate 0-100
+          [field]: Math.min(100, Math.max(0, parseInt(value) || 0)),
           total: field === 'ca' || field === 'exam' 
             ? calculateTotal(
                 field === 'ca' ? (parseInt(value) || 0) : (prev[studentId]?.[subject]?.ca || 0),
@@ -36,7 +60,7 @@ export const ExamProvider = ({ children }) => {
   };
 
   const calculateTotal = (ca, exam) => {
-    return Math.min(100, ca + exam); // Ensure total doesn't exceed 100
+    return Math.min(100, ca + exam);
   };
 
   const canUserEditSubject = (user, subject) => {
@@ -51,7 +75,8 @@ export const ExamProvider = ({ children }) => {
       examData, 
       updateScore, 
       canUserEditSubject,
-      calculateTotal 
+      calculateTotal,
+      initializeStudentScores
     }}>
       {children}
     </ExamContext.Provider>

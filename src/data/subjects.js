@@ -1,24 +1,51 @@
 export const subjects = {
   "SS1": [
-    "Mathematics", "English Language", "Biology", "Chemistry", "Physics",
-    "Civic Education", "Economics", "Geography", "Further Mathematics",
-    "Agricultural Science", "Literature in English", "Government"
+    "Animal Husbandry",
+    "Biology", 
+    "Mathematics",
+    "English",
+    "Hausa",
+    "Islamic Studies",
+    "Civic Education",
+    "Geography",
+    "Government",
+    "Physics",
+    "Chemistry",
+    "Economics"
   ],
   "SS2": [
-    "Mathematics", "English Language", "Biology", "Chemistry", "Physics",
-    "Civic Education", "Economics", "Geography", "Further Mathematics", 
-    "Agricultural Science", "Literature in English", "Government"
+    "Animal Husbandry",
+    "Biology",
+    "Mathematics", 
+    "English",
+    "Hausa",
+    "Islamic Studies",
+    "Civic Education",
+    "Geography",
+    "Government",
+    "Physics",
+    "Chemistry",
+    "Economics"
   ],
   "SS3": [
-    "Mathematics", "English Language", "Biology", "Chemistry", "Physics",
-    "Civic Education", "Economics", "Geography", "Further Mathematics",
-    "Agricultural Science", "Literature in English", "Government"
+    "Animal Husbandry", 
+    "Biology",
+    "Mathematics",
+    "English",
+    "Hausa",
+    "Islamic Studies",
+    "Civic Education",
+    "Geography",
+    "Government",
+    "Physics",
+    "Chemistry",
+    "Economics"
   ]
 };
 
-// Each student selects 9 subjects from the 12 available
+// Simple function to get 9 subjects for a student
 export const getStudentSubjects = (studentId, classLevel) => {
-  // In real app, this would come from student data
   // For now, return first 9 subjects
+  // Later you can implement actual subject selection
   return subjects[classLevel]?.slice(0, 9) || [];
 };

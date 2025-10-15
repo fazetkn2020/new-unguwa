@@ -1,6 +1,7 @@
-// src/App.jsx - FIXED IMPORTS
+// src/App.jsx - UPDATED WITH EXAM CONTEXT
 import { Routes, Route, useLocation } from "react-router-dom"; 
 import { AuthProvider } from "./context/AuthContext";
+import { ExamProvider } from "./context/ExamContext"; // ADD THIS IMPORT
 import Navbar from "./components/Navbar";
 
 // Public Pages
@@ -67,38 +68,41 @@ export default function App() {
 
   return (
     <AuthProvider>
-      {!isDashboard && <Navbar />}
+      {/* WRAP WITH EXAM PROVIDER */}
+      <ExamProvider>
+        {!isDashboard && <Navbar />}
 
-      <Routes>
-        {/* ===================== Dashboard Routes ===================== */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route path="principal" element={<PrincipalDashboard />} />
-          <Route path="vp-admin" element={<VPAdminDashboard />} />
-          <Route path="vp-academic" element={<VPAcademicDashboard />} />
-          <Route path="senior-master" element={<SeniorMasterDashboard />} />
-          <Route path="exam-officer" element={<ExamOfficerDashboard />} />
-          <Route path="form-master" element={<FormMasterDashboard />} />
-          <Route path="teacher" element={<SubjectTeacherDashboard />} />
-          <Route path="admin" element={<AdminDashboard />} />
-          
-          {/* Shared/Utility Pages */}
-          <Route path="profile" element={<ProfileCard />} />
-          <Route path="elibrary" element={<ELibraryDashboard />} />
-          <Route path="exambank" element={<ExamBank />} /> 
-          <Route path="score-center" element={<ScoreCenter />} /> 
-        </Route>
+        <Routes>
+          {/* ===================== Dashboard Routes ===================== */}
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route path="principal" element={<PrincipalDashboard />} />
+            <Route path="vp-admin" element={<VPAdminDashboard />} />
+            <Route path="vp-academic" element={<VPAcademicDashboard />} />
+            <Route path="senior-master" element={<SeniorMasterDashboard />} />
+            <Route path="exam-officer" element={<ExamOfficerDashboard />} />
+            <Route path="form-master" element={<FormMasterDashboard />} />
+            <Route path="teacher" element={<SubjectTeacherDashboard />} />
+            <Route path="admin" element={<AdminDashboard />} />
+            
+            {/* Shared/Utility Pages */}
+            <Route path="profile" element={<ProfileCard />} />
+            <Route path="elibrary" element={<ELibraryDashboard />} />
+            <Route path="exambank" element={<ExamBank />} /> 
+            <Route path="score-center" element={<ScoreCenter />} /> 
+          </Route>
 
-        {/* ===================== Public Routes ===================== */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/about-school" element={<AboutSchool />} />
-        <Route path="/duty-roster" element={<DutyRoster />} />
-        <Route path="/timetable" element={<Timetable />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/elibrary" element={<ELibrary />} />
-        <Route path="/top-students" element={<TopStudents />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-      </Routes>
+          {/* ===================== Public Routes ===================== */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/about-school" element={<AboutSchool />} />
+          <Route path="/duty-roster" element={<DutyRoster />} />
+          <Route path="/timetable" element={<Timetable />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/elibrary" element={<ELibrary />} />
+          <Route path="/top-students" element={<TopStudents />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </ExamProvider>
     </AuthProvider>
   );
 }
