@@ -1,4 +1,4 @@
-// src/pages/Dashboard/ProfileCard.jsx
+// src/pages/Dashboard/ProfileCard.jsx (FINAL VERSION)
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -13,11 +13,12 @@ const subjects = [
 
 export default function ProfileCard() {
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
+    const { user, logout, setUser } = useAuth(); 
 
     const [formData, setFormData] = useState({
         fullName: "", email: "", role: "", phone: "", profilePic: "",
-        isFormMaster: "No", class: "", isSubjectTeacher: "No", subject: "",
+        isFormMaster: "No", formClass: "", 
+        isSubjectTeacher: "No", subject: "", teachingClass: "",
     });
 
     useEffect(() => {
@@ -26,6 +27,7 @@ export default function ProfileCard() {
             return;
         }
 
+        // We combine the data from context and specialized local storage
         const profileKey = `profileData_${user.email}`;
         const savedProfile = JSON.parse(localStorage.getItem(profileKey)) || {};
 
@@ -35,13 +37,14 @@ export default function ProfileCard() {
             email: user.email || "",
             role: user.role || "",
             
-            // Editable fields from localStorage
-            phone: savedProfile.phone || "",
-            profilePic: savedProfile.profilePic || "",
-            isFormMaster: savedProfile.isFormMaster || "No",
-            class: savedProfile.class || "",
-            isSubjectTeacher: savedProfile.isSubjectTeacher || "No",
-            subject: savedProfile.subject || "",
+            // Editable fields: Prioritize main user object, then local save, then default
+            phone: user.phone || savedProfile.phone || "",
+            profilePic: user.profilePic || savedProfile.profilePic || "", 
+            isFormMaster: user.isFormMaster || savedProfile.isFormMaster || "No",
+            formClass: user.formClass || savedProfile.formClass || "", 
+            isSubjectTeacher: user.isSubjectTeacher || savedProfile.isSubjectTeacher || "No",
+            subject: user.subject || savedProfile.subject || "",
+            teachingClass: user.teachingClass || savedProfile.teachingClass || "", 
         });
         
     }, [user, navigate]);
@@ -65,28 +68,47 @@ export default function ProfileCard() {
         e.preventDefault();
         if (!user) return;
 
-        // Perform any client-side validation here before saving
-        if (formData.isFormMaster === "Yes" && !formData.class) {
+        // Validation checks
+        if (formData.isFormMaster === "Yes" && !formData.formClass) {
              alert("Please select a class for the Form Master role.");
              return;
         }
-        if (formData.isSubjectTeacher === "Yes" && !formData.subject) {
-             alert("Please select a subject for the Subject Teacher role.");
+        if (formData.isSubjectTeacher === "Yes" && (!formData.subject || !formData.teachingClass)) {
+             alert("Please select both a subject and a class for the Subject Teacher role.");
              return;
         }
 
-
-        const profileDataToSave = {
-            phone: formData.phone, profilePic: formData.profilePic,
-            isFormMaster: formData.isFormMaster, class: formData.class,
-            isSubjectTeacher: formData.isSubjectTeacher, subject: formData.subject,
+        // 1. Prepare the consolidated data
+        const updatedProfileData = {
+            phone: formData.phone,
+            profilePic: formData.profilePic,
+            isFormMaster: formData.isFormMaster,
+            formClass: formData.formClass,      
+            isSubjectTeacher: formData.isSubjectTeacher,
+            subject: formData.subject,
+            teachingClass: formData.teachingClass, 
         };
 
-        const profileKey = `profileData_${user.email}`;
-        localStorage.setItem(profileKey, JSON.stringify(profileDataToSave));
+        // 2. Create the new, merged user object
+        const updatedUser = {
+            ...user, 
+            ...updatedProfileData,
+        };
         
+        // 3. Update the global AuthContext state (CRITICAL for updating TopBar/Summary)
+        setUser(updatedUser); 
+        
+        // 4. Update the specialized local storage key (for form re-read)
+        const profileKey = `profileData_${user.email}`;
+        localStorage.setItem(profileKey, JSON.stringify(updatedProfileData));
+
+        // 🔥 FIX: Show Alert first.
         alert("Profile saved successfully!");
-        navigate("/dashboard");
+        
+        // 5. Navigate back and send a state signal (using setTimeout to ensure alert displays)
+        setTimeout(() => {
+            navigate("/dashboard", { state: { profileUpdated: true } }); 
+        }, 0); 
     };
     
     // Show a loading state if the user object hasn't been populated yet
@@ -97,7 +119,6 @@ export default function ProfileCard() {
     // --- RENDER LOGIC ---
     return (
         <div className="flex justify-center bg-gray-50 px-4 py-8">
-        {/* ^^^ KEY CHANGE: Removed min-h-screen to let the content drive the height. */}
             
             <div className="bg-white shadow-xl rounded-xl p-6 md:p-10 w-full max-w-xl">
                 
@@ -152,10 +173,11 @@ export default function ProfileCard() {
                     />
 
                     {formData.isFormMaster === "Yes" && (
+                        // Form Master Class uses 'formClass' state property
                         <SelectField 
-                            label="Class" 
-                            name="class" 
-                            value={formData.class} 
+                            label="Form Class" 
+                            name="formClass" 
+                            value={formData.formClass} 
                             onChange={handleChange}
                             options={["SS1", "SS2", "SS3"]}
                             required={true}
@@ -173,15 +195,27 @@ export default function ProfileCard() {
                     />
 
                     {formData.isSubjectTeacher === "Yes" && (
-                        <SelectField 
-                            label="Subject" 
-                            name="subject" 
-                            value={formData.subject} 
-                            onChange={handleChange}
-                            options={subjects}
-                            required={true}
-                            defaultOption="Select Subject"
-                        />
+                        <>
+                            <SelectField 
+                                label="Subject" 
+                                name="subject" 
+                                value={formData.subject} 
+                                onChange={handleChange}
+                                options={subjects}
+                                required={true}
+                                defaultOption="Select Subject"
+                            />
+                            {/* Field for Subject Teacher Class */}
+                            <SelectField 
+                                label="Class Taught" 
+                                name="teachingClass" 
+                                value={formData.teachingClass} 
+                                onChange={handleChange}
+                                options={["SS1", "SS2", "SS3", "JSS1", "JSS2", "JSS3"]}
+                                required={true}
+                                defaultOption="Select Class Taught"
+                            />
+                        </>
                     )}
 
                     {/* Save Button */}
@@ -202,7 +236,7 @@ export default function ProfileCard() {
     );
 }
 
-// Helper Components for Cleaner JSX (Add these at the bottom of the file)
+// Helper Components for Cleaner JSX 
 const InputReadOnly = ({ label, value }) => (
     <div>
         <label className="block text-gray-700 text-sm font-medium mb-1">{label}</label>
