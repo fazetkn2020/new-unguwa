@@ -5,43 +5,33 @@ const ScoreEntryTable = ({
   selectedSubject, 
   examData, 
   onScoreUpdate,
-  readOnly = false 
+  readOnly = false,
+  currentClass = "" 
 }) => {
-  
-  const handleScoreChange = (studentName, scoreType, value) => {
+
+  const handleScoreChange = (studentIdentifier, scoreType, value) => {
     if (readOnly) return;
 
-    // Convert to number and validate ranges
     let numericValue = value === '' ? '' : parseInt(value) || 0;
-    
-    // Validate score ranges
+
     if (scoreType === 'ca' && numericValue !== '') {
-      numericValue = Math.max(0, Math.min(40, numericValue)); // CA: 0-40
+      numericValue = Math.max(0, Math.min(40, numericValue));
     }
     if (scoreType === 'exam' && numericValue !== '') {
-      numericValue = Math.max(0, Math.min(60, numericValue)); // Exam: 0-60
+      numericValue = Math.max(0, Math.min(60, numericValue));
     }
 
-    // Find student by name (since we're using names as keys now)
-    const student = students.find(s => s.fullName === studentName);
-    if (!student) return;
-
-    onScoreUpdate(student.id, selectedSubject, scoreType, numericValue);
+    onScoreUpdate(studentIdentifier, selectedSubject, scoreType, numericValue);
   };
 
-  // Get score for a student by name
-  const getStudentScore = (studentName) => {
-    const student = students.find(s => s.fullName === studentName);
-    if (!student) return { ca: '', exam: '', total: 0 };
-    
-    return examData[student.id]?.[selectedSubject] || { ca: '', exam: '', total: 0 };
+  const getStudentScore = (studentIdentifier) => {
+    return examData[studentIdentifier]?.[selectedSubject] || { ca: '', exam: '', total: 0 };
   };
 
-  // Calculate total automatically
   const calculateTotal = (ca, exam) => {
     const caScore = ca === '' ? 0 : parseInt(ca);
     const examScore = exam === '' ? 0 : parseInt(exam);
-    return Math.min(100, caScore + examScore); // Total max 100
+    return Math.min(100, caScore + examScore);
   };
 
   return (
@@ -59,46 +49,44 @@ const ScoreEntryTable = ({
         </thead>
         <tbody>
           {students.map((student, index) => {
-            const scores = getStudentScore(student.fullName);
+            const studentIdentifier = `${currentClass}_${student.fullName.replace(/\s+/g, '_')}`;
+            const scores = getStudentScore(studentIdentifier);
             const isComplete = scores.ca !== '' && scores.exam !== '';
             const total = calculateTotal(scores.ca, scores.exam);
-            
+
             return (
-              <tr key={student.fullName} className="hover:bg-gray-50 border-b">
+              <tr key={studentIdentifier} className="hover:bg-gray-50 border-b">
                 <td className="py-3 px-4 font-medium">{index + 1}</td>
                 <td className="py-3 px-4 font-medium">{student.fullName}</td>
-                
-                {/* CA Score Input */}
+
                 <td className="py-3 px-4">
                   <input
                     type="number"
                     min="0"
                     max="40"
                     value={scores.ca}
-                    onChange={(e) => handleScoreChange(student.fullName, 'ca', e.target.value)}
+                    onChange={(e) => handleScoreChange(studentIdentifier, 'ca', e.target.value)}
                     className="w-20 p-1 border rounded text-center mx-auto block focus:ring-2 focus:ring-blue-300"
                     placeholder="0"
                     disabled={readOnly}
                   />
                   <div className="text-xs text-gray-500 text-center mt-1">Max: 40</div>
                 </td>
-                
-                {/* Exam Score Input */}
+
                 <td className="py-3 px-4">
                   <input
                     type="number"
                     min="0"
                     max="60"
                     value={scores.exam}
-                    onChange={(e) => handleScoreChange(student.fullName, 'exam', e.target.value)}
+                    onChange={(e) => handleScoreChange(studentIdentifier, 'exam', e.target.value)}
                     className="w-20 p-1 border rounded text-center mx-auto block focus:ring-2 focus:ring-blue-300"
                     placeholder="0"
                     disabled={readOnly}
                   />
                   <div className="text-xs text-gray-500 text-center mt-1">Max: 60</div>
                 </td>
-                
-                {/* Total Score (Auto-calculated) */}
+
                 <td className="py-3 px-4 text-center font-semibold">
                   <span className={`px-2 py-1 rounded ${
                     total >= 70 ? 'bg-green-100 text-green-800' :
@@ -109,8 +97,7 @@ const ScoreEntryTable = ({
                     {total}
                   </span>
                 </td>
-                
-                {/* Status */}
+
                 <td className="py-3 px-4 text-center">
                   <span className={`px-2 py-1 rounded text-xs ${
                     isComplete ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
