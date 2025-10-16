@@ -8,7 +8,7 @@ import {
   RecentActivity
 } from "../../../components/scoring";
 
-export default function SubjectTeacherDashboard() {
+function SubjectTeacherDashboard() {
   const { user } = useAuth();
   const { examData, updateScore } = useExam();
   const [activeTab, setActiveTab] = useState("quickScore");
@@ -60,7 +60,7 @@ export default function SubjectTeacherDashboard() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Teacher Scoring Dashboard</h1>
         <p className="text-gray-600">Welcome, {user.name}</p>
-        
+
         {/* Teacher Info - Shows admin assignments */}
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-blue-50 p-4 rounded-lg">
@@ -223,6 +223,7 @@ export default function SubjectTeacherDashboard() {
                 selectedSubject={currentSubject}
                 examData={examData}
                 onScoreUpdate={updateScore}
+                currentClass={currentClass}
               />
 
               {/* Quick Actions */}
@@ -235,7 +236,7 @@ export default function SubjectTeacherDashboard() {
           )}
         </div>
       )}
-      
+
       {activeTab === "recent" && (
         <RecentActivity 
           teacherSubjects={teacherSubjects}
@@ -246,7 +247,7 @@ export default function SubjectTeacherDashboard() {
   );
 }
 
-// Utility Functions (same as before)
+// Utility Functions
 function getTotalStudents(classes) {
   let total = 0;
   const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
@@ -280,3 +281,5 @@ function getCompletionRate(classes, subjects, examData) {
   const completed = getScoresEnteredCount(examData, subjects);
   return totalPossible > 0 ? Math.round((completed / totalPossible) * 100) : 0;
 }
+
+export default SubjectTeacherDashboard;
