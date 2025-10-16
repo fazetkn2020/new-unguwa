@@ -1,24 +1,18 @@
-// src/pages/Dashboard/ProfileCard.jsx (FINAL VERSION)
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-
-// Define subjects outside the component to prevent re-creation on re-render
-const subjects = [
-    "Animal Husbandry", "Biology", "Chemistry", "Civic Education", 
-    "Economics", "English", "Geography", "Government", "Hausa", 
-    "Islamic", "Mathematics", "Physics"
-].sort();
 
 export default function ProfileCard() {
     const navigate = useNavigate();
     const { user, logout, setUser } = useAuth(); 
 
     const [formData, setFormData] = useState({
-        fullName: "", email: "", role: "", phone: "", profilePic: "",
-        isFormMaster: "No", formClass: "", 
-        isSubjectTeacher: "No", subject: "", teachingClass: "",
+        phone: "", 
+        title: "", 
+        address: "", 
+        qualification: "", 
+        school: "",
+        profilePic: ""
     });
 
     useEffect(() => {
@@ -27,28 +21,21 @@ export default function ProfileCard() {
             return;
         }
 
-        // We combine the data from context and specialized local storage
+        // Load profile data from localStorage
         const profileKey = `profileData_${user.email}`;
         const savedProfile = JSON.parse(localStorage.getItem(profileKey)) || {};
 
         setFormData({
-            // Immutable fields from context
-            fullName: user.fullName || "",
-            email: user.email || "",
-            role: user.role || "",
-            
-            // Editable fields: Prioritize main user object, then local save, then default
+            // Simplified fields - only what we need
             phone: user.phone || savedProfile.phone || "",
+            title: user.title || savedProfile.title || "",
+            address: user.address || savedProfile.address || "",
+            qualification: user.qualification || savedProfile.qualification || "",
+            school: user.school || savedProfile.school || "",
             profilePic: user.profilePic || savedProfile.profilePic || "", 
-            isFormMaster: user.isFormMaster || savedProfile.isFormMaster || "No",
-            formClass: user.formClass || savedProfile.formClass || "", 
-            isSubjectTeacher: user.isSubjectTeacher || savedProfile.isSubjectTeacher || "No",
-            subject: user.subject || savedProfile.subject || "",
-            teachingClass: user.teachingClass || savedProfile.teachingClass || "", 
         });
         
     }, [user, navigate]);
-
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -68,47 +55,41 @@ export default function ProfileCard() {
         e.preventDefault();
         if (!user) return;
 
-        // Validation checks
-        if (formData.isFormMaster === "Yes" && !formData.formClass) {
-             alert("Please select a class for the Form Master role.");
-             return;
-        }
-        if (formData.isSubjectTeacher === "Yes" && (!formData.subject || !formData.teachingClass)) {
-             alert("Please select both a subject and a class for the Subject Teacher role.");
-             return;
-        }
-
-        // 1. Prepare the consolidated data
+        // Prepare the updated profile data
         const updatedProfileData = {
             phone: formData.phone,
+            title: formData.title,
+            address: formData.address,
+            qualification: formData.qualification,
+            school: formData.school,
             profilePic: formData.profilePic,
-            isFormMaster: formData.isFormMaster,
-            formClass: formData.formClass,      
-            isSubjectTeacher: formData.isSubjectTeacher,
-            subject: formData.subject,
-            teachingClass: formData.teachingClass, 
         };
 
-        // 2. Create the new, merged user object
+        // Create the new, merged user object
         const updatedUser = {
             ...user, 
             ...updatedProfileData,
         };
         
-        // 3. Update the global AuthContext state (CRITICAL for updating TopBar/Summary)
+        // 🔥 FIX: Update the global AuthContext state
         setUser(updatedUser); 
         
-        // 4. Update the specialized local storage key (for form re-read)
+        // Update localStorage
         const profileKey = `profileData_${user.email}`;
         localStorage.setItem(profileKey, JSON.stringify(updatedProfileData));
 
-        // 🔥 FIX: Show Alert first.
+        // Also update the main users array in localStorage
+        const savedUsers = JSON.parse(localStorage.getItem("users")) || [];
+        const updatedUsers = savedUsers.map(u => 
+            u.email === user.email ? { ...u, ...updatedProfileData } : u
+        );
+        localStorage.setItem("users", JSON.stringify(updatedUsers));
+
+        // Show success message
         alert("Profile saved successfully!");
         
-        // 5. Navigate back and send a state signal (using setTimeout to ensure alert displays)
-        setTimeout(() => {
-            navigate("/dashboard", { state: { profileUpdated: true } }); 
-        }, 0); 
+        // Navigate back to dashboard - FIXED: removed the state that might cause issues
+        navigate("/dashboard");
     };
     
     // Show a loading state if the user object hasn't been populated yet
@@ -116,7 +97,6 @@ export default function ProfileCard() {
         return <div className="text-center mt-20 text-xl font-medium text-gray-700">Loading profile...</div>;
     }
 
-    // --- RENDER LOGIC ---
     return (
         <div className="flex justify-center bg-gray-50 px-4 py-8">
             
@@ -133,7 +113,7 @@ export default function ProfileCard() {
                             <img src={formData.profilePic} alt="Profile" className="w-full h-full object-cover"/>
                         ) : (
                             <span className="text-gray-500 text-5xl font-semibold">
-                                {formData.fullName.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()}
+                                {user.fullName?.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()}
                             </span>
                         )}
                     </div>
@@ -146,14 +126,23 @@ export default function ProfileCard() {
                 <form onSubmit={handleSave} className="space-y-6">
                     {/* Immutable Fields */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <InputReadOnly label="Full Name" value={formData.fullName} />
-                        <InputReadOnly label="Email" value={formData.email} />
-                        <InputReadOnly label="Role" value={formData.role} />
+                        <InputReadOnly label="Full Name" value={user.fullName || ""} />
+                        <InputReadOnly label="Email" value={user.email || ""} />
+                        <InputReadOnly label="Role" value={user.role || ""} />
                     </div>
 
                     <hr className="border-gray-200" />
                     
-                    {/* Editable Field: Phone */}
+                    {/* Simplified Editable Fields */}
+                    <SelectField 
+                        label="Title" 
+                        name="title" 
+                        value={formData.title} 
+                        onChange={handleChange}
+                        options={["Mr", "Mrs", "Miss", "Dr", "Prof"]}
+                        defaultOption="Select Title"
+                    />
+
                     <InputField 
                         label="Phone Number" 
                         name="phone" 
@@ -163,60 +152,32 @@ export default function ProfileCard() {
                         placeholder="Enter phone number" 
                     />
 
-                    {/* Conditional Field: Form Master */}
-                    <SelectField 
-                        label="Are you a Form Master?" 
-                        name="isFormMaster" 
-                        value={formData.isFormMaster} 
-                        onChange={handleChange}
-                        options={["No", "Yes"]}
+                    <InputField 
+                        label="Address" 
+                        name="address" 
+                        type="text" 
+                        value={formData.address} 
+                        onChange={handleChange} 
+                        placeholder="Enter your address" 
                     />
 
-                    {formData.isFormMaster === "Yes" && (
-                        // Form Master Class uses 'formClass' state property
-                        <SelectField 
-                            label="Form Class" 
-                            name="formClass" 
-                            value={formData.formClass} 
-                            onChange={handleChange}
-                            options={["SS1", "SS2", "SS3"]}
-                            required={true}
-                            defaultOption="Select Class"
-                        />
-                    )}
-
-                    {/* Conditional Field: Subject Teacher */}
-                    <SelectField 
-                        label="Are you a Subject Teacher?" 
-                        name="isSubjectTeacher" 
-                        value={formData.isSubjectTeacher} 
-                        onChange={handleChange}
-                        options={["No", "Yes"]}
+                    <InputField 
+                        label="Qualification" 
+                        name="qualification" 
+                        type="text" 
+                        value={formData.qualification} 
+                        onChange={handleChange} 
+                        placeholder="e.g., B.Sc, M.Ed, PhD" 
                     />
 
-                    {formData.isSubjectTeacher === "Yes" && (
-                        <>
-                            <SelectField 
-                                label="Subject" 
-                                name="subject" 
-                                value={formData.subject} 
-                                onChange={handleChange}
-                                options={subjects}
-                                required={true}
-                                defaultOption="Select Subject"
-                            />
-                            {/* Field for Subject Teacher Class */}
-                            <SelectField 
-                                label="Class Taught" 
-                                name="teachingClass" 
-                                value={formData.teachingClass} 
-                                onChange={handleChange}
-                                options={["SS1", "SS2", "SS3", "JSS1", "JSS2", "JSS3"]}
-                                required={true}
-                                defaultOption="Select Class Taught"
-                            />
-                        </>
-                    )}
+                    <InputField 
+                        label="School" 
+                        name="school" 
+                        type="text" 
+                        value={formData.school} 
+                        onChange={handleChange} 
+                        placeholder="Enter school name" 
+                    />
 
                     {/* Save Button */}
                     <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-blue-700 transition duration-200 shadow-md mt-6">
@@ -275,7 +236,7 @@ const SelectField = ({ label, name, value, onChange, options, required, defaultO
             className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 bg-white" 
             required={required}
         >
-            {defaultOption && <option value="" disabled={required}>{defaultOption}</option>}
+            {defaultOption && <option value="">{defaultOption}</option>}
             {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
     </div>

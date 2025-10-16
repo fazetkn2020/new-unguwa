@@ -1,4 +1,3 @@
-// src/pages/Dashboard/roles/FormMasterDashboard.jsx - FIXED
 import React, { useState } from "react";
 import { useAuth } from "../../../context/AuthContext"; 
 import { useExam } from "../../../context/ExamContext";
@@ -17,15 +16,13 @@ export default function FormMasterDashboard() {
   };
 
   return (
-    <div className="p-4"> {/* Reduced padding to raise content */}
-      <div className="mb-4"> {/* Reduced margin */}
+    <div className="p-4">
+      <div className="mb-4">
         <h1 className="text-2xl font-bold">Form Master Dashboard</h1>
-        <p className="text-gray-600">Welcome, {user.name} - {user.formClass || user.classes?.[0]}</p>
+        <p className="text-gray-600">Welcome, {user.name} - {user.assignedClasses?.[0] || user.formClass}</p>
       </div>
 
-      {/* Three Collapsible Buttons - Moved higher */}
       <div className="space-y-4 max-w-2xl">
-        {/* Add Student Button */}
         <div className="border border-gray-200 rounded-lg">
           <button
             onClick={() => toggleSection('add')}
@@ -42,7 +39,6 @@ export default function FormMasterDashboard() {
           )}
         </div>
 
-        {/* View Students Button */}
         <div className="border border-gray-200 rounded-lg">
           <button
             onClick={() => toggleSection('view')}
@@ -59,7 +55,6 @@ export default function FormMasterDashboard() {
           )}
         </div>
 
-        {/* Exam Bank Button */}
         <div className="border border-gray-200 rounded-lg">
           <Link 
             to="/dashboard/exambank"
@@ -74,7 +69,7 @@ export default function FormMasterDashboard() {
   );
 }
 
-// Add Student Form Component - FIXED with useExam import
+// Add Student Form Component - FIXED: No IDs, only names
 function AddStudentForm() {
   const [studentName, setStudentName] = useState("");
   const { user } = useAuth();
@@ -86,27 +81,36 @@ function AddStudentForm() {
       return;
     }
 
-    const classLevel = user.formClass || user.classes?.[0];
-    const studentId = `${classLevel}_${Date.now()}`;
+    const classLevel = user.assignedClasses?.[0] || user.formClass;
     
-    // Save to class list
+    // Save to class list - USING ONLY NAMES
     const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
     if (!classLists[classLevel]) classLists[classLevel] = [];
     
+    // Create student object with only name (no ID)
     const newStudent = {
-      id: studentId,
-      fullName: studentName.trim(),
-      studentId: `STU${Date.now().toString().slice(-4)}`
+      fullName: studentName.trim()
     };
+    
+    // Check if student already exists
+    const existingStudent = classLists[classLevel].find(s => 
+      s.fullName.toLowerCase() === studentName.trim().toLowerCase()
+    );
+    
+    if (existingStudent) {
+      alert(`Student "${studentName}" already exists in ${classLevel}`);
+      return;
+    }
     
     classLists[classLevel].push(newStudent);
     localStorage.setItem('classLists', JSON.stringify(classLists));
     
-    // Create exam bank slots
-    initializeStudentScores(studentId, classLevel, studentName.trim());
+    // Create exam bank slots using name as identifier
+    const studentIdentifier = `${classLevel}_${studentName.trim().replace(/\s+/g, '_')}`;
+    initializeStudentScores(studentIdentifier, classLevel, studentName.trim());
     
     setStudentName("");
-    alert(`Student "${studentName}" added successfully!`);
+    alert(`Student "${studentName}" added successfully to ${classLevel}!`);
   };
 
   return (
@@ -129,26 +133,32 @@ function AddStudentForm() {
   );
 }
 
-// Student List View Component
+// Student List View Component - FIXED: No IDs
 function StudentListView() {
   const { user } = useAuth();
   const [students, setStudents] = useState([]);
 
   React.useEffect(() => {
-    const classLevel = user.formClass || user.classes?.[0];
+    const classLevel = user.assignedClasses?.[0] || user.formClass;
     const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
     setStudents(classLists[classLevel] || []);
   }, [user]);
 
-  const removeStudent = (studentId) => {
-    if (window.confirm("Are you sure you want to remove this student?")) {
-      const classLevel = user.formClass || user.classes?.[0];
+  const removeStudent = (studentName) => {
+    if (window.confirm(`Are you sure you want to remove ${studentName}?`)) {
+      const classLevel = user.assignedClasses?.[0] || user.formClass;
       const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
       
       if (classLists[classLevel]) {
-        classLists[classLevel] = classLists[classLevel].filter(s => s.id !== studentId);
+        classLists[classLevel] = classLists[classLevel].filter(s => s.fullName !== studentName);
         localStorage.setItem('classLists', JSON.stringify(classLists));
         setStudents(classLists[classLevel]);
+        
+        // Also remove from exam data
+        const examData = JSON.parse(localStorage.getItem('examData')) || {};
+        const studentIdentifier = `${classLevel}_${studentName.replace(/\s+/g, '_')}`;
+        delete examData[studentIdentifier];
+        localStorage.setItem('examData', JSON.stringify(examData));
       }
     }
   };
@@ -169,19 +179,17 @@ function StudentListView() {
           <tr>
             <th className="py-2 px-4 border-b text-left">#</th>
             <th className="py-2 px-4 border-b text-left">Student Name</th>
-            <th className="py-2 px-4 border-b text-left">Student ID</th>
             <th className="py-2 px-4 border-b text-left">Actions</th>
           </tr>
         </thead>
         <tbody>
           {sortedStudents.map((student, index) => (
-            <tr key={student.id} className="hover:bg-gray-50">
+            <tr key={student.fullName} className="hover:bg-gray-50">
               <td className="py-2 px-4 border-b">{index + 1}</td>
-              <td className="py-2 px-4 border-b">{student.fullName}</td>
-              <td className="py-2 px-4 border-b">{student.studentId}</td>
+              <td className="py-2 px-4 border-b font-medium">{student.fullName}</td>
               <td className="py-2 px-4 border-b">
                 <button
-                  onClick={() => removeStudent(student.id)}
+                  onClick={() => removeStudent(student.fullName)}
                   className="text-red-600 hover:text-red-800 text-sm"
                 >
                   Remove

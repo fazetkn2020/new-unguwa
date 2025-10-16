@@ -1,34 +1,58 @@
-// src/pages/Dashboard/roles/SubjectTeacherDashboard.jsx
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { useExam } from "../../../context/ExamContext";
-import { subjects } from "../../../data/subjects";
 import { Link } from "react-router-dom";
+import {
+  ScoreEntryTable,
+  ScoringStatistics,
+  RecentActivity
+} from "../../../components/scoring";
 
 export default function SubjectTeacherDashboard() {
   const { user } = useAuth();
   const { examData, updateScore } = useExam();
   const [activeTab, setActiveTab] = useState("quickScore");
-  const [selectedClass, setSelectedClass] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState("");
+  const [currentClassIndex, setCurrentClassIndex] = useState(0);
+  const [currentSubjectIndex, setCurrentSubjectIndex] = useState(0);
 
   if (!user) {
     return <div className="p-6">Loading user data...</div>;
   }
 
-  // Get teacher's assigned subjects and classes
-  const teacherSubjects = user.subjects || [];
-  const teacherClasses = user.classes || ["SS1", "SS2", "SS3"]; // Default if not set
+  // Get teacher's assigned subjects and classes from admin assignment
+  const teacherSubjects = user.assignedSubjects || user.subjects || [];
+  const teacherClasses = user.assignedClasses || user.classes || [];
 
-  // Set default selections
-  useEffect(() => {
-    if (teacherClasses.length > 0 && !selectedClass) {
-      setSelectedClass(teacherClasses[0]);
-    }
-    if (teacherSubjects.length > 0 && !selectedSubject) {
-      setSelectedSubject(teacherSubjects[0]);
-    }
-  }, [teacherClasses, teacherSubjects]);
+  // Get current class and subject based on index
+  const currentClass = teacherClasses[currentClassIndex] || "";
+  const currentSubject = teacherSubjects[currentSubjectIndex] || "";
+
+  // Get students for current class
+  const getClassStudents = (className) => {
+    const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
+    return classLists[className] || [];
+  };
+
+  const students = getClassStudents(currentClass);
+
+  // Navigation between assigned classes/subjects
+  const nextClass = () => {
+    setCurrentClassIndex((prev) => (prev + 1) % teacherClasses.length);
+    setCurrentSubjectIndex(0);
+  };
+
+  const prevClass = () => {
+    setCurrentClassIndex((prev) => (prev - 1 + teacherClasses.length) % teacherClasses.length);
+    setCurrentSubjectIndex(0);
+  };
+
+  const nextSubject = () => {
+    setCurrentSubjectIndex((prev) => (prev + 1) % teacherSubjects.length);
+  };
+
+  const prevSubject = () => {
+    setCurrentSubjectIndex((prev) => (prev - 1 + teacherSubjects.length) % teacherSubjects.length);
+  };
 
   return (
     <div className="p-6">
@@ -37,15 +61,21 @@ export default function SubjectTeacherDashboard() {
         <h1 className="text-2xl font-bold">Teacher Scoring Dashboard</h1>
         <p className="text-gray-600">Welcome, {user.name}</p>
         
-        {/* Teacher Info */}
+        {/* Teacher Info - Shows admin assignments */}
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-blue-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-blue-800">📚 Teaching Subjects</h3>
-            <p className="text-blue-600">{teacherSubjects.join(", ") || "No subjects assigned"}</p>
+            <h3 className="font-semibold text-blue-800">📚 Assigned Subjects</h3>
+            <p className="text-blue-600">
+              {teacherSubjects.length > 0 ? teacherSubjects.join(", ") : "No subjects assigned by admin"}
+            </p>
+            <p className="text-sm text-blue-500 mt-1">Contact admin to change assignments</p>
           </div>
           <div className="bg-green-50 p-4 rounded-lg">
             <h3 className="font-semibold text-green-800">🏫 Assigned Classes</h3>
-            <p className="text-green-600">{teacherClasses.join(", ") || "All classes"}</p>
+            <p className="text-green-600">
+              {teacherClasses.length > 0 ? teacherClasses.join(", ") : "No classes assigned by admin"}
+            </p>
+            <p className="text-sm text-green-500 mt-1">Contact admin to change assignments</p>
           </div>
         </div>
       </div>
@@ -76,6 +106,59 @@ export default function SubjectTeacherDashboard() {
         </div>
       </div>
 
+      {/* Current Assignment Navigation */}
+      {teacherClasses.length > 0 && teacherSubjects.length > 0 && (
+        <div className="bg-white rounded-lg shadow border p-4 mb-6">
+          <h3 className="font-semibold mb-3">Current Assignment</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-sm text-gray-500">Class:</span>
+                <span className="ml-2 font-semibold">{currentClass}</span>
+              </div>
+              <div className="flex gap-2">
+                <button 
+                  onClick={prevClass}
+                  className="px-3 py-1 bg-gray-200 rounded text-sm"
+                  disabled={teacherClasses.length <= 1}
+                >
+                  ←
+                </button>
+                <button 
+                  onClick={nextClass}
+                  className="px-3 py-1 bg-gray-200 rounded text-sm"
+                  disabled={teacherClasses.length <= 1}
+                >
+                  →
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-sm text-gray-500">Subject:</span>
+                <span className="ml-2 font-semibold">{currentSubject}</span>
+              </div>
+              <div className="flex gap-2">
+                <button 
+                  onClick={prevSubject}
+                  className="px-3 py-1 bg-gray-200 rounded text-sm"
+                  disabled={teacherSubjects.length <= 1}
+                >
+                  ←
+                </button>
+                <button 
+                  onClick={nextSubject}
+                  className="px-3 py-1 bg-gray-200 rounded text-sm"
+                  disabled={teacherSubjects.length <= 1}
+                >
+                  →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Navigation Tabs */}
       <div className="border-b border-gray-200 mb-6">
         <nav className="-mb-px flex space-x-8">
@@ -101,11 +184,7 @@ export default function SubjectTeacherDashboard() {
           </button>
           <Link 
             to="/dashboard/exambank"
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "exambank"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
+            className="py-2 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700"
           >
             🗂️ Full Exam Bank
           </Link>
@@ -114,14 +193,47 @@ export default function SubjectTeacherDashboard() {
 
       {/* Tab Content */}
       {activeTab === "quickScore" && (
-        <QuickScoreEntry 
-          teacherSubjects={teacherSubjects}
-          teacherClasses={teacherClasses}
-          selectedClass={selectedClass}
-          selectedSubject={selectedSubject}
-          onClassChange={setSelectedClass}
-          onSubjectChange={setSelectedSubject}
-        />
+        <div className="bg-white rounded-lg shadow border p-6">
+          <h2 className="text-xl font-semibold mb-4">
+            Quick Score Entry - {currentClass} - {currentSubject}
+          </h2>
+
+          {teacherClasses.length === 0 || teacherSubjects.length === 0 ? (
+            <div className="text-center py-8 bg-yellow-50 rounded-lg">
+              <p className="text-yellow-700 font-semibold">No Teaching Assignments</p>
+              <p className="text-yellow-600 text-sm mt-2">
+                Admin has not assigned you any classes or subjects yet.
+              </p>
+            </div>
+          ) : students.length === 0 ? (
+            <div className="text-center py-8 bg-gray-50 rounded-lg">
+              <p className="text-gray-500">No students found in {currentClass}.</p>
+              <p className="text-sm text-gray-400">Form Master needs to add students first.</p>
+            </div>
+          ) : (
+            <>
+              <ScoringStatistics
+                students={students}
+                selectedSubject={currentSubject}
+                examData={examData}
+              />
+
+              <ScoreEntryTable
+                students={students}
+                selectedSubject={currentSubject}
+                examData={examData}
+                onScoreUpdate={updateScore}
+              />
+
+              {/* Quick Actions */}
+              <div className="mt-6 flex gap-4">
+                <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                  Save All Scores
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       )}
       
       {activeTab === "recent" && (
@@ -134,144 +246,7 @@ export default function SubjectTeacherDashboard() {
   );
 }
 
-// Quick Score Entry Component
-function QuickScoreEntry({ teacherSubjects, teacherClasses, selectedClass, selectedSubject, onClassChange, onSubjectChange }) {
-  const { examData, updateScore } = useExam();
-  
-  // Get students for selected class
-  const getClassStudents = (className) => {
-    const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
-    return classLists[className] || [];
-  };
-
-  const students = getClassStudents(selectedClass);
-
-  return (
-    <div className="bg-white rounded-lg shadow border p-6">
-      <h2 className="text-xl font-semibold mb-4">Quick Score Entry</h2>
-      
-      {/* Class and Subject Selection */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div>
-          <label className="block text-sm font-medium mb-2">Select Class:</label>
-          <select
-            value={selectedClass}
-            onChange={(e) => onClassChange(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
-          >
-            {teacherClasses.map(cls => (
-              <option key={cls} value={cls}>{cls}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-2">Select Subject:</label>
-          <select
-            value={selectedSubject}
-            onChange={(e) => onSubjectChange(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
-          >
-            {teacherSubjects.map(sub => (
-              <option key={sub} value={sub}>{sub}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Score Entry Table */}
-      {students.length === 0 ? (
-        <div className="text-center py-8 bg-gray-50 rounded-lg">
-          <p className="text-gray-500">No students found in {selectedClass}.</p>
-          <p className="text-sm text-gray-400">Form Master needs to add students first.</p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="py-3 px-4 border-b text-left">Student Name</th>
-                <th className="py-3 px-4 border-b text-center">CA Score (0-40)</th>
-                <th className="py-3 px-4 border-b text-center">Exam Score (0-60)</th>
-                <th className="py-3 px-4 border-b text-center">Total</th>
-                <th className="py-3 px-4 border-b text-center">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {students.map(student => {
-                const scores = examData[student.id]?.[selectedSubject] || { ca: '', exam: '', total: 0 };
-                const isComplete = scores.ca !== '' && scores.exam !== '';
-                
-                return (
-                  <tr key={student.id} className="hover:bg-gray-50 border-b">
-                    <td className="py-3 px-4 font-medium">{student.fullName}</td>
-                    <td className="py-3 px-4">
-                      <input
-                        type="number"
-                        min="0"
-                        max="40"
-                        value={scores.ca}
-                        onChange={(e) => updateScore(student.id, selectedSubject, 'ca', e.target.value)}
-                        className="w-20 p-1 border rounded text-center mx-auto block"
-                        placeholder="0"
-                      />
-                    </td>
-                    <td className="py-3 px-4">
-                      <input
-                        type="number"
-                        min="0"
-                        max="60"
-                        value={scores.exam}
-                        onChange={(e) => updateScore(student.id, selectedSubject, 'exam', e.target.value)}
-                        className="w-20 p-1 border rounded text-center mx-auto block"
-                        placeholder="0"
-                      />
-                    </td>
-                    <td className="py-3 px-4 text-center font-semibold">
-                      {scores.total || 0}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        isComplete ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
-                      }`}>
-                        {isComplete ? 'Complete' : 'Pending'}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Quick Actions */}
-      <div className="mt-6 flex gap-4">
-        <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          Save All Scores
-        </button>
-        <button className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
-          Clear All
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// Recent Activity Component
-function RecentActivity({ teacherSubjects, examData }) {
-  // This would show recently edited scores
-  return (
-    <div className="bg-white rounded-lg shadow border p-6">
-      <h2 className="text-xl font-semibold mb-4">Recent Scoring Activity</h2>
-      <div className="text-center py-8 text-gray-500">
-        <p>Recent score entries will appear here.</p>
-        <p className="text-sm">Start entering scores to see your activity.</p>
-      </div>
-    </div>
-  );
-}
-
-// Utility Functions
+// Utility Functions (same as before)
 function getTotalStudents(classes) {
   let total = 0;
   const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
