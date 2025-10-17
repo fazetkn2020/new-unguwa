@@ -10,7 +10,7 @@ export default function ReportCardDashboard() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [classes, setClasses] = useState([]);
   const [students, setStudents] = useState([]);
-  
+
   const reportRef = useRef();
 
   const canAccessReports = user?.role === "Principal" || user?.role === "Exam Officer";
@@ -38,34 +38,52 @@ export default function ReportCardDashboard() {
     loadStudents(className);
   };
 
-  // Simple print function that works
+  // Professional print function
   const handlePrint = () => {
-    const printContent = reportRef.current.innerHTML;
-    const originalContent = document.body.innerHTML;
-    
-    document.body.innerHTML = printContent;
-    window.print();
-    document.body.innerHTML = originalContent;
-    window.location.reload(); // Refresh to restore original state
-  };
-
-  // Alternative: Open in new window for printing
-  const handlePrintNewWindow = () => {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
+    const printContent = `
+      <!DOCTYPE html>
       <html>
         <head>
           <title>Report Card - ${selectedStudent?.fullName}</title>
-          <script src="https://cdn.tailwindcss.com"></script>
+          <meta charset="UTF-8">
+          <style>
+            body { 
+              margin: 0; 
+              padding: 20px; 
+              font-family: Arial, sans-serif; 
+              background: white;
+            }
+            .report-container { 
+              max-width: 1000px; 
+              margin: 0 auto; 
+            }
+            @media print {
+              body { margin: 0; padding: 0; }
+              .no-print { display: none !important; }
+            }
+          </style>
         </head>
         <body>
-          ${reportRef.current.innerHTML}
+          <div class="report-container">
+            ${reportRef.current.innerHTML}
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(() => {
+                if (confirm('Close print window?')) {
+                  window.close();
+                }
+              }, 100);
+            };
+          </script>
         </body>
       </html>
-    `);
+    `;
+    
+    const printWindow = window.open('', '_blank', 'width=1000,height=800');
+    printWindow.document.write(printContent);
     printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
   };
 
   if (!canAccessReports) {
@@ -83,7 +101,8 @@ export default function ReportCardDashboard() {
 
   return (
     <div className="p-6">
-      <div className="bg-white rounded-lg shadow border p-6 mb-6">
+      {/* Dashboard Controls - Hidden when printing */}
+      <div className="bg-white rounded-lg shadow border p-6 mb-6 no-print">
         <h1 className="text-2xl font-bold mb-2">Report Card System</h1>
         <p className="text-gray-600 mb-4">
           {user.role === "Exam Officer" 
@@ -92,7 +111,6 @@ export default function ReportCardDashboard() {
           }
         </p>
 
-        {/* Class Selection */}
         <div className="mb-6">
           <label className="block text-sm font-medium mb-2">Select Class:</label>
           <select
@@ -107,7 +125,6 @@ export default function ReportCardDashboard() {
           </select>
         </div>
 
-        {/* Student Selection */}
         {selectedClass && (
           <div className="mb-6">
             <label className="block text-sm font-medium mb-2">Select Student:</label>
@@ -129,20 +146,13 @@ export default function ReportCardDashboard() {
           </div>
         )}
 
-        {/* Print Buttons - Only for Exam Officer */}
         {canPrintReports && selectedStudent && (
           <div className="mb-6 flex gap-4">
             <button
               onClick={handlePrint}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-semibold"
-            >
-              🖨️ Print Report (Current Tab)
-            </button>
-            <button
-              onClick={handlePrintNewWindow}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-semibold"
             >
-              📄 Print (New Window)
+              🖨️ Print Report Card
             </button>
           </div>
         )}
@@ -150,17 +160,18 @@ export default function ReportCardDashboard() {
 
       {/* Report Card Display */}
       {selectedStudent && (
-        <div ref={reportRef}>
+        <div ref={reportRef} className="print:block">
           <ReportSheet
             student={selectedStudent}
             examData={examData}
             currentClass={selectedClass}
+            students={students}
           />
         </div>
       )}
 
       {!selectedStudent && selectedClass && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center no-print">
           <p className="text-blue-700">
             Select a student from {selectedClass} to view their report card
           </p>

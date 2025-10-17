@@ -134,6 +134,9 @@ export const getPDFBlob = (pdf) => {
   return pdf.output('blob');
 };
 
+// ADD THE MISSING EXPORT
+export { isJsPDFAvailable };
+
 export default {
   generateSingleReportPDF,
   generateMultipleReportPDFs,

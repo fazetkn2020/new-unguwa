@@ -40,3 +40,44 @@
 .read-the-docs {
   color: #888;
 }
+@media print {
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    margin: 0;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+}
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    margin: 0;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .report-container {
+    zoom: 0.92; /* shrink to fit all 9 subjects on one page */
+    transform-origin: top center;
+  }
+
+  table {
+    page-break-inside: avoid;
+  }
+}

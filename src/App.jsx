@@ -1,4 +1,4 @@
-// src/App.jsx - FIXED SYNTAX
+// src/App.jsx - SIMPLIFIED ROUTING
 import { Routes, Route, useLocation } from "react-router-dom"; 
 import { AuthProvider } from "./context/AuthContext";
 import { ExamProvider } from "./context/ExamContext";
@@ -74,27 +74,6 @@ export default function App() {
           {!isDashboard && <Navbar />}
 
           <Routes>
-            {/* ===================== Dashboard Routes ===================== */}
-            <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route path="principal" element={<PrincipalDashboard />} />
-              <Route path="vp-admin" element={<VPAdminDashboard />} />
-              <Route path="vp-academic" element={<VPAcademicDashboard />} />
-              <Route path="senior-master" element={<SeniorMasterDashboard />} />
-              <Route path="exam-officer" element={<ExamOfficerDashboard />} />
-              <Route path="form-master" element={<FormMasterDashboard />} />
-              <Route path="teacher" element={<SubjectTeacherDashboard />} />
-              <Route path="admin" element={<AdminDashboard />} />
-
-              {/* Shared/Utility Pages */}
-              <Route path="profile" element={<ProfileCard />} />
-              <Route path="exambank" element={<ExamBank />} /> 
-              <Route path="score-center" element={<ScoreCenter />} />
-              
-              {/* Report Card Routes */}
-              <Route path="exam-officer/report-cards" element={<ReportCardDashboard />} />
-              <Route path="bulk-reports" element={<BulkReportCenter />} />
-            </Route>
-
             {/* ===================== Public Routes ===================== */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/about-school" element={<AboutSchool />} />
@@ -105,6 +84,40 @@ export default function App() {
             <Route path="/top-students" element={<TopStudents />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+
+            {/* ===================== Dashboard Routes ===================== */}
+            <Route path="/dashboard" element={<DashboardLayout />}>
+              {/* Default dashboard route */}
+              <Route index element={<PrincipalDashboard />} />
+              
+              {/* Role-specific dashboards */}
+              <Route path="principal" element={<PrincipalDashboard />} />
+              <Route path="vp-admin" element={<VPAdminDashboard />} />
+              <Route path="vp-academic" element={<VPAcademicDashboard />} />
+              <Route path="senior-master" element={<SeniorMasterDashboard />} />
+              <Route path="exam-officer" element={<ExamOfficerDashboard />} />
+              <Route path="form-master" element={<FormMasterDashboard />} />
+              <Route path="teacher" element={<SubjectTeacherDashboard />} />
+              <Route path="admin" element={<AdminDashboard />} />
+
+              {/* Dashboard utility pages */}
+              <Route path="profile" element={<ProfileCard />} />
+              <Route path="exambank" element={<ExamBank />} />
+              <Route path="score-center" element={<ScoreCenter />} />
+              <Route path="bulk-reports" element={<BulkReportCenter />} />
+              <Route path="exam-officer/report-cards" element={<ReportCardDashboard />} />
+            </Route>
+
+            {/* 404 Page */}
+            <Route path="*" element={
+              <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                  <h1 className="text-4xl font-bold text-gray-900 mb-4">404 - Page Not Found</h1>
+                  <p className="text-gray-600 mb-4">The page you're looking for doesn't exist.</p>
+                  <a href="/" className="text-blue-600 hover:text-blue-800 underline">Return to Home</a>
+                </div>
+              </div>
+            } />
           </Routes>
         </BulkPrintProvider>
       </ExamProvider>

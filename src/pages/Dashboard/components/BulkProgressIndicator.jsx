@@ -1,4 +1,5 @@
-micro srimport React from 'react';
+// FIXED IMPORT PATH - GO UP 3 LEVELS
+import React from 'react';
 import { useBulkPrint } from '../../../context/BulkPrintContext';
 
 const BulkProgressIndicator = () => {

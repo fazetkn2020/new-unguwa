@@ -1,3 +1,4 @@
+// FIXED IMPORT PATHS
 import React, { useState, useEffect } from 'react';
 import { useBulkPrint } from '../context/BulkPrintContext';
 
