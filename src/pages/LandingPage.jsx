@@ -7,7 +7,7 @@ const LandingPage = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
-      
+
       {/* Header */}
       <Header />
 
@@ -56,9 +56,14 @@ const LandingPage = () => {
           <div className="text-2xl font-bold bg-gradient-to-r from-emerald-200 to-teal-200 bg-clip-text text-transparent">
             © 2025 Faruk Bashir | fazetdev
           </div>
-          <div className="text-emerald-300 text-lg font-medium">
-            📞 07082921105
-          </div>
+          <a
+            href="https://wa.me/2347082921105"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-emerald-300 text-lg font-medium hover:text-emerald-100 transition-colors duration-300"
+          >
+            📞 Chat on WhatsApp
+          </a>
           <div className="text-emerald-400 text-base md:text-lg font-light italic">
             “Empowering schools with modern management tools”
           </div>

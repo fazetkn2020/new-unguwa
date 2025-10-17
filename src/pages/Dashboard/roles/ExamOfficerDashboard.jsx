@@ -19,7 +19,7 @@ export default function ExamOfficerDashboard() {
     // Load teachers count
     const users = JSON.parse(localStorage.getItem('users')) || [];
     const teachers = users.filter(u => u.role === 'Subject Teacher');
-    
+
     // Mock data for submissions (will be replaced with actual file system)
     const submissionsReceived = Math.floor(Math.random() * teachers.length);
     const pendingSubmissions = teachers.length - submissionsReceived;
@@ -78,7 +78,7 @@ export default function ExamOfficerDashboard() {
               View teacher test submissions (Placeholder)
             </div>
           </button>
-          
+
           {/* Exam Bank - View Only */}
           <Link 
             to="/dashboard/exambank"
@@ -86,15 +86,29 @@ export default function ExamOfficerDashboard() {
           >
             📊 EXAM BANK (VIEW ONLY)
           </Link>
-          
-          {/* Report Sheet Generation - Placeholder */}
-          <button className="block w-full bg-white border-2 border-green-500 p-4 rounded-lg text-xl font-semibold text-gray-800 hover:bg-green-50 text-center">
-            🖨️ GENERATE REPORT SHEETS
+
+          {/* Single Report Cards */}
+          <Link 
+            to="/dashboard/exam-officer/report-cards"
+            className="block w-full bg-white border-2 border-green-500 p-4 rounded-lg text-xl font-semibold text-gray-800 hover:bg-green-50 text-center"
+          >
+            📄 SINGLE REPORT CARDS
             <div className="text-sm text-gray-600 mt-1">
-              Print student report cards (Placeholder)
+              Generate individual student report cards
             </div>
-          </button>
-          
+          </Link>
+
+          {/* Bulk Report Cards - NEW FEATURE */}
+          <Link 
+            to="/dashboard/bulk-reports"
+            className="block w-full bg-white border-2 border-blue-500 p-4 rounded-lg text-xl font-semibold text-gray-800 hover:bg-blue-50 text-center"
+          >
+            🖨️ BULK REPORT CARDS
+            <div className="text-sm text-gray-600 mt-1">
+              Print multiple reports at once for entire classes
+            </div>
+          </Link>
+
           {/* Teacher Activity - Placeholder */}
           <button className="block w-full bg-white border-2 border-blue-500 p-4 rounded-lg text-xl font-semibold text-gray-800 hover:bg-blue-50 text-center">
             👨‍🏫 TEACHER SUBMISSION ACTIVITY
@@ -102,7 +116,7 @@ export default function ExamOfficerDashboard() {
               View submission status by teacher (Placeholder)
             </div>
           </button>
-          
+
           {/* Exam Analytics - Placeholder */}
           <button className="block w-full bg-white border-2 border-orange-500 p-4 rounded-lg text-xl font-semibold text-gray-800 hover:bg-orange-50 text-center">
             📈 EXAM PERFORMANCE ANALYTICS
@@ -110,7 +124,7 @@ export default function ExamOfficerDashboard() {
               View class/subject performance (Placeholder)
             </div>
           </button>
-          
+
           {/* External Exams - Placeholder */}
           <button className="block w-full bg-white border-2 border-red-500 p-4 rounded-lg text-xl font-semibold text-gray-800 hover:bg-red-50 text-center">
             🎓 EXTERNAL EXAM COORDINATION

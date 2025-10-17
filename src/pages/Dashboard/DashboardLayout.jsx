@@ -1,11 +1,7 @@
-// src/pages/Dashboard/DashboardLayout.jsx - FIXED
+// src/pages/Dashboard/DashboardLayout.jsx - CLEAN VERSION
 import React, { useState, useEffect } from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext"; 
-// Add this import
-import ReportCardDashboard from "./ReportCardDashboard";
-
-// Add this route in your navigation/routing system2
 
 // Layout Components
 import TopBar from "./layout/TopBar";
@@ -36,11 +32,6 @@ export default function DashboardLayout() {
         navigate("/login");
     };
 
-    // ✅ FIXED: Only show role dashboard when on base dashboard path
-    const shouldShowRoleDashboard = location.pathname === "/dashboard" || 
-                                   location.pathname === "/dashboard/" ||
-                                   /\/dashboard\/(admin|principal|vp-admin|vp-academic|senior-master|exam-officer|form-master|teacher)$/.test(location.pathname);
-
     if (!user) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -66,7 +57,6 @@ export default function DashboardLayout() {
 
             {/* === Main Content Area === */}
             <main className="flex-1 p-4">
-                {/* ✅ FIXED: Only show Outlet, remove renderDashboard() */}
                 <Outlet />
             </main>
 

@@ -1,12 +1,13 @@
+// src/pages/Dashboard/roles/rolePermissions.js
 export const rolePermissions = {
-  "Admin": ["Exam Bank", "E-Library", "User Management"],
-  "Principal": ["Exam Bank", "E-Library"],
-  "Form Master": ["Exam Bank", "Class Lists"],
-  "Subject Teacher": ["Exam Bank"],
-  "Senior Master": ["Exam Bank", "E-Library"],
-  "Exam Officer": ["Exam Bank"],
-  "VP Admin": ["E-Library"],
-  "VP Academic": ["Exam Bank", "E-Library"],
+  "Admin": ["Exam Bank", "E-Library", "User Management", "System Settings"],
+  "Principal": ["Exam Bank", "Report Cards", "Bulk Reports", "E-Library", "Top Students"],
+  "Form Master": ["Exam Bank", "Class Lists", "Bulk Reports", "E-Library"],
+  "Subject Teacher": ["Exam Bank", "E-Library"],
+  "Senior Master": ["Exam Bank", "Bulk Reports", "E-Library"],
+  "Exam Officer": ["Exam Bank", "Report Cards", "Bulk Reports", "E-Library"],
+  "VP Admin": ["Exam Bank", "E-Library"],
+  "VP Academic": ["Exam Bank", "Bulk Reports", "E-Library"],
 };
 
 export const canEditScores = (role, userSubjects, targetSubject) => {
@@ -14,20 +15,11 @@ export const canEditScores = (role, userSubjects, targetSubject) => {
   if (role === "Subject Teacher" && userSubjects?.includes(targetSubject)) return true;
   return false;
 };
-// Add "Report Cards" to Principal and Exam Officer permissions
-const rolePermissions = {
-  "Principal": ["Exam Bank", "Report Cards", "E-Library", /* ... other permissions */],
-  "Exam Officer": ["Exam Bank", "Report Cards", "E-Library", /* ... other permissions */],
-  // Other roles should NOT have "Report Cards"
+
+export const canAccessBulkReports = (role) => {
+  return ["Principal", "Exam Officer", "Form Master", "Senior Master", "VP Academic"].includes(role);
 };
-// Add "E-Library" to all roles that should have access
-const rolePermissions = {
-  "Admin": ["Exam Bank", "E-Library", "User Management", /* ... */],
-  "Principal": ["Exam Bank", "Report Cards", "E-Library", /* ... */],
-  "Exam Officer": ["Exam Bank", "Report Cards", "E-Library", /* ... */],
-  "Subject Teacher": ["Exam Bank", "E-Library", /* ... */],
-  "Form Master": ["Exam Bank", "E-Library", /* ... */],
-  "VP Academic": ["Exam Bank", "E-Library", /* ... */],
-  "VP Admin": ["Exam Bank", "E-Library", /* ... */],
-  "Senior Master": ["Exam Bank", "E-Library", /* ... */],
+
+export const canAccessSingleReports = (role) => {
+  return ["Principal", "Exam Officer"].includes(role);
 };

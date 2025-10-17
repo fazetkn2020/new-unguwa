@@ -1,7 +1,8 @@
-// src/App.jsx - UPDATED WITH EXAM CONTEXT
+// src/App.jsx - FIXED SYNTAX
 import { Routes, Route, useLocation } from "react-router-dom"; 
 import { AuthProvider } from "./context/AuthContext";
-import { ExamProvider } from "./context/ExamContext"; // ADD THIS IMPORT
+import { ExamProvider } from "./context/ExamContext";
+import { BulkPrintProvider } from "./context/BulkPrintContext";
 import Navbar from "./components/Navbar";
 
 // Public Pages
@@ -20,6 +21,8 @@ import DashboardLayout from "./pages/Dashboard/DashboardLayout";
 import ExamBank from "./pages/Dashboard/ExamBank"; 
 import ScoreCenter from "./pages/Dashboard/ScoreCenter"; 
 import ProfileCard from "./pages/Dashboard/ProfileCard";
+import ReportCardDashboard from "./pages/Dashboard/ReportCardDashboard";
+import BulkReportCenter from "./pages/Dashboard/BulkReportCenter";
 
 // Role-Specific Dashboard Imports
 import PrincipalDashboard from "./pages/Dashboard/roles/PrincipalDashboard";
@@ -31,7 +34,6 @@ import FormMasterDashboard from "./pages/Dashboard/roles/FormMasterDashboard";
 import SubjectTeacherDashboard from "./pages/Dashboard/roles/SubjectTeacherDashboard";
 import AdminDashboard from "./pages/Dashboard/roles/AdminDashboard";
 
-// ✅ FIXED: Import from correct file
 import { initializeClassData } from "./data/classes";
 
 // Initialize admin user on app start
@@ -57,7 +59,7 @@ const initializeAdmin = () => {
   }
 };
 
-// ✅ FIXED: Initialize both systems
+// Initialize both systems
 initializeAdmin();
 initializeClassData();
 
@@ -67,40 +69,44 @@ export default function App() {
 
   return (
     <AuthProvider>
-      {/* WRAP WITH EXAM PROVIDER */}
       <ExamProvider>
-        {!isDashboard && <Navbar />}
+        <BulkPrintProvider>
+          {!isDashboard && <Navbar />}
 
-        <Routes>
-          {/* ===================== Dashboard Routes ===================== */}
-          <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route path="principal" element={<PrincipalDashboard />} />
-            <Route path="vp-admin" element={<VPAdminDashboard />} />
-            <Route path="vp-academic" element={<VPAcademicDashboard />} />
-            <Route path="senior-master" element={<SeniorMasterDashboard />} />
-            <Route path="exam-officer" element={<ExamOfficerDashboard />} />
-            <Route path="form-master" element={<FormMasterDashboard />} />
-            <Route path="teacher" element={<SubjectTeacherDashboard />} />
-            <Route path="admin" element={<AdminDashboard />} />
+          <Routes>
+            {/* ===================== Dashboard Routes ===================== */}
+            <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route path="principal" element={<PrincipalDashboard />} />
+              <Route path="vp-admin" element={<VPAdminDashboard />} />
+              <Route path="vp-academic" element={<VPAcademicDashboard />} />
+              <Route path="senior-master" element={<SeniorMasterDashboard />} />
+              <Route path="exam-officer" element={<ExamOfficerDashboard />} />
+              <Route path="form-master" element={<FormMasterDashboard />} />
+              <Route path="teacher" element={<SubjectTeacherDashboard />} />
+              <Route path="admin" element={<AdminDashboard />} />
 
-            {/* Shared/Utility Pages */}
-            <Route path="profile" element={<ProfileCard />} />
-            {/* REMOVED: <Route path="elibrary" element={<ELibraryDashboard />} /> */}
-            <Route path="exambank" element={<ExamBank />} /> 
-            <Route path="score-center" element={<ScoreCenter />} /> 
-          </Route>
+              {/* Shared/Utility Pages */}
+              <Route path="profile" element={<ProfileCard />} />
+              <Route path="exambank" element={<ExamBank />} /> 
+              <Route path="score-center" element={<ScoreCenter />} />
+              
+              {/* Report Card Routes */}
+              <Route path="exam-officer/report-cards" element={<ReportCardDashboard />} />
+              <Route path="bulk-reports" element={<BulkReportCenter />} />
+            </Route>
 
-          {/* ===================== Public Routes ===================== */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/about-school" element={<AboutSchool />} />
-          <Route path="/duty-roster" element={<DutyRoster />} />
-          <Route path="/timetable" element={<Timetable />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/elibrary" element={<ELibrary />} />
-          <Route path="/top-students" element={<TopStudents />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-        </Routes>
+            {/* ===================== Public Routes ===================== */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/about-school" element={<AboutSchool />} />
+            <Route path="/duty-roster" element={<DutyRoster />} />
+            <Route path="/timetable" element={<Timetable />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/elibrary" element={<ELibrary />} />
+            <Route path="/top-students" element={<TopStudents />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+          </Routes>
+        </BulkPrintProvider>
       </ExamProvider>
     </AuthProvider>
   );
