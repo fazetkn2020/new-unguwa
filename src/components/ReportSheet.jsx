@@ -1,6 +1,5 @@
 // src/components/ReportSheet.jsx
 import React, { useRef } from "react";
-import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { schoolConfig } from "../data/schoolConfig";
 import { getStudentPosition } from "../utils/positionCalculator";
@@ -69,44 +68,54 @@ const ReportSheet = ({
   };
 
   const handleSavePDF = async () => {
-    const element = reportRef.current;
-    const canvas = await html2canvas(element, { scale: 2 });
-    const data = canvas.toDataURL("image/png");
-
-    const pdf = new jsPDF("p", "mm", "a4");
-    const imgProps = pdf.getImageProperties(data);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-    pdf.addImage(data, "PNG", 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`${student.fullName}_report.pdf`);
+    try {
+      const element = reportRef.current;
+      
+      const canvas = await html2canvas(element, { 
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      const link = document.createElement('a');
+      link.download = `${student.fullName}_report.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+      
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      alert('Failed to generate PDF. Please use the Print button instead.');
+    }
   };
 
   return (
     <div className="flex flex-col items-center">
-      {/* 🔹 Top Buttons (only two: Print + Save) */}
       <div className="flex gap-3 mb-4 print:hidden">
         <button
           onClick={handlePrint}
-          className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700"
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm"
         >
-          Print Report Card
+          Print Report
         </button>
-
         <button
           onClick={handleSavePDF}
-          className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
         >
-          Save as PDF
+          Save as Image
         </button>
       </div>
 
-      {/* Report Sheet */}
       <div
         ref={reportRef}
-        className="bg-white border border-gray-400 shadow-lg mx-auto max-w-4xl p-4 print:shadow-none print:border print:p-2"
+        className="bg-white border border-gray-400 shadow-lg mx-auto w-full max-w-3xl p-4 print:shadow-none print:border print:p-2 report-sheet-container"
+        style={{ 
+          width: '210mm',
+          minHeight: '297mm',
+          pageBreakInside: 'avoid'
+        }}
       >
-        {/* Header */}
-        <div className="text-center border-b-4 border-gray-600 pb-2 mb-2">
+        <div className="text-center border-b-2 border-gray-600 pb-2 mb-3">
           <h1 className="text-xl font-bold uppercase">{schoolConfig.name}</h1>
           <p className="text-sm">{schoolConfig.zone}</p>
           <p className="italic text-gray-600 text-xs">{schoolConfig.motto}</p>
@@ -115,8 +124,7 @@ const ReportSheet = ({
           </h2>
         </div>
 
-        {/* Student Info */}
-        <div className="grid grid-cols-2 text-sm mb-2">
+        <div className="grid grid-cols-2 text-sm mb-3">
           <p><strong>Name:</strong> {student.fullName}</p>
           <p><strong>Class:</strong> {currentClass}</p>
           <p>
@@ -128,11 +136,10 @@ const ReportSheet = ({
           <p><strong>Average:</strong> {average}%</p>
         </div>
 
-        {/* Subjects Table */}
-        <table className="w-full text-xs border border-gray-400 mb-3">
+        <table className="w-full text-sm border border-gray-400 mb-3">
           <thead className="bg-gray-100">
-            <tr className="border border-gray-400 text-[11px]">
-              <th className="border p-1">Subject</th>
+            <tr>
+              <th className="border p-1 text-left">Subject</th>
               <th className="border p-1">CA (40)</th>
               <th className="border p-1">Exam (60)</th>
               <th className="border p-1">Total (100)</th>
@@ -142,29 +149,22 @@ const ReportSheet = ({
           </thead>
           <tbody>
             {subjectResults.map((r, idx) => (
-              <tr key={idx} className="text-center">
-                <td className="border p-1 text-left">{r.subject}</td>
-                <td className="border p-1">{r.ca}</td>
-                <td className="border p-1">{r.exam}</td>
-                <td className="border p-1 font-semibold">{r.total}</td>
-                <td className="border p-1">{r.grade}</td>
-                <td className="border p-1">{r.remark}</td>
+              <tr key={idx}>
+                <td className="border p-1">{r.subject}</td>
+                <td className="border p-1 text-center">{r.ca}</td>
+                <td className="border p-1 text-center">{r.exam}</td>
+                <td className="border p-1 text-center font-semibold">{r.total}</td>
+                <td className="border p-1 text-center">{r.grade}</td>
+                <td className="border p-1 text-center">{r.remark}</td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        {/* Comments */}
         <div className="mt-3 text-sm">
-          <p className="mb-2">
-            <strong>Form Master’s Comment:</strong> ____________________________________________
-          </p>
-          <p className="mb-1">
-            <strong>Principal’s Comment:</strong> ______________________________________________
-          </p>
-          <p className="text-xs mt-2">
-            <strong>Principal’s Signature:</strong> ______________________
-          </p>
+          <p className="mb-2"><strong>Form Master's Comment:</strong> ___________________</p>
+          <p className="mb-2"><strong>Principal's Comment:</strong> ___________________</p>
+          <p><strong>Principal's Signature:</strong> ___________________</p>
         </div>
       </div>
     </div>
