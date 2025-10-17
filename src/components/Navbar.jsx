@@ -42,5 +42,9 @@ const Navbar = () => {
     </nav>
   );
 };
+// Add E-Library link to navigation
+<Link to="/dashboard/elibrary" className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100">
+  📚 E-Library
+</Link>
 
 export default Navbar;

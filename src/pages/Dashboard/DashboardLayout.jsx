@@ -2,6 +2,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext"; 
+// Add this import
+import ReportCardDashboard from "./ReportCardDashboard";
+
+// Add this route in your navigation/routing system2
 
 // Layout Components
 import TopBar from "./layout/TopBar";

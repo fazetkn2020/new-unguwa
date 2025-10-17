@@ -33,7 +33,7 @@ export default function SeniorMasterDashboard() {
       totalStudents,
       totalTeachers: teachers.length,
       totalClasses: Object.keys(classLists).length,
-      pendingDuties: 0 // Can be calculated from duty roster later
+      pendingDuties: 0
     });
   };
 
@@ -72,26 +72,26 @@ export default function SeniorMasterDashboard() {
         </div>
       </div>
 
-      {/* Main Actions - Big Buttons */}
+      {/* Main Actions - Big Buttons - FIXED ROUTES */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold mb-4 text-gray-800">Management Actions</h2>
         <div className="space-y-4">
-          {/* Duty Roster - Create/Edit */}
+          {/* Duty Roster - Fixed to public route */}
           <Link 
-            to="/dashboard/duty-roster"
+            to="/duty-roster"
             className="block bg-white border-2 border-green-500 p-4 rounded-lg text-xl font-semibold text-gray-800 hover:bg-green-50 text-center"
           >
             🕐 DUTY ROSTER MANAGEMENT
           </Link>
-          
-          {/* Timetable - Create/Edit */}
+
+          {/* Timetable - Fixed to public route */}
           <Link 
-            to="/dashboard/timetable"
+            to="/timetable"
             className="block bg-white border-2 border-blue-500 p-4 rounded-lg text-xl font-semibold text-gray-800 hover:bg-blue-50 text-center"
           >
             📅 SCHOOL TIMETABLE
           </Link>
-          
+
           {/* Exam Bank - View Only */}
           <Link 
             to="/dashboard/exambank"
@@ -99,20 +99,20 @@ export default function SeniorMasterDashboard() {
           >
             📊 EXAM BANK (VIEW ONLY)
           </Link>
-          
+
           {/* Students List - View Only */}
           <button className="block w-full bg-white border-2 border-gray-400 p-4 rounded-lg text-xl font-semibold text-gray-800 hover:bg-gray-50 text-center">
             👨‍🎓 STUDENTS LIST (VIEW)
           </button>
-          
+
           {/* Teachers List - View Only */}
           <button className="block w-full bg-white border-2 border-gray-400 p-4 rounded-lg text-xl font-semibold text-gray-800 hover:bg-gray-50 text-center">
             👨‍🏫 TEACHERS LIST (VIEW)
           </button>
-          
-          {/* E-Library - Add/Remove PDFs */}
+
+          {/* E-Library - Fixed to public route */}
           <Link 
-            to="/dashboard/elibrary"
+            to="/elibrary"
             className="block bg-white border-2 border-purple-500 p-4 rounded-lg text-xl font-semibold text-gray-800 hover:bg-purple-50 text-center"
           >
             📚 E-LIBRARY (MANAGE PDFs)

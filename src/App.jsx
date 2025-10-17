@@ -19,7 +19,6 @@ import Register from "./pages/Register";
 import DashboardLayout from "./pages/Dashboard/DashboardLayout";
 import ExamBank from "./pages/Dashboard/ExamBank"; 
 import ScoreCenter from "./pages/Dashboard/ScoreCenter"; 
-import ELibraryDashboard from "./pages/Dashboard/ELibraryDashboard";
 import ProfileCard from "./pages/Dashboard/ProfileCard";
 
 // Role-Specific Dashboard Imports
@@ -39,7 +38,7 @@ import { initializeClassData } from "./data/classes";
 const initializeAdmin = () => {
   const users = JSON.parse(localStorage.getItem("users")) || [];
   const adminExists = users.some(user => user.role === "admin");
-  
+
   if (!adminExists) {
     const adminUser = {
       id: "admin-001",
@@ -51,7 +50,7 @@ const initializeAdmin = () => {
       createdAt: new Date().toISOString(),
       status: "active"
     };
-    
+
     users.push(adminUser);
     localStorage.setItem("users", JSON.stringify(users));
     console.log("Default admin user created: admin@school.edu / admin123");
@@ -83,10 +82,10 @@ export default function App() {
             <Route path="form-master" element={<FormMasterDashboard />} />
             <Route path="teacher" element={<SubjectTeacherDashboard />} />
             <Route path="admin" element={<AdminDashboard />} />
-            
+
             {/* Shared/Utility Pages */}
             <Route path="profile" element={<ProfileCard />} />
-            <Route path="elibrary" element={<ELibraryDashboard />} />
+            {/* REMOVED: <Route path="elibrary" element={<ELibraryDashboard />} /> */}
             <Route path="exambank" element={<ExamBank />} /> 
             <Route path="score-center" element={<ScoreCenter />} /> 
           </Route>
