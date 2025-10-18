@@ -3,7 +3,7 @@ import { useAuth } from "../../../context/AuthContext";
 import UserManagementPanel from "./UserManagementPanel";
 import RoleManagementPanel from "./RoleManagementPanel";
 import SystemSettings from "./SystemSettings";
-import TeacherAssignmentPanel from "./TeacherAssignmentPanel"; // New component
+import TeacherAssignmentPanel from "./TeacherAssignmentPanel";
 
 export default function AdminDashboard() {
   const { user, isAdmin } = useAuth();
@@ -21,9 +21,9 @@ export default function AdminDashboard() {
 
   if (!isAdmin) {
     return (
-      <div className="p-6 text-center">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          <h2 className="text-xl font-bold">Access Denied</h2>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-slate-900 to-blue-950 p-6">
+        <div className="bg-red-900/30 border border-red-500/40 text-red-300 px-6 py-4 rounded-xl shadow-lg backdrop-blur-md">
+          <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
           <p>Administrator privileges required to access this page.</p>
         </div>
       </div>
@@ -31,33 +31,48 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
-        <p className="text-gray-600">Manage users, roles, assignments, and system settings</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-blue-950 p-8 text-gray-100">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-800 via-indigo-800 to-cyan-700 rounded-2xl p-8 mb-10 shadow-2xl border border-blue-500/40">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold tracking-wide text-white mb-2">
+              Admin Control Center
+            </h1>
+            <p className="text-slate-200 text-base">
+              Manage users, roles, assignments, and system settings with full control.
+            </p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg text-slate-100 text-sm border border-slate-500/30">
+            👋 Welcome, <span className="font-semibold text-cyan-300">{user?.name}</span>
+          </div>
+        </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8">
-          {["users", "assignments", "roles", "settings"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm capitalize ${
-                activeTab === tab
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              {tab === "assignments" ? "📚 Teacher Assignments" : tab}
-            </button>
-          ))}
-        </nav>
+      <div className="flex flex-wrap items-center gap-4 mb-8 border-b border-slate-700/50 pb-3">
+        {[
+          { key: "users", label: "👥 User Management" },
+          { key: "assignments", label: "📚 Teacher Assignments" },
+          { key: "roles", label: "🧩 Role Management" },
+          { key: "settings", label: "⚙️ System Settings" },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-300 ${
+              activeTab === tab.key
+                ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg border border-blue-400/50"
+                : "text-slate-300 hover:text-white hover:bg-slate-800/60 border border-transparent"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {/* Tab Content */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      {/* Main Content Container */}
+      <div className="bg-slate-900/60 rounded-2xl border border-slate-700/40 shadow-xl p-6 backdrop-blur-md transition-all duration-300">
         {activeTab === "users" && (
           <UserManagementPanel users={users} onUsersUpdate={loadUsers} />
         )}

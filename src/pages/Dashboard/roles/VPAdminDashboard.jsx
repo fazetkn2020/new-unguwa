@@ -8,7 +8,7 @@ export default function VPAdminDashboard() {
     totalUsers: 0,
     activeClasses: 0,
     systemAdmins: 0,
-    formMasters: 0
+    formMasters: 0,
   });
 
   useEffect(() => {
@@ -16,92 +16,105 @@ export default function VPAdminDashboard() {
   }, []);
 
   const loadDashboardData = () => {
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
-    
-    const admins = users.filter(u => u.role === 'Admin');
-    const formMasters = users.filter(u => u.role === 'Form Master');
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+    const classLists = JSON.parse(localStorage.getItem("classLists")) || {};
+
+    const admins = users.filter((u) => u.role === "Admin");
+    const formMasters = users.filter((u) => u.role === "Form Master");
 
     setStats({
       totalUsers: users.length,
       activeClasses: Object.keys(classLists).length,
       systemAdmins: admins.length,
-      formMasters: formMasters.length
+      formMasters: formMasters.length,
     });
   };
 
   if (!user) {
-    return <div className="p-4 text-large">Loading...</div>;
+    return <div className="p-4 text-lg">Loading...</div>;
   }
 
   return (
-    <div className="p-4 bg-white min-h-screen">
-      {/* Header - Large and Clear */}
-      <div className="bg-orange-600 text-white p-6 mb-6 rounded-lg">
-        <h1 className="text-3xl font-bold mb-2">VP ADMIN DASHBOARD</h1>
-        <p className="text-xl">Welcome, {user.name}</p>
+    <div className="p-4 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 min-h-screen text-gray-100">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white p-6 mb-8 rounded-xl shadow-lg">
+        <h1 className="text-3xl font-bold mb-2 tracking-wide">
+          VP ADMIN DASHBOARD
+        </h1>
+        <p className="text-xl font-medium text-yellow-300">
+          Welcome, {user.name}
+        </p>
       </div>
 
-      {/* Quick Stats - Admin Focus */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">System Overview</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-orange-100 border-2 border-orange-400 p-4 rounded-lg text-center">
-            <div className="text-3xl font-bold text-orange-800">{stats.totalUsers}</div>
-            <div className="text-lg text-orange-700">System Users</div>
+      {/* Stats Section */}
+      <div className="mb-10">
+        <h2 className="text-2xl font-bold mb-4 text-yellow-300">
+          System Overview
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-blue-800/40 border border-blue-500 p-4 rounded-lg text-center shadow hover:bg-blue-700/40 transition">
+            <div className="text-3xl font-bold text-yellow-300">
+              {stats.totalUsers}
+            </div>
+            <div className="text-lg text-gray-200">System Users</div>
           </div>
-          <div className="bg-green-100 border-2 border-green-400 p-4 rounded-lg text-center">
-            <div className="text-3xl font-bold text-green-800">{stats.activeClasses}</div>
-            <div className="text-lg text-green-700">Active Classes</div>
+          <div className="bg-emerald-800/40 border border-emerald-500 p-4 rounded-lg text-center shadow hover:bg-emerald-700/40 transition">
+            <div className="text-3xl font-bold text-yellow-300">
+              {stats.activeClasses}
+            </div>
+            <div className="text-lg text-gray-200">Active Classes</div>
           </div>
-          <div className="bg-red-100 border-2 border-red-400 p-4 rounded-lg text-center">
-            <div className="text-3xl font-bold text-red-800">{stats.systemAdmins}</div>
-            <div className="text-lg text-red-700">Admin Users</div>
+          <div className="bg-rose-800/40 border border-rose-500 p-4 rounded-lg text-center shadow hover:bg-rose-700/40 transition">
+            <div className="text-3xl font-bold text-yellow-300">
+              {stats.systemAdmins}
+            </div>
+            <div className="text-lg text-gray-200">Admin Users</div>
           </div>
-          <div className="bg-blue-100 border-2 border-blue-400 p-4 rounded-lg text-center">
-            <div className="text-3xl font-bold text-blue-800">{stats.formMasters}</div>
-            <div className="text-lg text-blue-700">Form Masters</div>
+          <div className="bg-indigo-800/40 border border-indigo-500 p-4 rounded-lg text-center shadow hover:bg-indigo-700/40 transition">
+            <div className="text-3xl font-bold text-yellow-300">
+              {stats.formMasters}
+            </div>
+            <div className="text-lg text-gray-200">Form Masters</div>
           </div>
         </div>
       </div>
 
-      {/* Admin Actions - View Only */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">Administrative Oversight</h2>
+      {/* Oversight Actions */}
+      <div className="mb-10">
+        <h2 className="text-2xl font-bold mb-4 text-yellow-300">
+          Administrative Oversight
+        </h2>
         <div className="space-y-4">
-          <button className="block w-full bg-white border-2 border-gray-400 p-4 rounded-lg text-xl font-semibold text-gray-800 hover:bg-gray-50 text-center">
-            👥 USER MANAGEMENT OVERVIEW
-          </button>
-          
-          <button className="block w-full bg-white border-2 border-gray-400 p-4 rounded-lg text-xl font-semibold text-gray-800 hover:bg-gray-50 text-center">
-            🏫 CLASS STRUCTURE OVERVIEW
-          </button>
-          
-          <button className="block w-full bg-white border-2 border-gray-400 p-4 rounded-lg text-xl font-semibold text-gray-800 hover:bg-gray-50 text-center">
-            📊 SYSTEM USAGE STATISTICS
-          </button>
-          
-          <button className="block w-full bg-white border-2 border-gray-400 p-4 rounded-lg text-xl font-semibold text-gray-800 hover:bg-gray-50 text-center">
-            👨‍🏫 STAFF ROLE ASSIGNMENTS
-          </button>
-          
-          <Link 
+          {[
+            "👥 USER MANAGEMENT OVERVIEW",
+            "🏫 CLASS STRUCTURE OVERVIEW",
+            "📊 SYSTEM USAGE STATISTICS",
+            "👨‍🏫 STAFF ROLE ASSIGNMENTS",
+            "📋 SYSTEM REPORTS",
+          ].map((title, i) => (
+            <button
+              key={i}
+              className="block w-full bg-blue-800/40 border border-blue-600 p-4 rounded-lg text-lg font-semibold text-gray-100 hover:bg-blue-700/40 transition shadow"
+            >
+              {title}
+            </button>
+          ))}
+
+          <Link
             to="/dashboard/exambank"
-            className="block bg-white border-2 border-orange-500 p-4 rounded-lg text-xl font-semibold text-gray-800 hover:bg-orange-50 text-center"
+            className="block bg-gradient-to-r from-yellow-400 to-yellow-500 text-slate-900 border border-yellow-300 p-4 rounded-lg text-lg font-semibold text-center hover:from-yellow-500 hover:to-yellow-400 transition shadow"
           >
             📈 ACADEMIC PROGRESS MONITORING
           </Link>
-          
-          <button className="block w-full bg-white border-2 border-gray-400 p-4 rounded-lg text-xl font-semibold text-gray-800 hover:bg-gray-50 text-center">
-            📋 SYSTEM REPORTS
-          </button>
         </div>
       </div>
 
-      {/* Quick Info Section */}
-      <div className="bg-orange-50 border-2 border-orange-400 p-4 rounded-lg">
-        <h3 className="text-xl font-bold text-orange-800 mb-2">VP Admin Responsibilities</h3>
-        <ul className="text-lg text-orange-700 space-y-1">
+      {/* Info Section */}
+      <div className="bg-blue-800/40 border border-blue-600 p-6 rounded-lg shadow-lg">
+        <h3 className="text-xl font-bold text-yellow-300 mb-3">
+          VP Admin Responsibilities
+        </h3>
+        <ul className="text-lg text-gray-200 space-y-2">
           <li>• Oversee system user management and roles</li>
           <li>• Monitor class structure and student enrollment</li>
           <li>• Track system usage and performance</li>
