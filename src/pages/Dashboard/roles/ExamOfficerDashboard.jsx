@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { Link } from "react-router-dom";
+import { ScoringQuickAccess, useTeachingAssignments } from "../../../components/scoring";
 
 export default function ExamOfficerDashboard() {
   const { user } = useAuth();
+  const teaching = useTeachingAssignments(user);
   const [stats, setStats] = useState({
     totalTeachers: 0,
     submissionsReceived: 0,
@@ -263,6 +265,20 @@ export default function ExamOfficerDashboard() {
           })}
         </div>
       </div>
+
+      {/* 🆕 TEACHING ASSIGNMENTS */}
+      {teaching.hasTeachingAssignments && (
+        <div className="mb-12">
+          <h2 className="text-xl font-semibold mb-6 tracking-tight flex items-center gap-2">
+            <div className="w-1 h-6 bg-teal-500 rounded animate-pulse"></div>
+            TEACHING ASSIGNMENTS
+          </h2>
+          <ScoringQuickAccess 
+            teaching={teaching}
+            onExpand={() => {/* Optional: could expand in-place */}}
+          />
+        </div>
+      )}
 
       {/* OPERATIONAL PROTOCOLS */}
       <div className="bg-slate-800/60 backdrop-blur-sm rounded-xl p-8 border border-slate-700 shadow-lg">
