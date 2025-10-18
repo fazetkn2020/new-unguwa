@@ -11,3 +11,106 @@
   display: inline-block;
   animation: marquee 15s linear infinite;
 }
+
+/* Mobile Optimization - Safe Global Styles */
+@media (max-width: 768px) {
+  /* Better touch targets */
+  button, 
+  [role="button"],
+  .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improve text readability */
+  body {
+    font-size: 16px; /* Prevents zoom on iOS */
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%; /* Prevent font scaling */
+  }
+  
+  /* Better table scrolling */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevent horizontal overflow */
+  .container, .dashboard-container {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  
+  /* Better form inputs */
+  input, select, textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+    min-height: 44px;
+  }
+  
+  /* Mobile-specific spacing */
+  .mobile-padding {
+    padding: 1rem !important;
+  }
+  
+  /* Force single column layouts on mobile */
+  .mobile-stack {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Responsive text utility classes */
+.text-responsive {
+  font-size: 0.875rem; /* sm */
+}
+@media (min-width: 640px) {
+  .text-responsive {
+    font-size: 1rem; /* base */
+  }
+}
+@media (min-width: 1024px) {
+  .text-responsive {
+    font-size: 1.125rem; /* lg */
+  }
+}
+
+/* Safe mobile padding utilities */
+.mobile-padding {
+  padding: 1rem;
+}
+@media (min-width: 640px) {
+  .mobile-padding {
+    padding: 1.5rem;
+  }
+}
+
+/* Touch-friendly */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile-first container */
+.mobile-container {
+  padding: 1rem;
+}
+@media (min-width: 640px) {
+  .mobile-container {
+    padding: 1.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .mobile-container {
+    padding: 2rem;
+  }
+}
+
+@media print {
+    @page { margin: 0; size: A4; }
+    body * { visibility: hidden; }
+    .report-sheet-container, .report-sheet-container * { visibility: visible; }
+    .report-sheet-container { position: absolute; left: 0; top: 0; width: 100% !important; }
+    .print\:hidden { display: none !important; }
+}

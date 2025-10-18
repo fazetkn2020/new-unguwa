@@ -23,6 +23,7 @@ import ScoreCenter from "./pages/Dashboard/ScoreCenter";
 import ProfileCard from "./pages/Dashboard/ProfileCard";
 import ReportCardDashboard from "./pages/Dashboard/ReportCardDashboard";
 import BulkReportCenter from "./pages/Dashboard/BulkReportCenter";
+import TeachingPortal from './pages/Dashboard/TeachingPortal';
 
 // Role-Specific Dashboard Imports
 import PrincipalDashboard from "./pages/Dashboard/roles/PrincipalDashboard";
@@ -73,6 +74,14 @@ export default function App() {
         <BulkPrintProvider>
           {!isDashboard && <Navbar />}
 
+          {/* Mobile/Desktop indicator - remove after testing */}
+          <div className="lg:hidden fixed top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs z-50">
+            📱 Mobile
+          </div>
+          <div className="hidden lg:block fixed top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded text-xs z-50">
+            🖥️ Desktop
+          </div>
+
           <Routes>
             {/* ===================== Public Routes ===================== */}
             <Route path="/" element={<LandingPage />} />
@@ -89,7 +98,8 @@ export default function App() {
             <Route path="/dashboard" element={<DashboardLayout />}>
               {/* Default dashboard route */}
               <Route index element={<PrincipalDashboard />} />
-              
+              <Route path="/dashboard/teaching-portal" element={<TeachingPortal />} />
+
               {/* Role-specific dashboards */}
               <Route path="principal" element={<PrincipalDashboard />} />
               <Route path="vp-admin" element={<VPAdminDashboard />} />

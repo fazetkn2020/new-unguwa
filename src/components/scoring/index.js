@@ -1,7 +1,4 @@
-export { default as ScoreEntryTable } from './ScoreEntryTable';
-export { default as SubjectSelector } from './SubjectSelector';
-export { default as ScoringStatistics } from './ScoringStatistics';
-export { default as RecentActivity } from './RecentActivity';
+// components/scoring/index.js
 // Export all scoring components
 export { default as RecentActivity } from './RecentActivity.jsx';
 export { default as ScoreEntryTable } from './ScoreEntryTable.jsx';

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { Link } from "react-router-dom";
+import { ScoringQuickAccess, useTeachingAssignments } from "../../../components/scoring";
 
 export default function VPAcademicDashboard() {
   const { user } = useAuth();
+  const teaching = useTeachingAssignments(user);
+  
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalTeachers: 0,
@@ -91,6 +94,16 @@ export default function VPAcademicDashboard() {
           </div>
         </div>
       </div>
+
+      {/* 🆕 TEACHING ASSIGNMENTS - Conditionally shown */}
+      {teaching.hasTeachingAssignments && (
+        <div className="mb-8">
+          <ScoringQuickAccess 
+            teaching={teaching}
+            onExpand={() => {/* Optional: could expand in-place */}}
+          />
+        </div>
+      )}
 
       {/* Quick Stats */}
       <section className="mb-10">

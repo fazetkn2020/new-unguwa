@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { Link } from "react-router-dom";
+import { ScoringQuickAccess, useTeachingAssignments } from "../../../components/scoring";
 
 /**
  * SeniorMasterDashboard
@@ -13,6 +14,7 @@ import { Link } from "react-router-dom";
  */
 export default function SeniorMasterDashboard() {
   const { user } = useAuth();
+  const teaching = useTeachingAssignments(user);
 
   // Main stats (keeps original fields)
   const [stats, setStats] = useState({
@@ -181,6 +183,16 @@ export default function SeniorMasterDashboard() {
         </div>
       </div>
 
+      {/* 🆕 TEACHING ASSIGNMENTS - Conditionally shown */}
+      {teaching.hasTeachingAssignments && (
+        <div className="mb-8">
+          <ScoringQuickAccess 
+            teaching={teaching}
+            onExpand={() => {/* Optional: could expand in-place */}}
+          />
+        </div>
+      )}
+
       {/* Institutional Metrics (collapsible) */}
       <div className="mb-6 bg-white rounded-xl shadow-md border border-slate-300 overflow-hidden">
         <button
@@ -271,7 +283,7 @@ export default function SeniorMasterDashboard() {
           aria-expanded={open.performance}
           aria-controls="performance-section"
         >
-          <span>🧾 Teachers’ Weekly Performance Summary</span>
+          <span>🧾 Teachers' Weekly Performance Summary</span>
           <span className="text-slate-600">{open.performance ? "▲" : "▼"}</span>
         </button>
 

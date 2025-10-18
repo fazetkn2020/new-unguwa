@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { useAuth } from "../../../context/AuthContext"; 
 import { useExam } from "../../../context/ExamContext";
 import { Link } from "react-router-dom";
+import { ScoringQuickAccess, useTeachingAssignments } from "../../../components/scoring";
 
 export default function FormMasterDashboard() {
   const { user } = useAuth(); 
+  const teaching = useTeachingAssignments(user);
   const [activeSection, setActiveSection] = useState(null);
 
   if (!user) {
@@ -40,6 +42,16 @@ export default function FormMasterDashboard() {
           </span>
         </div>
       </div>
+
+      {/* 🆕 TEACHING ASSIGNMENTS - Conditionally shown */}
+      {teaching.hasTeachingAssignments && (
+        <div className="mb-8">
+          <ScoringQuickAccess 
+            teaching={teaching}
+            onExpand={() => {/* Optional: could expand in-place */}}
+          />
+        </div>
+      )}
 
       {/* Action Cards */}
       <div className="space-y-4 max-w-4xl">

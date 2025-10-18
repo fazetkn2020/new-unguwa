@@ -2,9 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { Link } from "react-router-dom";
+import { ScoringQuickAccess, useTeachingAssignments } from "../../../components/scoring";
 
 export default function PrincipalDashboard() {
   const { user } = useAuth();
+  const teaching = useTeachingAssignments(user);
 
   const [stats, setStats] = useState({
     totalStudents: 0,
@@ -124,6 +126,16 @@ export default function PrincipalDashboard() {
         </div>
       </div>
 
+      {/* 🆕 TEACHING ASSIGNMENTS - Conditionally shown */}
+      {teaching.hasTeachingAssignments && (
+        <div className="mb-8">
+          <ScoringQuickAccess 
+            teaching={teaching}
+            onExpand={() => {/* Optional: could expand in-place */}}
+          />
+        </div>
+      )}
+
       {/* Institution Overview */}
       <div className="mb-8 bg-white rounded-xl shadow-md border border-slate-300 overflow-hidden">
         <button
@@ -193,7 +205,7 @@ export default function PrincipalDashboard() {
           onClick={() => toggleSection("performance")}
           className="w-full flex justify-between items-center px-6 py-4 bg-slate-200 hover:bg-slate-300 text-lg font-semibold"
         >
-          <span>🧾 Teachers’ Weekly Performance</span>
+          <span>🧾 Teachers' Weekly Performance</span>
           <span>{openSections.performance ? "▲" : "▼"}</span>
         </button>
         {openSections.performance && (
