@@ -11,7 +11,37 @@
   display: inline-block;
   animation: marquee 15s linear infinite;
 }
+/* Fix for admin panel contrast issues */
+.admin-panel * {
+  color: inherit !important;
+}
 
+.admin-panel input,
+.admin-panel select,
+.admin-panel textarea {
+  background-color: #1e293b !important; /* slate-800 */
+  border-color: #475569 !important; /* slate-600 */
+  color: #f1f5f9 !important; /* slate-100 */
+}
+
+.admin-panel input::placeholder {
+  color: #94a3b8 !important; /* slate-400 */
+}
+
+/* Ensure tables are readable */
+.admin-panel table {
+  color: #f1f5f9 !important;
+}
+
+.admin-panel table th {
+  background-color: #334155 !important; /* slate-700 */
+  color: #e2e8f0 !important; /* slate-200 */
+}
+
+.admin-panel table td {
+  background-color: #1e293b !important; /* slate-800 */
+  color: #f1f5f9 !important; /* slate-100 */
+}
 /* Mobile Optimization - Safe Global Styles */
 @media (max-width: 768px) {
   /* Better touch targets */
