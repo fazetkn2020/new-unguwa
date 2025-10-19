@@ -1,5 +1,6 @@
 import { createContext, useState, useContext, useEffect } from "react";
-import { subjects } from "../data/subjects";
+// Assuming 'subjects' structure is correct: { 'SS1': ['Mathematics', 'English', ...], ... }
+import { subjects } from "../data/subjects"; 
 
 const ExamContext = createContext();
 
@@ -17,56 +18,63 @@ export const ExamProvider = ({ children }) => {
     localStorage.setItem("examData", JSON.stringify(examData));
   }, [examData]);
 
-  // Initialize score slots for a new student
-  const initializeStudentScores = (studentId, classLevel, studentName) => {
+  const calculateTotal = (ca, exam) => {
+    // Ensure both are treated as numbers, default to 0 if NaN
+    const numCa = parseInt(ca) || 0;
+    const numExam = parseInt(exam) || 0;
+    return Math.min(100, numCa + numExam);
+  };
+  
+  // NOTE: This function is primarily for initialization when loading class data, 
+  // but we'll make updateScore handle on-the-fly initialization too.
+  const initializeStudentScores = (studentId, classLevel) => {
     const classSubjects = subjects[classLevel] || [];
-    
-    setExamData(prev => {
-      const newScores = {};
-      
-      // Create empty score slots for each subject
-      classSubjects.forEach(subject => {
-        newScores[subject] = {
-          ca: '',
-          exam: '',
-          total: 0
-        };
-      });
 
-      return {
-        ...prev,
-        [studentId]: newScores
-      };
-    });
+    // This initialization seems mostly unused if scores are entered directly.
+    // We will rely on the logic in `updateScore` for on-demand initialization.
+    console.log(`Attempted to initialize scores for ${studentId} in ${classLevel}`);
+    
+    // You might want to remove this function if it's never explicitly called
+    // before scores are entered, or make sure your ScoreEntryTable calls it.
   };
 
   const updateScore = (studentId, subject, field, value) => {
-    setExamData(prev => ({
-      ...prev,
-      [studentId]: {
-        ...prev[studentId],
-        [subject]: {
-          ...prev[studentId]?.[subject],
-          [field]: Math.min(100, Math.max(0, parseInt(value) || 0)),
-          total: field === 'ca' || field === 'exam' 
-            ? calculateTotal(
-                field === 'ca' ? (parseInt(value) || 0) : (prev[studentId]?.[subject]?.ca || 0),
-                field === 'exam' ? (parseInt(value) || 0) : (prev[studentId]?.[subject]?.exam || 0)
-              )
-            : prev[studentId]?.[subject]?.total
-        }
-      }
-    }));
-  };
+    // 1. Sanitize the input value
+    const numValue = Math.min(100, Math.max(0, parseInt(value) || 0));
 
-  const calculateTotal = (ca, exam) => {
-    return Math.min(100, ca + exam);
+    setExamData(prev => {
+      // 2. Safely get existing student data or initialize an empty object
+      const studentScores = prev[studentId] || {};
+      
+      // 3. Safely get existing subject data or initialize an empty object
+      const subjectScores = studentScores[subject] || { ca: '', exam: '', total: 0 };
+      
+      // 4. Determine the new CA and Exam values
+      const newCa = field === 'ca' ? numValue : (subjectScores.ca || 0);
+      const newExam = field === 'exam' ? numValue : (subjectScores.exam || 0);
+      
+      // 5. Calculate the new total
+      const newTotal = calculateTotal(newCa, newExam);
+
+      return {
+        ...prev,
+        [studentId]: {
+          ...studentScores,
+          [subject]: {
+            ca: newCa,
+            exam: newExam,
+            total: newTotal
+          }
+        }
+      };
+    });
   };
 
   const canUserEditSubject = (user, subject) => {
     if (!user) return false;
     if (user.role === "Admin" || user.role === "Form Master") return true;
-    if (user.role === "Subject Teacher" && user.subjects?.includes(subject)) return true;
+    // Check if user.subjects is an array and includes the subject
+    if (user.role === "Subject Teacher" && Array.isArray(user.subjects) && user.subjects.includes(subject)) return true;
     return false;
   };
 

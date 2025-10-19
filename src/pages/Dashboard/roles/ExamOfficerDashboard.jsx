@@ -13,8 +13,8 @@ export default function ExamOfficerDashboard() {
     examsProcessed: 0,
   });
 
-  const [showMetrics, setShowMetrics] = useState(true);
-  const [showReports, setShowReports] = useState(true);
+  const [showMetrics, setShowMetrics] = useState(false);
+  const [showReports, setShowReports] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -25,7 +25,6 @@ export default function ExamOfficerDashboard() {
     const teachers = users.filter((u) => u.role === "Subject Teacher");
     const submissionsReceived = Math.floor(Math.random() * teachers.length);
     const pendingSubmissions = teachers.length - submissionsReceived;
-
     setStats({
       totalTeachers: teachers.length,
       submissionsReceived,
@@ -44,7 +43,6 @@ export default function ExamOfficerDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-6 text-slate-100">
-      {/* HEADER */}
       <div className="relative overflow-hidden bg-slate-800/70 backdrop-blur-sm rounded-2xl p-8 mb-8 border border-cyan-500/30 shadow-lg shadow-cyan-500/10">
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
@@ -70,7 +68,6 @@ export default function ExamOfficerDashboard() {
         <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-transparent via-cyan-500 to-transparent animate-pulse"></div>
       </div>
 
-      {/* SYSTEM METRICS */}
       <div className="mb-12">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold tracking-tight flex items-center gap-2">
@@ -121,7 +118,6 @@ export default function ExamOfficerDashboard() {
         </div>
       </div>
 
-      {/* CONTROL PANEL */}
       <div className="mb-12">
         <h2 className="text-xl font-semibold mb-6 tracking-tight flex items-center gap-2">
           <div className="w-1 h-6 bg-blue-500 rounded animate-pulse"></div>
@@ -129,33 +125,21 @@ export default function ExamOfficerDashboard() {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* INTERNAL EXAM + EXAM DATABASE */}
           {[
             { title: "INTERNAL EXAM SUBMISSIONS", description: "Access teacher test data streams", icon: "📋", color: "purple", type: "button" },
             { title: "EXAM DATABASE", description: "Query examination data repository", icon: "📊", color: "slate", type: "link", to: "/dashboard/exambank" },
           ].map((action) => {
             const base = `group relative bg-slate-800/60 backdrop-blur-sm rounded-lg p-6 border border-slate-700 hover:scale-[1.02] transition-all duration-300 flex flex-col h-full text-left`;
-            const glow = {
-              purple: "hover:border-purple-400/40",
-              slate: "hover:border-slate-400/40",
-            };
+            const glow = { purple: "hover:border-purple-400/40", slate: "hover:border-slate-400/40" };
             const content = (
               <>
                 <div className="flex items-start justify-between mb-4">
                   <span className="text-2xl">{action.icon}</span>
-                  <div
-                    className={`w-2 h-2 bg-${action.color}-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
-                  />
+                  <div className={`w-2 h-2 bg-${action.color}-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
                 </div>
-                <h3 className="text-sm font-semibold text-white mb-2 tracking-wider font-mono">
-                  {action.title}
-                </h3>
-                <p className="text-sm text-slate-400 leading-relaxed mt-auto">
-                  {action.description}
-                </p>
-                <div
-                  className={`absolute inset-0 rounded-lg bg-gradient-to-r from-${action.color}-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10`}
-                />
+                <h3 className="text-sm font-semibold text-white mb-2 tracking-wider font-mono">{action.title}</h3>
+                <p className="text-sm text-slate-400 leading-relaxed mt-auto">{action.description}</p>
+                <div className={`absolute inset-0 rounded-lg bg-gradient-to-r from-${action.color}-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10`} />
               </>
             );
             return action.type === "link" ? (
@@ -169,7 +153,6 @@ export default function ExamOfficerDashboard() {
             );
           })}
 
-          {/* REPORT GENERATOR (COLLAPSIBLE GROUP) */}
           <div className="col-span-full">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -194,27 +177,16 @@ export default function ExamOfficerDashboard() {
                 { title: "BULK REPORT PROCESSOR", description: "Batch compile class reports", icon: "🖨️", color: "cyan", type: "link", to: "/dashboard/bulk-reports" },
               ].map((action) => {
                 const base = `group relative bg-slate-800/60 backdrop-blur-sm rounded-lg p-6 border border-slate-700 hover:scale-[1.02] transition-all duration-300 flex flex-col h-full text-left`;
-                const glow = {
-                  emerald: "hover:border-emerald-400/40",
-                  cyan: "hover:border-cyan-400/40",
-                };
+                const glow = { emerald: "hover:border-emerald-400/40", cyan: "hover:border-cyan-400/40" };
                 const content = (
                   <>
                     <div className="flex items-start justify-between mb-4">
                       <span className="text-2xl">{action.icon}</span>
-                      <div
-                        className={`w-2 h-2 bg-${action.color}-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
-                      />
+                      <div className={`w-2 h-2 bg-${action.color}-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
                     </div>
-                    <h3 className="text-sm font-semibold text-white mb-2 tracking-wider font-mono">
-                      {action.title}
-                    </h3>
-                    <p className="text-sm text-slate-400 leading-relaxed mt-auto">
-                      {action.description}
-                    </p>
-                    <div
-                      className={`absolute inset-0 rounded-lg bg-gradient-to-r from-${action.color}-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10`}
-                    />
+                    <h3 className="text-sm font-semibold text-white mb-2 tracking-wider font-mono">{action.title}</h3>
+                    <p className="text-sm text-slate-400 leading-relaxed mt-auto">{action.description}</p>
+                    <div className={`absolute inset-0 rounded-lg bg-gradient-to-r from-${action.color}-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10`} />
                   </>
                 );
                 return (
@@ -226,35 +198,22 @@ export default function ExamOfficerDashboard() {
             </div>
           </div>
 
-          {/* OTHER ACTIONS */}
           {[
             { title: "INSTRUCTOR ACTIVITY MONITOR", description: "Monitor submission status feeds", icon: "👨‍🏫", color: "blue", type: "button" },
             { title: "PERFORMANCE ANALYTICS", description: "Analyze class/subject metrics", icon: "📈", color: "orange", type: "button" },
             { title: "EXTERNAL EXAM COORDINATION", description: "WAEC/NECO protocol handler", icon: "🎓", color: "rose", type: "button" },
           ].map((action) => {
             const base = `group relative bg-slate-800/60 backdrop-blur-sm rounded-lg p-6 border border-slate-700 hover:scale-[1.02] transition-all duration-300 flex flex-col h-full text-left`;
-            const glow = {
-              blue: "hover:border-blue-400/40",
-              orange: "hover:border-orange-400/40",
-              rose: "hover:border-rose-400/40",
-            };
+            const glow = { blue: "hover:border-blue-400/40", orange: "hover:border-orange-400/40", rose: "hover:border-rose-400/40" };
             const content = (
               <>
                 <div className="flex items-start justify-between mb-4">
                   <span className="text-2xl">{action.icon}</span>
-                  <div
-                    className={`w-2 h-2 bg-${action.color}-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
-                  />
+                  <div className={`w-2 h-2 bg-${action.color}-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
                 </div>
-                <h3 className="text-sm font-semibold text-white mb-2 tracking-wider font-mono">
-                  {action.title}
-                </h3>
-                <p className="text-sm text-slate-400 leading-relaxed mt-auto">
-                  {action.description}
-                </p>
-                <div
-                  className={`absolute inset-0 rounded-lg bg-gradient-to-r from-${action.color}-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10`}
-                />
+                <h3 className="text-sm font-semibold text-white mb-2 tracking-wider font-mono">{action.title}</h3>
+                <p className="text-sm text-slate-400 leading-relaxed mt-auto">{action.description}</p>
+                <div className={`absolute inset-0 rounded-lg bg-gradient-to-r from-${action.color}-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10`} />
               </>
             );
             return (
@@ -266,21 +225,16 @@ export default function ExamOfficerDashboard() {
         </div>
       </div>
 
-      {/* 🆕 TEACHING ASSIGNMENTS */}
       {teaching.hasTeachingAssignments && (
         <div className="mb-12">
           <h2 className="text-xl font-semibold mb-6 tracking-tight flex items-center gap-2">
             <div className="w-1 h-6 bg-teal-500 rounded animate-pulse"></div>
             TEACHING ASSIGNMENTS
           </h2>
-          <ScoringQuickAccess 
-            teaching={teaching}
-            onExpand={() => {/* Optional: could expand in-place */}}
-          />
+          <ScoringQuickAccess teaching={teaching} onExpand={() => {}} />
         </div>
       )}
 
-      {/* OPERATIONAL PROTOCOLS */}
       <div className="bg-slate-800/60 backdrop-blur-sm rounded-xl p-8 border border-slate-700 shadow-lg">
         <h3 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
           <div className="w-1 h-6 bg-green-500 rounded animate-pulse"></div>

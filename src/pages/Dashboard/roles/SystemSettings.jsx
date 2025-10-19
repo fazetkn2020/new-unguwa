@@ -1,9 +1,18 @@
-// src/pages/Dashboard/roles/SystemSettings.jsx - NEW FILE
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function SystemSettings() {
   const [allowedDomains, setAllowedDomains] = useState(["@school.edu", "@example.com"]);
   const [newDomain, setNewDomain] = useState("");
+  const [storageUsed, setStorageUsed] = useState("Calculating...");
+
+  useEffect(() => {
+    try {
+      const total = new Blob(Object.values(localStorage)).size / 1024;
+      setStorageUsed(`${total.toFixed(2)} KB`);
+    } catch {
+      setStorageUsed("N/A");
+    }
+  }, []);
 
   const addDomain = () => {
     if (newDomain && !allowedDomains.includes(newDomain)) {
@@ -13,44 +22,49 @@ export default function SystemSettings() {
   };
 
   const removeDomain = (domain) => {
-    setAllowedDomains(allowedDomains.filter(d => d !== domain));
+    setAllowedDomains(allowedDomains.filter((d) => d !== domain));
   };
 
   return (
-    <div className="p-6">
-      <h3 className="text-xl font-semibold mb-6">System Settings</h3>
-      
+    <div className="p-4 sm:p-6 bg-slate-900/50 rounded-2xl border border-slate-700/40 shadow-lg text-slate-100">
+      <h3 className="text-xl sm:text-2xl font-semibold mb-6 text-cyan-300 text-center sm:text-left">
+        ⚙️ System Settings
+      </h3>
+
       <div className="space-y-6">
-        {/* Email Domain Restrictions */}
-        <div className="border border-gray-200 rounded-lg p-4">
-          <h4 className="font-medium text-gray-800 mb-3">Allowed Email Domains</h4>
-          <p className="text-sm text-gray-600 mb-3">
-            Only emails from these domains can register on the platform
+        {/* Allowed Domains */}
+        <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 sm:p-6 shadow-inner">
+          <h4 className="font-semibold text-lg text-blue-300 mb-3">Allowed Email Domains</h4>
+          <p className="text-sm text-slate-400 mb-4">
+            Only emails from these domains can register on the platform.
           </p>
-          
-          <div className="flex gap-2 mb-3">
+
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <input
               type="text"
-              placeholder="Add domain (e.g., @school.edu)"
+              placeholder="Add domain (e.g. @school.edu)"
               value={newDomain}
               onChange={(e) => setNewDomain(e.target.value)}
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="flex-1 bg-slate-900 border border-slate-600 text-slate-100 rounded-lg px-3 py-2 focus:ring-2 focus:ring-cyan-500 outline-none"
             />
             <button
               onClick={addDomain}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+              className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-cyan-500 hover:to-blue-500 transition-all duration-200"
             >
-              Add
+              Add Domain
             </button>
           </div>
-          
-          <div className="space-y-2">
-            {allowedDomains.map(domain => (
-              <div key={domain} className="flex justify-between items-center bg-gray-50 px-3 py-2 rounded">
+
+          <div className="space-y-2 max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
+            {allowedDomains.map((domain) => (
+              <div
+                key={domain}
+                className="flex justify-between items-center bg-slate-900/70 border border-slate-700 px-3 py-2 rounded-lg text-sm sm:text-base"
+              >
                 <span>{domain}</span>
                 <button
                   onClick={() => removeDomain(domain)}
-                  className="text-red-600 hover:text-red-800"
+                  className="text-red-400 hover:text-red-600 transition"
                 >
                   Remove
                 </button>
@@ -59,17 +73,27 @@ export default function SystemSettings() {
           </div>
         </div>
 
-        {/* System Information */}
-        <div className="border border-gray-200 rounded-lg p-4">
-          <h4 className="font-medium text-gray-800 mb-3">System Information</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p><strong>Total Users:</strong> {JSON.parse(localStorage.getItem("users") || "[]").length}</p>
-              <p><strong>Version:</strong> 1.0.0</p>
+        {/* System Info */}
+        <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 sm:p-6 shadow-inner">
+          <h4 className="font-semibold text-lg text-blue-300 mb-4">System Information</h4>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-slate-200">
+            <div className="space-y-2">
+              <p>
+                <span className="text-slate-400">Total Users:</span>{" "}
+                {JSON.parse(localStorage.getItem("users") || "[]").length}
+              </p>
+              <p>
+                <span className="text-slate-400">Version:</span> 1.0.0
+              </p>
             </div>
-            <div>
-              <p><strong>Last Backup:</strong> Never</p>
-              <p><strong>Storage Used:</strong> Calculating...</p>
+            <div className="space-y-2">
+              <p>
+                <span className="text-slate-400">Last Backup:</span> Never
+              </p>
+              <p>
+                <span className="text-slate-400">Storage Used:</span> {storageUsed}
+              </p>
             </div>
           </div>
         </div>

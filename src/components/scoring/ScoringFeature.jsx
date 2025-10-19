@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useExam } from '../../context/ExamContext';
-import { useTeachingAssignments } from './useTeachingAssignments';
+import useTeachingAssignments from './useTeachingAssignments';
 import { ScoreEntryTable, ScoringStatistics, RecentActivity } from './index';
 
 const ScoringFeature = ({ user, context = "dashboard" }) => {
