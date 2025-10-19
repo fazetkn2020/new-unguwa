@@ -1,15 +1,36 @@
+// src/pages/Dashboard/roles/TeacherAssignmentPanel.jsx
 import React, { useState, useEffect } from "react";
 
-// Available subjects and classes
+/**
+ * Full-featured TeacherAssignmentPanel
+ * Props expected by your AdminDashboard:
+ *   - users: array of user objects (saved in localStorage as "users")
+ *   - onUsersUpdate: callback to refresh users in parent (e.g., loadUsers)
+ *
+ * This component preserves full logic (subjects, classes, form-master handling,
+ * custom class creation) while using a dark admin theme to match the dashboard.
+ */
+
+// All subjects (kept as your canonical list)
 const ALL_SUBJECTS = [
-  "Mathematics", "English", "Physics", "Chemistry", "Biology", 
-  "Economics", "Geography", "Government", "Civic Education",
-  "Islamic Studies", "Hausa", "Animal Husbandry"
+  "Mathematics",
+  "English",
+  "Physics",
+  "Chemistry",
+  "Biology",
+  "Economics",
+  "Geography",
+  "Government",
+  "Civic Education",
+  "Islamic Studies",
+  "Hausa",
+  "Animal Husbandry",
 ].sort();
 
+// Base classes to show plus any classes defined in localStorage.classLists
 const BASE_CLASSES = ["SS1", "SS2", "SS3", "JSS1", "JSS2", "JSS3"];
 
-export default function TeacherAssignmentPanel({ users, onUsersUpdate }) {
+export default function TeacherAssignmentPanel({ users = [], onUsersUpdate = () => {} }) {
   const [staff, setStaff] = useState([]);
   const [selectedStaff, setSelectedStaff] = useState("");
   const [assignedSubjects, setAssignedSubjects] = useState([]);
@@ -19,244 +40,252 @@ export default function TeacherAssignmentPanel({ users, onUsersUpdate }) {
   const [isFormMaster, setIsFormMaster] = useState(false);
   const [customClass, setCustomClass] = useState("");
 
-  // Filter teaching staff from users
+  // Populate teaching staff from users whenever users change
   useEffect(() => {
-    const teachingStaff = users.filter(user => 
-      user.role === "Subject Teacher" || 
-      user.role === "Form Master" ||
-      user.role === "Principal" ||
-      user.role === "Senior Master" ||
-      user.role === "VP Academic"
-    );
+    const teachingStaff = Array.isArray(users)
+      ? users.filter((user) =>
+          [
+            "Subject Teacher",
+            "Form Master",
+            "Principal",
+            "Senior Master",
+            "VP Academic",
+            "VP Admin",
+            "Exam Officer",
+          ].includes(user.role)
+        )
+      : [];
     setStaff(teachingStaff);
   }, [users]);
 
-  // When staff is selected, load their assignments
+  // When selected staff changes, load that staff's assignments and available options
   useEffect(() => {
+    // Load classes that exist in classLists (user-created classes)
+    const classLists = JSON.parse(localStorage.getItem("classLists")) || {};
+    const existingClasses = Object.keys(classLists || {});
+
     if (selectedStaff) {
-      const staffMember = users.find(u => u.id === selectedStaff);
+      const staffMember = users.find((u) => u.id === selectedStaff || u.email === selectedStaff);
       if (staffMember) {
-        setAssignedSubjects(staffMember.assignedSubjects || []);
-        setAssignedClasses(staffMember.assignedClasses || []);
+        const subj = Array.isArray(staffMember.assignedSubjects) ? staffMember.assignedSubjects : [];
+        const cls = Array.isArray(staffMember.assignedClasses) ? staffMember.assignedClasses : [];
+
+        setAssignedSubjects(subj);
+        setAssignedClasses(cls);
         setIsFormMaster(staffMember.role === "Form Master");
         setCustomClass(staffMember.formClass || "");
-        
-        // Set available options
-        setAvailableSubjects(ALL_SUBJECTS.filter(sub => 
-          !staffMember.assignedSubjects?.includes(sub)
-        ));
-        
-        // Load existing classes from localStorage
-        const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
-        const existingClasses = Object.keys(classLists);
-        setAvailableClasses([...BASE_CLASSES, ...existingClasses].filter(cls => 
-          !staffMember.assignedClasses?.includes(cls)
-        ));
+
+        // Compute available subjects & classes (exclude already assigned)
+        setAvailableSubjects(ALL_SUBJECTS.filter((s) => !subj.includes(s)));
+        setAvailableClasses(
+          [...BASE_CLASSES, ...existingClasses].filter((c) => !cls.includes(c))
+        );
+      } else {
+        // if staff not found, reset
+        setAssignedSubjects([]);
+        setAssignedClasses([]);
+        setAvailableSubjects(ALL_SUBJECTS);
+        setAvailableClasses([...BASE_CLASSES, ...existingClasses]);
+        setIsFormMaster(false);
+        setCustomClass("");
       }
     } else {
+      // Nothing selected — reset lists
       setAssignedSubjects([]);
       setAssignedClasses([]);
       setAvailableSubjects(ALL_SUBJECTS);
-      
-      // Load all available classes
-      const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
-      const existingClasses = Object.keys(classLists);
       setAvailableClasses([...BASE_CLASSES, ...existingClasses]);
-      
       setIsFormMaster(false);
       setCustomClass("");
     }
   }, [selectedStaff, users]);
 
+  // Subject helpers
   const addSubject = (subject) => {
-    if (subject && !assignedSubjects.includes(subject)) {
-      setAssignedSubjects([...assignedSubjects, subject]);
-      setAvailableSubjects(availableSubjects.filter(sub => sub !== subject));
-    }
+    if (!subject || assignedSubjects.includes(subject)) return;
+    const nextAssigned = [...assignedSubjects, subject];
+    setAssignedSubjects(nextAssigned);
+    setAvailableSubjects(availableSubjects.filter((s) => s !== subject));
   };
 
   const removeSubject = (subject) => {
-    setAssignedSubjects(assignedSubjects.filter(sub => sub !== subject));
+    const nextAssigned = assignedSubjects.filter((s) => s !== subject);
+    setAssignedSubjects(nextAssigned);
     setAvailableSubjects([...availableSubjects, subject].sort());
   };
 
+  // Class helpers
   const addClass = (className) => {
-    if (className && !assignedClasses.includes(className)) {
-      setAssignedClasses([...assignedClasses, className]);
-      setAvailableClasses(availableClasses.filter(cls => cls !== className));
-    }
+    if (!className || assignedClasses.includes(className)) return;
+    const nextAssigned = [...assignedClasses, className];
+    setAssignedClasses(nextAssigned);
+    setAvailableClasses(availableClasses.filter((c) => c !== className));
   };
 
   const removeClass = (className) => {
-    setAssignedClasses(assignedClasses.filter(cls => cls !== className));
+    const nextAssigned = assignedClasses.filter((c) => c !== className);
+    setAssignedClasses(nextAssigned);
     setAvailableClasses([...availableClasses, className].sort());
   };
 
+  // Create custom class and persist to classLists
   const createCustomClass = () => {
-    if (!customClass.trim()) {
+    const name = (customClass || "").trim();
+    if (!name) {
       alert("Please enter a class name");
       return;
     }
 
-    const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
-    
-    // Initialize the class if it doesn't exist
-    if (!classLists[customClass]) {
-      classLists[customClass] = [];
-      localStorage.setItem('classLists', JSON.stringify(classLists));
+    const classLists = JSON.parse(localStorage.getItem("classLists")) || {};
+    if (!classLists[name]) {
+      classLists[name] = [];
+      localStorage.setItem("classLists", JSON.stringify(classLists));
     }
-
-    // Add to assigned classes
-    if (!assignedClasses.includes(customClass)) {
-      setAssignedClasses([...assignedClasses, customClass]);
+    if (!assignedClasses.includes(name)) {
+      setAssignedClasses([...assignedClasses, name]);
+      setAvailableClasses(availableClasses.filter((c) => c !== name));
     }
-
     setCustomClass("");
-    alert(`Class "${customClass}" created successfully!`);
+    alert(`Class "${name}" created successfully!`);
   };
 
+  // Save assignments back into users array and localStorage
   const saveAssignments = () => {
     if (!selectedStaff) {
       alert("Please select a staff member first.");
       return;
     }
 
-    // For Form Master, ensure they have exactly one class
     if (isFormMaster && assignedClasses.length !== 1) {
       alert("Form Master must be assigned exactly ONE class.");
       return;
     }
 
-    const updatedUsers = users.map(user => {
-      if (user.id === selectedStaff) {
+    const updatedUsers = users.map((user) => {
+      if (user.id === selectedStaff || user.email === selectedStaff) {
         const updatedUser = {
           ...user,
           assignedSubjects: assignedSubjects,
           assignedClasses: assignedClasses,
         };
-
-        // For Form Master, set the formClass
         if (isFormMaster && assignedClasses.length === 1) {
           updatedUser.formClass = assignedClasses[0];
+        } else {
+          // if not form master, ensure formClass is removed
+          if (updatedUser.formClass && !isFormMaster) delete updatedUser.formClass;
         }
-
         return updatedUser;
       }
       return user;
     });
 
-    // Update localStorage
+    // persist
     localStorage.setItem("users", JSON.stringify(updatedUsers));
-    
-    // Update current user if they are editing their own profile
+
+    // update currentUser if needed (keeps session in sync)
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-    if (currentUser && currentUser.id === selectedStaff) {
-      const updatedCurrentUser = updatedUsers.find(u => u.id === selectedStaff);
-      localStorage.setItem("currentUser", JSON.stringify(updatedCurrentUser));
+    if (currentUser && (currentUser.id === selectedStaff || currentUser.email === selectedStaff)) {
+      const updatedCurrentUser = updatedUsers.find((u) => u.id === selectedStaff || u.email === selectedStaff);
+      if (updatedCurrentUser) localStorage.setItem("currentUser", JSON.stringify(updatedCurrentUser));
     }
 
+    // tell parent to refresh
     onUsersUpdate();
     alert("Assignments saved successfully!");
   };
 
   const getSelectedStaffInfo = () => {
-    const staffMember = users.find(u => u.id === selectedStaff);
+    const staffMember = users.find((u) => u.id === selectedStaff || u.email === selectedStaff);
     return staffMember ? `${staffMember.name} (${staffMember.role})` : "Select a staff member";
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Staff Assignment Management</h2>
-      
+    <div className="p-6 bg-[#0e1420] rounded-2xl shadow-lg border border-gray-800">
+      <h2 className="text-2xl font-bold text-cyan-300 mb-6">Staff Assignment Management</h2>
+
       {/* Staff Selection */}
-      <div className="mb-8">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Select Staff Member
-        </label>
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-300 mb-2">Select Staff Member</label>
         <select
           value={selectedStaff}
           onChange={(e) => setSelectedStaff(e.target.value)}
-          className="w-full max-w-md p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+          className="w-full max-w-xl p-2 bg-[#1a2233] border border-gray-700 text-gray-200 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
         >
           <option value="">Choose a staff member...</option>
-          {staff.map(staffMember => (
-            <option key={staffMember.id} value={staffMember.id}>
-              {staffMember.name} - {staffMember.role}
+          {staff.map((s) => (
+            <option key={s.id || s.email} value={s.id || s.email}>
+              {s.name} — {s.role}
             </option>
           ))}
         </select>
       </div>
 
-      {selectedStaff && (
-        <div className="space-y-8">
-          {/* Current Assignments Summary */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-blue-800 mb-2">
-              Current Assignments for {getSelectedStaffInfo()}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {selectedStaff ? (
+        <div className="space-y-6">
+          {/* Summary Card */}
+          <div className="bg-[#111827] border border-cyan-700/20 p-4 rounded-lg">
+            <h3 className="font-semibold text-cyan-300 mb-2">Current Assignments for {getSelectedStaffInfo()}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-200">
               <div>
-                <span className="text-sm text-blue-600">Subjects: </span>
-                <span className="font-medium">
+                <div className="text-sm text-gray-300">Subjects</div>
+                <div className="font-medium">
                   {assignedSubjects.length > 0 ? assignedSubjects.join(", ") : "None assigned"}
-                </span>
+                </div>
               </div>
               <div>
-                <span className="text-sm text-blue-600">Classes: </span>
-                <span className="font-medium">
+                <div className="text-sm text-gray-300">Classes</div>
+                <div className="font-medium">
                   {assignedClasses.length > 0 ? assignedClasses.join(", ") : "None assigned"}
-                </span>
+                </div>
                 {isFormMaster && assignedClasses.length > 0 && (
-                  <div className="text-xs text-green-600 mt-1">
-                    ✓ Form Master of {assignedClasses[0]}
-                  </div>
+                  <div className="text-sm text-green-400 mt-1">✓ Form Master of {assignedClasses[0]}</div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Subject Assignment (Hide for Form Masters) */}
+          {/* Subjects Assignment (hidden for Form Masters) */}
           {!isFormMaster && (
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="font-semibold text-gray-800 mb-3">Assign Subjects</h3>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Available Subjects
-                </label>
+            <div className="border border-gray-700 rounded-lg p-4 bg-[#0f1724]">
+              <h4 className="font-semibold text-gray-200 mb-3">Assign Subjects</h4>
+
+              <div className="mb-3">
+                <label className="text-sm text-gray-300 block mb-2">Available Subjects</label>
                 <select
-                  onChange={(e) => addSubject(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded mb-2"
+                  onChange={(e) => {
+                    addSubject(e.target.value);
+                    e.target.value = "";
+                  }}
                   defaultValue=""
+                  className="w-full p-2 bg-[#1a2233] border border-gray-700 text-gray-200 rounded mb-2"
                 >
                   <option value="">Select subject to add...</option>
-                  {availableSubjects.map(subject => (
-                    <option key={subject} value={subject}>{subject}</option>
+                  {availableSubjects.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500">
-                  {availableSubjects.length} subjects available
-                </p>
+                <p className="text-xs text-gray-400">{availableSubjects.length} subjects available</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Assigned Subjects ({assignedSubjects.length})
-                </label>
+                <label className="text-sm text-gray-300 block mb-2">Assigned Subjects ({assignedSubjects.length})</label>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {assignedSubjects.map(subject => (
-                    <div key={subject} className="flex justify-between items-center bg-green-50 p-2 rounded">
-                      <span className="text-green-700">{subject}</span>
-                      <button
-                        onClick={() => removeSubject(subject)}
-                        className="text-red-500 hover:text-red-700 text-sm"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                  {assignedSubjects.length === 0 && (
-                    <p className="text-gray-500 text-sm text-center py-2">No subjects assigned</p>
+                  {assignedSubjects.length === 0 ? (
+                    <p className="text-gray-500 italic text-center py-2">No subjects assigned</p>
+                  ) : (
+                    assignedSubjects.map((sub) => (
+                      <div key={sub} className="flex items-center justify-between bg-[#12202f] p-2 rounded">
+                        <span className="text-gray-100">{sub}</span>
+                        <button
+                          onClick={() => removeSubject(sub)}
+                          className="text-red-400 hover:text-red-600 text-sm"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))
                   )}
                 </div>
               </div>
@@ -264,22 +293,19 @@ export default function TeacherAssignmentPanel({ users, onUsersUpdate }) {
           )}
 
           {/* Class Assignment */}
-          <div className="border border-gray-200 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 mb-3">
-              Assign Classes {isFormMaster && "(Form Master)"}
-            </h3>
-            
-            {/* Create Custom Class (Especially for Form Masters) */}
+          <div className="border border-gray-700 rounded-lg p-4 bg-[#0f1724]">
+            <h4 className="font-semibold text-gray-200 mb-3">Assign Classes {isFormMaster && "(Form Master)"}</h4>
+
             {isFormMaster && (
-              <div className="mb-4 bg-yellow-50 p-3 rounded-lg">
-                <h4 className="font-medium text-yellow-800 mb-2">Create Class for Form Master</h4>
+              <div className="mb-3 bg-yellow-900/10 border border-yellow-700/20 p-3 rounded">
+                <h5 className="font-medium text-yellow-300 mb-2">Create Class (for Form Master)</h5>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={customClass}
                     onChange={(e) => setCustomClass(e.target.value)}
-                    placeholder="e.g., SS1A, SS1B, SS1G, etc."
-                    className="flex-1 p-2 border border-gray-300 rounded"
+                    placeholder="e.g., SS1A, SS2B"
+                    className="flex-1 p-2 bg-[#1a2233] border border-gray-700 text-gray-200 rounded"
                   />
                   <button
                     onClick={createCustomClass}
@@ -288,83 +314,71 @@ export default function TeacherAssignmentPanel({ users, onUsersUpdate }) {
                     Create Class
                   </button>
                 </div>
-                <p className="text-xs text-yellow-600 mt-1">
-                  Create custom class names like SS1A, SS1B, etc.
-                </p>
+                <p className="text-xs text-yellow-200 mt-1">Create custom class names like SS1A, SS1B etc.</p>
               </div>
             )}
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Available Classes
-              </label>
+            <div className="mb-3">
+              <label className="text-sm text-gray-300 block mb-2">Available Classes</label>
               <select
-                onChange={(e) => addClass(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded mb-2"
+                onChange={(e) => {
+                  addClass(e.target.value);
+                  e.target.value = "";
+                }}
                 defaultValue=""
+                className="w-full p-2 bg-[#1a2233] border border-gray-700 text-gray-200 rounded mb-2"
               >
                 <option value="">Select class to add...</option>
-                {availableClasses.map(className => (
-                  <option key={className} value={className}>{className}</option>
+                {availableClasses.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500">
-                {availableClasses.length} classes available
-              </p>
-              {isFormMaster && (
-                <p className="text-xs text-orange-600 mt-1">
-                  ⚠️ Form Master must be assigned exactly ONE class
-                </p>
-              )}
+              <p className="text-xs text-gray-400">{availableClasses.length} classes available</p>
+              {isFormMaster && <p className="text-xs text-orange-400 mt-1">⚠️ Form Master must be assigned exactly ONE class</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Assigned Classes ({assignedClasses.length})
-                {isFormMaster && " - Must be exactly 1"}
-              </label>
+              <label className="text-sm text-gray-300 block mb-2">Assigned Classes ({assignedClasses.length}) {isFormMaster && " - Must be exactly 1"}</label>
               <div className="space-y-2 max-h-40 overflow-y-auto">
-                {assignedClasses.map(className => (
-                  <div key={className} className="flex justify-between items-center bg-blue-50 p-2 rounded">
-                    <span className="text-blue-700">
-                      {className}
-                      {isFormMaster && " (Form Master)"}
-                    </span>
-                    <button
-                      onClick={() => removeClass(className)}
-                      className="text-red-500 hover:text-red-700 text-sm"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-                {assignedClasses.length === 0 && (
-                  <p className="text-gray-500 text-sm text-center py-2">No classes assigned</p>
+                {assignedClasses.length === 0 ? (
+                  <p className="text-gray-500 italic text-center py-2">No classes assigned</p>
+                ) : (
+                  assignedClasses.map((c) => (
+                    <div key={c} className="flex items-center justify-between bg-[#12202f] p-2 rounded">
+                      <span className="text-gray-100">
+                        {c}
+                        {isFormMaster && " (Form Master)"}
+                      </span>
+                      <button onClick={() => removeClass(c)} className="text-red-400 hover:text-red-600 text-sm">
+                        Remove
+                      </button>
+                    </div>
+                  ))
                 )}
               </div>
             </div>
           </div>
 
-          {/* Save Button */}
+          {/* Save */}
           <div className="flex justify-end">
             <button
               onClick={saveAssignments}
               disabled={isFormMaster && assignedClasses.length !== 1}
               className={`px-6 py-2 rounded-lg font-medium ${
                 isFormMaster && assignedClasses.length !== 1
-                  ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                  : "bg-green-600 text-white hover:bg-green-700"
+                  ? "bg-gray-500 text-gray-200 cursor-not-allowed"
+                  : "bg-gradient-to-r from-cyan-600 to-blue-700 text-white hover:from-cyan-500 hover:to-blue-600"
               }`}
             >
               Save Assignments
             </button>
           </div>
         </div>
-      )}
-
-      {!selectedStaff && (
-        <div className="text-center py-8 bg-gray-50 rounded-lg">
-          <p className="text-gray-500">Select a staff member to manage their assignments</p>
+      ) : (
+        <div className="py-10 bg-[#07111a] rounded-lg text-center text-gray-400">
+          Select a staff member to manage their assignments
         </div>
       )}
     </div>
