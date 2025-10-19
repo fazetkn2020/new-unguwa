@@ -6,7 +6,7 @@ import { ScoringQuickAccess, useTeachingAssignments } from "../../../components/
 export default function VPAdminDashboard() {
   const { user } = useAuth();
   const teaching = useTeachingAssignments(user);
-  
+
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeClasses: 0,
@@ -92,6 +92,16 @@ export default function VPAdminDashboard() {
         </div>
       </div>
 
+      {/* 🆕 QUICK ATTENDANCE ENTRY BUTTON */}
+      <div className="mb-6">
+        <Link
+          to="/attendance/admin"
+          className="block bg-gradient-to-r from-green-500 to-emerald-600 text-white border border-emerald-400 p-4 rounded-lg text-lg font-semibold text-center hover:from-green-600 hover:to-emerald-700 transition shadow touch-target mobile-padding"
+        >
+          📋 QUICK ATTENDANCE ENTRY
+        </Link>
+      </div>
+
       {/* Oversight Actions */}
       <div className="mb-10">
         <h2 className="text-2xl font-bold mb-4 text-yellow-300">
@@ -100,14 +110,14 @@ export default function VPAdminDashboard() {
         <div className="space-y-4">
           {[
             "👥 USER MANAGEMENT OVERVIEW",
-            "🏫 CLASS STRUCTURE OVERVIEW",
+            "🏫 CLASS STRUCTURE OVERVIEW", 
             "📊 SYSTEM USAGE STATISTICS",
             "👨‍🏫 STAFF ROLE ASSIGNMENTS",
             "📋 SYSTEM REPORTS",
           ].map((title, i) => (
             <button
               key={i}
-              className="block w-full bg-blue-800/40 border border-blue-600 p-4 rounded-lg text-lg font-semibold text-gray-100 hover:bg-blue-700/40 transition shadow"
+              className="block w-full bg-blue-800/40 border border-blue-600 p-4 rounded-lg text-lg font-semibold text-gray-100 hover:bg-blue-700/40 transition shadow touch-target"
             >
               {title}
             </button>
@@ -115,7 +125,7 @@ export default function VPAdminDashboard() {
 
           <Link
             to="/dashboard/exambank"
-            className="block bg-gradient-to-r from-yellow-400 to-yellow-500 text-slate-900 border border-yellow-300 p-4 rounded-lg text-lg font-semibold text-center hover:from-yellow-500 hover:to-yellow-400 transition shadow"
+            className="block bg-gradient-to-r from-yellow-400 to-yellow-500 text-slate-900 border border-yellow-300 p-4 rounded-lg text-lg font-semibold text-center hover:from-yellow-500 hover:to-yellow-400 transition shadow touch-target"
           >
             📈 ACADEMIC PROGRESS MONITORING
           </Link>
@@ -133,6 +143,7 @@ export default function VPAdminDashboard() {
           <li>• Track system usage and performance</li>
           <li>• Review staff role assignments and coverage</li>
           <li>• Ensure administrative systems are functional</li>
+          <li>• Manage staff attendance records</li>
         </ul>
       </div>
     </div>

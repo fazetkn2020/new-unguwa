@@ -144,3 +144,20 @@
     .report-sheet-container { position: absolute; left: 0; top: 0; width: 100% !important; }
     .print\:hidden { display: none !important; }
 }
+/* Fix for navbar z-index issue */
+nav.bg-gray-900 {
+  position: relative;
+  z-index: 1000;
+}
+
+/* Ensure landing page content stays below navbar */
+.landing-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Mobile menu z-index fix */
+.md\\:hidden {
+  position: relative;
+  z-index: 1001;
+}
