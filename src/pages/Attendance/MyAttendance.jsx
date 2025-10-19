@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getStaffAttendance, authenticateStaff, getCurrentUserStaff } from '../../utils/attendanceStorage.jsx';
-import { getAttendanceStats } from '../../utils/attendanceCalculations';
+import { getStaffAttendance, getCurrentUserStaff } from '../../utils/attendanceStorage.jsx';
+import { getAttendanceStats } from '../../utils/attendanceCalculations.js';
+import universalTime from '../../utils/universalTime.js';
 import PasswordGate from './components/PasswordGate';
 import AttendanceStats from './components/AttendanceStats';
+import AppealForm from './components/AppealForm';
 
 const MyAttendance = () => {
   const { user } = useAuth();
@@ -15,13 +17,6 @@ const MyAttendance = () => {
     if (user) {
       const staffData = getCurrentUserStaff(user);
       setCurrentStaff(staffData);
-      
-      // Auto-authenticate if user is logged in (optional - for convenience)
-      // Or require password every time for security
-      if (staffData) {
-        // For security, we'll require password each time
-        // setAuthenticated(true);
-      }
     }
   }, [user]);
 
@@ -33,7 +28,10 @@ const MyAttendance = () => {
   }, [authenticated, currentStaff]);
 
   const handleStaffAuth = (password) => {
-    if (currentStaff && authenticateStaff(currentStaff.id, password)) {
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+    const currentStaffUser = users.find(u => u.id === user.id);
+    
+    if (currentStaffUser && currentStaffUser.password === password) {
       setAuthenticated(true);
       return true;
     }
@@ -83,6 +81,19 @@ const MyAttendance = () => {
   const monthlyStats = getAttendanceStats(staffRecords, 'month');
   const termStats = getAttendanceStats(staffRecords, 'term');
 
+  // Get today's record
+  const today = universalTime.getTodayDate();
+  const todayRecord = staffRecords[today];
+  const todayStatus = todayRecord?.status || 'Not recorded';
+  const todayArrivalTime = todayRecord?.arrivalTime || 'Not recorded';
+
+  const statusColors = {
+    'present': 'bg-green-100 text-green-800',
+    'late': 'bg-yellow-100 text-yellow-800',
+    'absent': 'bg-red-100 text-red-800',
+    'Not recorded': 'bg-gray-100 text-gray-800'
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 mobile-padding">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -94,9 +105,56 @@ const MyAttendance = () => {
           <p className="text-gray-600">
             Welcome, {currentStaff?.name} - {currentStaff?.role}
           </p>
-          <p className="text-sm text-gray-500 mt-1">
-            Staff ID: {currentStaff?.id}
-          </p>
+        </div>
+
+        {/* Today's Status - Always Visible */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Today's Status</h3>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm text-gray-600">Current Status</div>
+              <div className="text-2xl font-bold mt-1">
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusColors[todayStatus]}`}>
+                  {todayStatus.toUpperCase()}
+                </span>
+              </div>
+              <div className="text-sm text-gray-500 mt-2">
+                Arrival Time: {todayArrivalTime}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-gray-600">Date</div>
+              <div className="text-lg font-semibold">
+                {new Date().toLocaleDateString('en-NG', { 
+                  weekday: 'short', 
+                  year: 'numeric', 
+                  month: 'short', 
+                  day: 'numeric' 
+                })}
+              </div>
+              <div className="text-sm text-gray-500">
+                {universalTime.getCurrentTime()}
+              </div>
+            </div>
+          </div>
+
+          {/* Appeal Section */}
+          {(todayStatus === 'late' || todayStatus === 'absent') && (
+            <div className="border-t pt-4 mt-4">
+              <div className="text-sm text-gray-600 mb-3">
+                Disagree with today's status? Submit an appeal with your reason:
+              </div>
+              <AppealForm 
+                staffId={currentStaff.id}
+                staffName={currentStaff.name}
+                onAppealSubmit={() => {
+                  // Refresh data after appeal
+                  const records = getStaffAttendance(currentStaff.id);
+                  setStaffRecords(records);
+                }}
+              />
+            </div>
+          )}
         </div>
 
         {/* Quick Overview */}
@@ -166,34 +224,6 @@ const MyAttendance = () => {
               </table>
             </div>
           )}
-        </div>
-
-        {/* Status Legend */}
-        <div className="bg-blue-50 rounded-lg p-4">
-          <h4 className="font-medium text-blue-900 mb-2">Status Legend:</h4>
-          <div className="flex flex-wrap gap-4 text-sm">
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-              <span>Present - Arrived on time</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
-              <span>Late - Arrived after threshold</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-              <span>Absent - No record for the day</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Security Notice */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h4 className="font-medium text-yellow-800 mb-2">Security Notice</h4>
-          <p className="text-sm text-yellow-700">
-            For security, you must enter your password each time to view attendance records. 
-            Contact administrator if you need to reset your password.
-          </p>
         </div>
       </div>
     </div>

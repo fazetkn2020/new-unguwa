@@ -1,96 +1,183 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  getAllStaff, 
-  getTodaysAttendance, 
-  saveAttendanceRecord, 
-  getAttendanceSettings,
-  updateAttendanceSettings,
-  authenticateVP 
-} from '../../utils/attendanceStorage.jsx';
-import { calculateStatus } from '../../utils/attendanceCalculations';
+import { getAllStaff, getTodaysAttendance, saveAttendanceRecord } from '../../utils/attendanceStorage.jsx';
+import universalTime from '../../utils/universalTime.js';
+import autoAttendance from '../../utils/autoAttendance.js';
 import PasswordGate from './components/PasswordGate';
 
 const EnterAttendance = () => {
   const { user } = useAuth();
   const [authenticated, setAuthenticated] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendanceData, setAttendanceData] = useState({});
-  const [lateThreshold, setLateThreshold] = useState('08:00');
   const [saveStatus, setSaveStatus] = useState('');
-  const [isToday, setIsToday] = useState(true);
+  const [autoSummary, setAutoSummary] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedStaff, setSelectedStaff] = useState(null);
+  const [showActionPopup, setShowActionPopup] = useState(false);
+  const [showReasonPopup, setShowReasonPopup] = useState(false);
 
   const allStaff = getAllStaff();
-
-  useEffect(() => {
-    const settings = getAttendanceSettings();
-    if (settings?.lateThreshold) {
-      setLateThreshold(settings.lateThreshold);
-    }
-  }, []);
+  const today = universalTime.getTodayDate();
+  const currentTime = universalTime.getCurrentTime();
 
   useEffect(() => {
     if (authenticated) {
       loadAttendanceData();
-      checkIfToday();
+      startAutoUpdates();
     }
-  }, [selectedDate, authenticated]);
+    
+    return () => {
+      autoAttendance.stop();
+    };
+  }, [authenticated]);
 
   const loadAttendanceData = () => {
     const existingData = getTodaysAttendance();
-    const initialData = {};
+    setAttendanceData(existingData);
+    updateAutoSummary();
+  };
+
+  const startAutoUpdates = () => {
+    autoAttendance.init();
+    const updateInterval = setInterval(() => {
+      loadAttendanceData();
+    }, 30000);
     
-    allStaff.forEach(staff => {
-      if (existingData[staff.id]) {
-        initialData[staff.id] = existingData[staff.id];
-      } else {
-        initialData[staff.id] = { arrivalTime: '', status: 'absent' };
-      }
-    });
+    return () => clearInterval(updateInterval);
+  };
+
+  const updateAutoSummary = () => {
+    setAutoSummary(autoAttendance.getAutoStatusSummary());
+  };
+
+  // Filter staff based on search
+  const filteredStaff = allStaff.filter(staff =>
+    staff.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleStaffClick = (staff) => {
+    setSelectedStaff(staff);
+    setShowActionPopup(true);
+  };
+
+  const calculateStatus = () => {
+    return universalTime.isBefore('08:00') ? 'present' : 'late';
+  };
+
+  const handleMarkPresent = () => {
+    if (!selectedStaff) return;
+
+    const status = calculateStatus();
     
-    setAttendanceData(initialData);
-  };
-
-  const checkIfToday = () => {
-    const today = new Date().toISOString().split('T')[0];
-    setIsToday(selectedDate === today);
-  };
-
-  const handleTimeChange = (staffId, time) => {
-    setAttendanceData(prev => ({
-      ...prev,
-      [staffId]: {
-        arrivalTime: time,
-        status: time ? calculateStatus(time, lateThreshold) : 'absent'
+    const updatedData = {
+      ...attendanceData,
+      [selectedStaff.id]: {
+        arrivalTime: currentTime,
+        status: status,
+        manualEntry: true,
+        entryTime: currentTime,
+        timestamp: universalTime.generateTimestampHash(),
+        entryBy: 'vp_admin'
       }
-    }));
-  };
+    };
 
-  const handleSaveSettings = () => {
-    const settings = getAttendanceSettings();
-    updateAttendanceSettings({
-      ...settings,
-      lateThreshold
-    });
-    setSaveStatus('Settings updated successfully!');
+    saveAttendanceRecord(today, updatedData);
+    setAttendanceData(updatedData);
+    setShowActionPopup(false);
+    setSelectedStaff(null);
+    setSaveStatus(`${selectedStaff.name} marked ${status} at ${currentTime}`);
     setTimeout(() => setSaveStatus(''), 3000);
   };
 
-  const handleSaveAttendance = () => {
-    saveAttendanceRecord(selectedDate, attendanceData);
-    setSaveStatus('Attendance saved successfully!');
+  const handleAbsentWithPermission = () => {
+    setShowActionPopup(false);
+    setShowReasonPopup(true);
+  };
+
+  const handleAbsentWithoutPermission = () => {
+    if (!selectedStaff) return;
+
+    const updatedData = {
+      ...attendanceData,
+      [selectedStaff.id]: {
+        arrivalTime: null,
+        status: 'absent',
+        absentType: 'unauthorized',
+        manualEntry: true,
+        entryTime: currentTime,
+        timestamp: universalTime.generateTimestampHash(),
+        entryBy: 'vp_admin',
+        notes: 'Absent without permission'
+      }
+    };
+
+    saveAttendanceRecord(today, updatedData);
+    setAttendanceData(updatedData);
+    setShowActionPopup(false);
+    setSelectedStaff(null);
+    setSaveStatus(`${selectedStaff.name} marked absent (unauthorized)`);
     setTimeout(() => setSaveStatus(''), 3000);
+  };
+
+  const handleSubmitReason = (reasonType, customReason = '') => {
+    if (!selectedStaff) return;
+
+    const reasonText = customReason || reasonType;
+    
+    const updatedData = {
+      ...attendanceData,
+      [selectedStaff.id]: {
+        arrivalTime: null,
+        status: 'absent',
+        absentType: reasonType,
+        manualEntry: true,
+        entryTime: currentTime,
+        timestamp: universalTime.generateTimestampHash(),
+        entryBy: 'vp_admin',
+        notes: `Absent with permission: ${reasonText}`
+      }
+    };
+
+    saveAttendanceRecord(today, updatedData);
+    setAttendanceData(updatedData);
+    setShowReasonPopup(false);
+    setSelectedStaff(null);
+    setSaveStatus(`${selectedStaff.name} marked absent (${reasonType})`);
+    setTimeout(() => setSaveStatus(''), 3000);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'present': return 'bg-green-100 text-green-800';
+      case 'late': return 'bg-yellow-100 text-yellow-800';
+      case 'absent': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getAbsentTypeText = (absentType) => {
+    const types = {
+      'sick_leave': '🏥 Sick Leave',
+      'official_duty': '📋 Official Duty',
+      'emergency': '🚨 Emergency',
+      'unauthorized': '❌ Unauthorized',
+      'family_emergency': '👨‍👩‍👧‍👦 Family Emergency',
+      'other': '📝 Other Reason'
+    };
+    return types[absentType] || absentType;
   };
 
   const handleVPAuth = (password) => {
-    if (user && authenticateVP(password, user)) {
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+    const currentVP = users.find(u => u.id === user.id && u.role?.toLowerCase() === 'vp admin');
+    
+    if (currentVP && currentVP.password === password) {
       setAuthenticated(true);
       return true;
     }
     return false;
   };
 
-  // If no user is logged in
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center mobile-padding">
@@ -116,93 +203,65 @@ const EnterAttendance = () => {
     );
   }
 
-  const presentCount = Object.values(attendanceData).filter(item => item.status === 'present').length;
-  const lateCount = Object.values(attendanceData).filter(item => item.status === 'late').length;
-  const absentCount = Object.values(attendanceData).filter(item => item.status === 'absent').length;
-
   return (
     <div className="min-h-screen bg-gray-50 mobile-padding">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center py-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Staff Attendance Entry
+            Staff Attendance Console
           </h1>
           <p className="text-gray-600">
-            VP Admin - Enter and manage staff attendance records
+            VP Admin - Real-time Attendance Management
           </p>
           <p className="text-sm text-gray-500 mt-1">
-            Logged in as: {user.name} ({user.role})
+            Today: {today} | Current Time: {currentTime} | Nigerian Time (WAT)
           </p>
         </div>
 
-        {/* Controls Section */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Attendance Date
-              </label>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 touch-target"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Late Threshold Time
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="time"
-                  value={lateThreshold}
-                  onChange={(e) => setLateThreshold(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 touch-target"
-                />
-                <button
-                  onClick={handleSaveSettings}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 touch-target"
-                >
-                  Update
-                </button>
+        {/* Search Bar */}
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <input
+            type="text"
+            placeholder="Search staff names..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
+            autoFocus
+          />
+        </div>
+
+        {/* Auto-System Status */}
+        {autoSummary && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="font-medium text-blue-900 mb-2">Auto-System Status</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <div className="text-blue-700">Total Staff</div>
+                <div className="font-bold">{autoSummary.totalStaff}</div>
+              </div>
+              <div>
+                <div className="text-green-700">Auto-Marked</div>
+                <div className="font-bold">{autoSummary.autoMarked}</div>
+              </div>
+              <div>
+                <div className="text-purple-700">Manual Entries</div>
+                <div className="font-bold">{autoSummary.manuallyMarked}</div>
+              </div>
+              <div>
+                <div className="text-orange-700">Pending</div>
+                <div className="font-bold">{autoSummary.pending}</div>
               </div>
             </div>
-
-            <div className="flex items-end">
-              <button
-                onClick={handleSaveAttendance}
-                className="w-full px-4 py-3 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 touch-target"
-              >
-                Save Attendance Records
-              </button>
-            </div>
           </div>
+        )}
 
-          {saveStatus && (
-            <div className="text-green-600 text-center font-medium">
-              {saveStatus}
-            </div>
-          )}
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-4 mt-4">
-            <div className="text-center p-3 bg-green-100 rounded-lg">
-              <div className="text-2xl font-bold text-green-800">{presentCount}</div>
-              <div className="text-sm text-green-600">Present</div>
-            </div>
-            <div className="text-center p-3 bg-yellow-100 rounded-lg">
-              <div className="text-2xl font-bold text-yellow-800">{lateCount}</div>
-              <div className="text-sm text-yellow-600">Late</div>
-            </div>
-            <div className="text-center p-3 bg-red-100 rounded-lg">
-              <div className="text-2xl font-bold text-red-800">{absentCount}</div>
-              <div className="text-sm text-red-600">Absent</div>
-            </div>
+        {/* Save Status */}
+        {saveStatus && (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+            {saveStatus}
           </div>
-        </div>
+        )}
 
         {/* Staff Attendance Table */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -214,47 +273,55 @@ const EnterAttendance = () => {
                     Staff Member
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
+                    Current Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Arrival Time
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    Quick Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {allStaff.map((staff) => {
-                  const record = attendanceData[staff.id] || { arrivalTime: '', status: 'absent' };
+                {(searchTerm ? filteredStaff : allStaff).map((staff) => {
+                  const record = attendanceData[staff.id] || {};
                   
                   return (
                     <tr key={staff.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{staff.name}</div>
-                        <div className="text-xs text-gray-500">ID: {staff.id}</div>
+                      <td className="px-6 py-4">
+                        <div 
+                          className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600"
+                          onClick={() => handleStaffClick(staff)}
+                        >
+                          {staff.name}
+                        </div>
+                        <div className="text-xs text-gray-500">{staff.role}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{staff.role}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <input
-                          type="time"
-                          value={record.arrivalTime}
-                          onChange={(e) => handleTimeChange(staff.id, e.target.value)}
-                          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-responsive touch-target"
-                        />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          record.status === 'present' 
-                            ? 'bg-green-100 text-green-800'
-                            : record.status === 'late'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {record.status.toUpperCase()}
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}>
+                          {record.status ? record.status.toUpperCase() : 'NOT MARKED'}
+                          {record.absentType && ` (${getAbsentTypeText(record.absentType)})`}
                         </span>
+                        {record.autoStatus && (
+                          <div className="text-xs text-gray-500 mt-1">Auto-system</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {record.arrivalTime || 'Not recorded'}
+                        {record.entryTime && (
+                          <div className="text-xs text-gray-500">Marked at: {record.entryTime}</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => handleStaffClick(staff)}
+                            className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 touch-target"
+                          >
+                            Mark Status
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -264,26 +331,105 @@ const EnterAttendance = () => {
           </div>
         </div>
 
-        {/* Instructions */}
-        <div className="bg-blue-50 rounded-lg p-4">
-          <h4 className="font-medium text-blue-900 mb-2">Instructions:</h4>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Select the date for attendance entry</li>
-            <li>• Set the late threshold time (default: 8:00 AM)</li>
-            <li>• Enter arrival time for each staff member</li>
-            <li>• Status updates automatically based on threshold</li>
-            <li>• Leave time empty to mark as absent</li>
-            <li>• Click "Save Attendance Records" to save</li>
-          </ul>
-        </div>
+        {/* Action Popup */}
+        {showActionPopup && selectedStaff && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-sm w-full p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                {selectedStaff.name}
+              </h3>
+              <p className="text-gray-600 mb-1">{selectedStaff.role}</p>
+              <p className="text-sm text-gray-500 mb-4">Current Time: {currentTime}</p>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={handleMarkPresent}
+                  className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 touch-target"
+                >
+                  PRESENT
+                </button>
+                
+                <button
+                  onClick={handleAbsentWithPermission}
+                  className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 touch-target"
+                >
+                  ABSENT WITH PERMISSION
+                </button>
+                
+                <button
+                  onClick={handleAbsentWithoutPermission}
+                  className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 touch-target"
+                >
+                  ABSENT WITHOUT PERMISSION
+                </button>
+                
+                <button
+                  onClick={() => setShowActionPopup(false)}
+                  className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 touch-target"
+                >
+                  CANCEL
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-        {/* Security Notice */}
+        {/* Reason Popup */}
+        {showReasonPopup && selectedStaff && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-sm w-full p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">
+                Reason for Absence
+              </h3>
+              
+              <div className="space-y-3 mb-4">
+                {[
+                  { type: 'sick_leave', label: '🏥 Sick Leave' },
+                  { type: 'official_duty', label: '📋 Official Duty' },
+                  { type: 'family_emergency', label: '👨‍👩‍👧‍👦 Family Emergency' },
+                  { type: 'other', label: '📝 Other Reason' }
+                ].map((reason) => (
+                  <button
+                    key={reason.type}
+                    onClick={() => {
+                      if (reason.type === 'other') {
+                        const customReason = prompt('Please specify reason:');
+                        if (customReason) {
+                          handleSubmitReason('other', customReason);
+                        }
+                      } else {
+                        handleSubmitReason(reason.type);
+                      }
+                    }}
+                    className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 touch-target text-left"
+                  >
+                    {reason.label}
+                  </button>
+                ))}
+              </div>
+              
+              <button
+                onClick={() => {
+                  setShowReasonPopup(false);
+                  setShowActionPopup(true);
+                }}
+                className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 touch-target"
+              >
+                BACK
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* System Information */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h4 className="font-medium text-yellow-800 mb-2">Access Information</h4>
-          <p className="text-sm text-yellow-700">
-            Only users with "VP Admin" role can access this page. 
-            Using your login password for authentication.
-          </p>
+          <h4 className="font-medium text-yellow-800 mb-2">System Information</h4>
+          <ul className="text-sm text-yellow-700 space-y-1">
+            <li>• <strong>Click staff name</strong> to mark attendance with popup</li>
+            <li>• <strong>Search</strong> staff by typing names</li>
+            <li>• <strong>Auto-system:</strong> Automatically marks absent at 10:00 AM</li>
+            <li>• <strong>Time:</strong> Uses Nigerian time (WAT) - cannot be manipulated</li>
+          </ul>
         </div>
       </div>
     </div>
