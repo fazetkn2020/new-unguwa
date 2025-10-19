@@ -1,94 +1,91 @@
-import { createContext, useState, useContext, useEffect } from "react";
-// Assuming 'subjects' structure is correct: { 'SS1': ['Mathematics', 'English', ...], ... }
-import { subjects } from "../data/subjects"; 
+// src/context/ExamContext.jsx
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
+// Create context
 const ExamContext = createContext();
+
+export const useExam = () => useContext(ExamContext);
+
+// Helper to calculate total score
+const calculateTotal = (ca, exam) => {
+  const caScore = ca === '' ? 0 : parseInt(ca);
+  const examScore = exam === '' ? 0 : parseInt(exam);
+  return Math.min(100, caScore + examScore);
+};
 
 export const ExamProvider = ({ children }) => {
   const [examData, setExamData] = useState({});
 
-  // Load exam data from localStorage on startup
+  // Load exam data from localStorage
   useEffect(() => {
-    const savedData = localStorage.getItem("examData");
-    if (savedData) setExamData(JSON.parse(savedData));
+    const storedData = JSON.parse(localStorage.getItem('examData')) || {};
+    setExamData(storedData);
   }, []);
 
-  // Auto-save to localStorage when examData changes
+  // Persist exam data to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem("examData", JSON.stringify(examData));
+    localStorage.setItem('examData', JSON.stringify(examData));
   }, [examData]);
 
-  const calculateTotal = (ca, exam) => {
-    // Ensure both are treated as numbers, default to 0 if NaN
-    const numCa = parseInt(ca) || 0;
-    const numExam = parseInt(exam) || 0;
-    return Math.min(100, numCa + numExam);
-  };
-  
-  // NOTE: This function is primarily for initialization when loading class data, 
-  // but we'll make updateScore handle on-the-fly initialization too.
-  const initializeStudentScores = (studentId, classLevel) => {
-    const classSubjects = subjects[classLevel] || [];
-
-    // This initialization seems mostly unused if scores are entered directly.
-    // We will rely on the logic in `updateScore` for on-demand initialization.
-    console.log(`Attempted to initialize scores for ${studentId} in ${classLevel}`);
-    
-    // You might want to remove this function if it's never explicitly called
-    // before scores are entered, or make sure your ScoreEntryTable calls it.
-  };
-
+  // Update score for a student & subject
   const updateScore = (studentId, subject, field, value) => {
-    // 1. Sanitize the input value
-    const numValue = Math.min(100, Math.max(0, parseInt(value) || 0));
-
     setExamData(prev => {
-      // 2. Safely get existing student data or initialize an empty object
-      const studentScores = prev[studentId] || {};
-      
-      // 3. Safely get existing subject data or initialize an empty object
-      const subjectScores = studentScores[subject] || { ca: '', exam: '', total: 0 };
-      
-      // 4. Determine the new CA and Exam values
-      const newCa = field === 'ca' ? numValue : (subjectScores.ca || 0);
-      const newExam = field === 'exam' ? numValue : (subjectScores.exam || 0);
-      
-      // 5. Calculate the new total
-      const newTotal = calculateTotal(newCa, newExam);
+      const currentSubject = prev[studentId]?.[subject] || { ca: '', exam: '', total: 0 };
+      const newFieldValue = value === '' ? '' : parseInt(value) || 0;
 
-      return {
+      const updatedSubject = {
+        ...currentSubject,
+        [field]: newFieldValue,
+      };
+
+      // Update total if CA or Exam changed
+      if (field === 'ca' || field === 'exam') {
+        updatedSubject.total = calculateTotal(
+          field === 'ca' ? newFieldValue : currentSubject.ca,
+          field === 'exam' ? newFieldValue : currentSubject.exam
+        );
+      }
+
+      const updatedData = {
         ...prev,
         [studentId]: {
-          ...studentScores,
-          [subject]: {
-            ca: newCa,
-            exam: newExam,
-            total: newTotal
-          }
-        }
+          ...prev[studentId],
+          [subject]: updatedSubject,
+        },
       };
+
+      // Save to localStorage
+      localStorage.setItem('examData', JSON.stringify(updatedData));
+      return updatedData;
     });
   };
 
+  // Check if user can edit a subject
   const canUserEditSubject = (user, subject) => {
     if (!user) return false;
-    if (user.role === "Admin" || user.role === "Form Master") return true;
-    // Check if user.subjects is an array and includes the subject
-    if (user.role === "Subject Teacher" && Array.isArray(user.subjects) && user.subjects.includes(subject)) return true;
+    if (user.role === 'Principal' || user.role === 'VP') return false;
+    if (user.role === 'SubjectTeacher' && user.subjects) {
+      return user.subjects.includes(subject);
+    }
+    if (user.role === 'FormMaster') return true; // Can edit all
     return false;
   };
 
+  // Get student by name from classLists
+  const getStudentByName = (studentName, className) => {
+    const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
+    const classStudents = classLists[className] || [];
+    return classStudents.find(student => student.fullName === studentName);
+  };
+
   return (
-    <ExamContext.Provider value={{ 
-      examData, 
-      updateScore, 
+    <ExamContext.Provider value={{
+      examData,
+      updateScore,
       canUserEditSubject,
-      calculateTotal,
-      initializeStudentScores
+      getStudentByName,
     }}>
       {children}
     </ExamContext.Provider>
   );
 };
-
-export const useExam = () => useContext(ExamContext);

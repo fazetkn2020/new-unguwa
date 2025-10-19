@@ -4,44 +4,29 @@ const ScoreEntryTable = ({
   students, 
   selectedSubject, 
   examData, 
-  // 💡 CRITICAL FIX: Changed prop name from 'onScoreUpdate' to 'updateScore'
   updateScore, 
-  readOnly = false,
-  currentClass = "" 
+  readOnly = false
 }) => {
 
   const handleScoreChange = (studentIdentifier, scoreType, value) => {
     if (readOnly) return;
 
-    // Use empty string if input is cleared, otherwise parse to integer
     let numericValue = value === '' ? '' : parseInt(value);
+    if (numericValue !== '' && isNaN(numericValue)) numericValue = 0;
 
-    // If parsing resulted in NaN (e.g., user typed non-numeric characters), default to 0
-    if (numericValue !== '' && isNaN(numericValue)) {
-      numericValue = 0;
-    }
-
-    // Apply specific max limits
     if (numericValue !== '') {
-      if (scoreType === 'ca') {
-        numericValue = Math.max(0, Math.min(40, numericValue));
-      }
-      if (scoreType === 'exam') {
-        numericValue = Math.max(0, Math.min(60, numericValue));
-      }
+      if (scoreType === 'ca') numericValue = Math.max(0, Math.min(40, numericValue));
+      if (scoreType === 'exam') numericValue = Math.max(0, Math.min(60, numericValue));
     }
-    
-    // 💡 This now correctly calls the function passed from the dashboard
+
     updateScore(studentIdentifier, selectedSubject, scoreType, numericValue);
   };
 
   const getStudentScore = (studentIdentifier) => {
-    // Return scores or initialize with empty strings for CA/Exam if none found
     return examData[studentIdentifier]?.[selectedSubject] || { ca: '', exam: '', total: '' };
   };
 
   const calculateTotal = (ca, exam) => {
-    // Treat empty string as 0 for calculation purposes
     const caScore = ca === '' ? 0 : parseInt(ca);
     const examScore = exam === '' ? 0 : parseInt(exam);
     return Math.min(100, caScore + examScore);
@@ -62,7 +47,6 @@ const ScoreEntryTable = ({
         </thead>
         <tbody>
           {students.map((student, index) => {
-            // Use a reliable identifier (assuming student.id is present from your context)
             const studentIdentifier = student.id || student.fullName || `temp_student_${index}`;
             const scores = getStudentScore(studentIdentifier);
             const isComplete = scores.ca !== '' && scores.exam !== '';
@@ -78,7 +62,6 @@ const ScoreEntryTable = ({
                     type="number"
                     min="0"
                     max="40"
-                    // Display empty string to allow clearing the input field
                     value={scores.ca === '' ? '' : scores.ca} 
                     onChange={(e) => handleScoreChange(studentIdentifier, 'ca', e.target.value)}
                     className="w-20 p-1 border rounded text-center mx-auto block focus:ring-2 focus:ring-cyan-500 bg-slate-700/80 border-slate-600 text-slate-100"
@@ -93,7 +76,6 @@ const ScoreEntryTable = ({
                     type="number"
                     min="0"
                     max="60"
-                    // Display empty string to allow clearing the input field
                     value={scores.exam === '' ? '' : scores.exam}
                     onChange={(e) => handleScoreChange(studentIdentifier, 'exam', e.target.value)}
                     className="w-20 p-1 border rounded text-center mx-auto block focus:ring-2 focus:ring-cyan-500 bg-slate-700/80 border-slate-600 text-slate-100"

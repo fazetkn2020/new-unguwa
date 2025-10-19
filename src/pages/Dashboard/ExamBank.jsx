@@ -1,17 +1,17 @@
-import React from "react"; // Add this import
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useExam } from "../../context/ExamContext";
-import { useState, useEffect } from "react";
 import { subjects } from "../../data/subjects";
 
 export default function ExamBank() {
   const { user } = useAuth() || {};
   const { examData, updateScore, canUserEditSubject } = useExam();
+
   const [selectedClass, setSelectedClass] = useState(user?.classes?.[0] || "");
   const [searchTerm, setSearchTerm] = useState("");
   const [allClasses, setAllClasses] = useState([]);
 
-  // Get all available classes from localStorage
+  // Load class list from localStorage
   useEffect(() => {
     const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
     setAllClasses(Object.keys(classLists));
@@ -19,7 +19,6 @@ export default function ExamBank() {
 
   if (!user) return <p>Loading...</p>;
 
-  // Get students from class lists
   const getClassStudents = (className) => {
     const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
     return classLists[className] || [];
@@ -28,12 +27,10 @@ export default function ExamBank() {
   const currentSubjects = subjects[selectedClass] || [];
   const classStudents = getClassStudents(selectedClass);
 
-  // Filter classes based on search
   const filteredClasses = allClasses.filter(cls => 
     cls.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Create student identifier (same as FormMasterDashboard)
   const getStudentIdentifier = (student) => {
     return `${selectedClass}_${student.fullName.replace(/\s+/g, '_')}`;
   };
@@ -45,7 +42,6 @@ export default function ExamBank() {
       {/* Class Search and Selection */}
       <div className="mb-6 bg-white p-4 rounded-lg shadow border">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Class Search */}
           <div>
             <label className="block text-sm font-medium mb-2">Search Classes:</label>
             <input
@@ -56,13 +52,11 @@ export default function ExamBank() {
               className="p-2 border rounded w-full"
             />
           </div>
-
-          {/* Class Selection */}
           <div>
             <label className="block text-sm font-medium mb-2">Select Class:</label>
             <select
               value={selectedClass}
-              onChange={e => setSelectedClass(e.target.value)}
+              onChange={(e) => setSelectedClass(e.target.value)}
               className="p-2 border rounded w-full"
             >
               <option value="">Choose a class</option>
@@ -73,7 +67,6 @@ export default function ExamBank() {
           </div>
         </div>
 
-        {/* Quick Class Buttons */}
         {searchTerm === "" && allClasses.length > 0 && (
           <div className="mt-4">
             <p className="text-sm text-gray-600 mb-2">Quick select:</p>
@@ -159,7 +152,6 @@ export default function ExamBank() {
 
                       return (
                         <React.Fragment key={subject}>
-                          {/* CA Score Input */}
                           <td className="p-1 border-l">
                             <input
                               type="number"
@@ -172,8 +164,6 @@ export default function ExamBank() {
                               placeholder="0"
                             />
                           </td>
-
-                          {/* Exam Score Input */}
                           <td className="p-1">
                             <input
                               type="number"
@@ -186,8 +176,6 @@ export default function ExamBank() {
                               placeholder="0"
                             />
                           </td>
-
-                          {/* Total Score Display */}
                           <td className="p-2 text-center font-medium bg-blue-50">
                             <span className={`px-2 py-1 rounded text-sm ${
                               scores.total >= 70 ? 'bg-green-100 text-green-800' :
@@ -207,7 +195,7 @@ export default function ExamBank() {
             </table>
           </div>
 
-          {/* Mobile Responsive Note */}
+          {/* Mobile Tip */}
           <div className="mt-4 md:hidden bg-orange-50 border border-orange-200 rounded-lg p-3">
             <p className="text-orange-700 text-sm">
               💡 <strong>Mobile Tip:</strong> Scroll horizontally to view all subjects
