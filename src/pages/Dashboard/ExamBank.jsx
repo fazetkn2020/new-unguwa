@@ -1,7 +1,10 @@
+// src/pages/Dashboard/ExamBank.jsx
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useExam } from "../../context/ExamContext";
 import { subjects } from "../../data/subjects";
+import DebugExamData from "../../components/DebugExamData";
+import { getStudentIdentifier } from "../../utils/studentUtils";
 
 export default function ExamBank() {
   const { user } = useAuth() || {};
@@ -27,16 +30,15 @@ export default function ExamBank() {
   const currentSubjects = subjects[selectedClass] || [];
   const classStudents = getClassStudents(selectedClass);
 
-  const filteredClasses = allClasses.filter(cls => 
+  const filteredClasses = allClasses.filter(cls =>
     cls.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getStudentIdentifier = (student) => {
-    return `${selectedClass}_${student.fullName.replace(/\s+/g, '_')}`;
-  };
-
   return (
     <div className="p-6">
+      {/* Debug component (you can remove this later) */}
+      <DebugExamData />
+
       <h2 className="text-2xl font-bold mb-6">Exam Bank - Score Management</h2>
 
       {/* Class Search and Selection */}
@@ -76,8 +78,8 @@ export default function ExamBank() {
                   key={cls}
                   onClick={() => setSelectedClass(cls)}
                   className={`px-3 py-1 rounded text-sm ${
-                    selectedClass === cls 
-                      ? 'bg-blue-600 text-white' 
+                    selectedClass === cls
+                      ? 'bg-blue-600 text-white'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >
@@ -140,57 +142,64 @@ export default function ExamBank() {
                 </tr>
               </thead>
               <tbody>
-                {classStudents.map(student => (
-                  <tr key={student.fullName} className="border-b hover:bg-gray-50">
-                    <td className="p-3 font-medium sticky left-0 bg-white border-r">
-                      {student.fullName}
-                    </td>
-                    {currentSubjects.map(subject => {
-                      const studentIdentifier = getStudentIdentifier(student);
-                      const canEdit = canUserEditSubject(user, subject);
-                      const scores = examData[studentIdentifier]?.[subject] || { ca: '', exam: '', total: 0 };
+                {classStudents.map(student => {
+                  const studentIdentifier = getStudentIdentifier(student, selectedClass);
+                  const canEdit = canUserEditSubject(user, currentSubjects.length ? currentSubjects[0] : "");
+                  const scores = examData[studentIdentifier] || {};
 
-                      return (
-                        <React.Fragment key={subject}>
-                          <td className="p-1 border-l">
-                            <input
-                              type="number"
-                              min="0"
-                              max="40"
-                              value={scores.ca}
-                              onChange={(e) => updateScore(studentIdentifier, subject, 'ca', e.target.value)}
-                              disabled={!canEdit}
-                              className="w-16 p-1 border rounded text-center disabled:bg-gray-100 focus:ring-2 focus:ring-blue-300"
-                              placeholder="0"
-                            />
-                          </td>
-                          <td className="p-1">
-                            <input
-                              type="number"
-                              min="0"
-                              max="60"
-                              value={scores.exam}
-                              onChange={(e) => updateScore(studentIdentifier, subject, 'exam', e.target.value)}
-                              disabled={!canEdit}
-                              className="w-16 p-1 border rounded text-center disabled:bg-gray-100 focus:ring-2 focus:ring-blue-300"
-                              placeholder="0"
-                            />
-                          </td>
-                          <td className="p-2 text-center font-medium bg-blue-50">
-                            <span className={`px-2 py-1 rounded text-sm ${
-                              scores.total >= 70 ? 'bg-green-100 text-green-800' :
-                              scores.total >= 50 ? 'bg-blue-100 text-blue-800' :
-                              scores.total >= 40 ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {scores.total || 0}
-                            </span>
-                          </td>
-                        </React.Fragment>
-                      );
-                    })}
-                  </tr>
-                ))}
+                  return (
+                    <tr key={studentIdentifier} className="border-b hover:bg-gray-50">
+                      <td className="p-3 font-medium sticky left-0 bg-white border-r">
+                        {student.fullName}
+                      </td>
+
+                      {currentSubjects.map(subject => {
+                        const sid = studentIdentifier;
+                        const subjectScores = examData[sid]?.[subject] || { ca: '', exam: '', total: 0 };
+                        const editable = canUserEditSubject(user, subject);
+
+                        return (
+                          <React.Fragment key={`${sid}_${subject}`}>
+                            <td className="p-1 border-l">
+                              <input
+                                type="number"
+                                min="0"
+                                max="40"
+                                value={subjectScores.ca === '' ? '' : subjectScores.ca}
+                                onChange={(e) => updateScore(sid, subject, 'ca', e.target.value)}
+                                disabled={!editable}
+                                className="w-16 p-1 border rounded text-center disabled:bg-gray-100 focus:ring-2 focus:ring-blue-300"
+                                placeholder="0"
+                              />
+                            </td>
+                            <td className="p-1">
+                              <input
+                                type="number"
+                                min="0"
+                                max="60"
+                                value={subjectScores.exam === '' ? '' : subjectScores.exam}
+                                onChange={(e) => updateScore(sid, subject, 'exam', e.target.value)}
+                                disabled={!editable}
+                                className="w-16 p-1 border rounded text-center disabled:bg-gray-100 focus:ring-2 focus:ring-blue-300"
+                                placeholder="0"
+                              />
+                            </td>
+                            <td className="p-2 text-center font-medium bg-blue-50">
+                              <span className={`px-2 py-1 rounded text-sm ${
+                                subjectScores.total >= 70 ? 'bg-green-100 text-green-800' :
+                                subjectScores.total >= 50 ? 'bg-blue-100 text-blue-800' :
+                                subjectScores.total >= 40 ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {subjectScores.total || 0}
+                              </span>
+                            </td>
+                          </React.Fragment>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

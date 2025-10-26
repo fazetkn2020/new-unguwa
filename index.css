@@ -1,0 +1,7 @@
+@media print {
+    @page { margin: 0; size: A4; }
+    body * { visibility: hidden; }
+    .report-sheet-container, .report-sheet-container * { visibility: visible; }
+    .report-sheet-container { position: absolute; left: 0; top: 0; width: 100% !important; }
+    .print\:hidden { display: none !important; }
+  }

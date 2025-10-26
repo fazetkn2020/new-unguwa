@@ -155,13 +155,13 @@ const ScoringFeature = ({ user, context = "dashboard" }) => {
                   </div>
                 ) : (
                   <>
-                    <ScoreEntryTable
-                      students={filteredStudents}
-                      selectedSubject={teaching.currentSubject}
-                      examData={examData}
-                      onScoreUpdate={updateScore}
-                      currentClass={teaching.currentClass}
-                    />
+<ScoreEntryTable
+  students={filteredStudents}
+  selectedSubject={teaching.currentSubject}
+  examData={examData}
+  updateScore={updateScore}  // ← CHANGED to updateScore
+  currentClass={teaching.currentClass}
+/>
 
                     {/* Quick Actions */}
                     <div className="mt-6 flex gap-4">

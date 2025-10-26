@@ -1,7 +1,7 @@
 // FIXED IMPORT PATHS
 import React from 'react';
 import { useBulkPrint } from '../context/BulkPrintContext';
-import { generateMultipleReportPDFs, downloadPDF, isJsPDFAvailable } from '../utils/pdfExportUtils';
+import { exportAsImage, isJsPDFAvailable } from '../utils/pdfExportUtils';
 import { generateReportFileName, generateBulkZipFileName } from '../utils/fileNamingUtils';
 import { validateStudentsForPrint } from '../utils/bulkPrintUtils';
 
