@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useExam } from "../../context/ExamContext";
 import { subjects } from "../../data/subjects";
-import DebugExamData from "../../components/DebugExamData";
 import { getStudentIdentifier } from "../../utils/studentUtils";
 
 export default function ExamBank() {
@@ -37,7 +36,7 @@ export default function ExamBank() {
   return (
     <div className="p-6">
       {/* Debug component (you can remove this later) */}
-      <DebugExamData />
+      
 
       <h2 className="text-2xl font-bold mb-6">Exam Bank - Score Management</h2>
 
