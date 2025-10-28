@@ -32,7 +32,7 @@ export default function StudentDashboard() {
         return <StudentScores studentId={user.id} scores={scores} />;
       case 'reports':
         return <StudentReports student={user} />;
-      case 'message': // NEW MODULE
+      case 'message':
         return <ParentMessage />;
       default:
         return <StudentAttendance studentId={user.id} />;
@@ -73,14 +73,14 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {/* Module Navigation - UPDATED */}
+      {/* Module Navigation - UPDATED: No assignments */}
       <div className="bg-white rounded-lg shadow">
         <div className="flex border-b overflow-x-auto">
           {[
             { id: 'attendance', label: 'My Attendance', icon: '✅' },
             { id: 'scores', label: 'My Scores', icon: '📊' },
             { id: 'reports', label: 'Progress Reports', icon: '📋' },
-            { id: 'message', label: 'Message Principal', icon: '📝' } // NEW BUTTON
+            { id: 'message', label: 'Message Principal', icon: '📝' }
           ].map(module => (
             <button
               key={module.id}

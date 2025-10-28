@@ -33,9 +33,9 @@ export const getRoleConfig = (role) => {
       defaultModule: "overview",
       modules: [
         { id: "overview", label: "School Overview", icon: "🏫" },
-        { id: "activities", label: "Weekly Activities", icon: "📊" },
         { id: "staff", label: "Staff Overview", icon: "👨‍🏫" },
         { id: "attendance", label: "Attendance", icon: "👥" },
+        { id: "messages", label: "Parent Messages", icon: "📨" },
         { id: "exambank", label: "Exam Bank", icon: "📚" }
       ]
     },
@@ -79,7 +79,8 @@ export const getRoleConfig = (role) => {
         { id: "students", label: "Student Management", icon: "👥" },
         { id: "roster", label: "Duty Roster", icon: "📋" },
         { id: "monitors", label: "Student Monitors", icon: "⭐" },
-        { id: "scoring", label: "Score Entry", icon: "✏️" },
+        // Scoring only shown if Form Master has subject assignments
+        // { id: "scoring", label: "Score Entry", icon: "✏️" },
         { id: "exambank", label: "Exam Bank", icon: "📊" }
       ]
     },
@@ -136,7 +137,8 @@ export const getRoleConfig = (role) => {
         { id: "attendance", label: "My Attendance", icon: "✅" },
         { id: "scores", label: "My Scores", icon: "📊" },
         { id: "reports", label: "Progress Reports", icon: "📋" },
-        { id: "assignments", label: "My Work", icon: "📝" }
+        { id: "message", label: "Message Principal", icon: "📝" }
+        // REMOVED: assignments module
       ]
     }
   };

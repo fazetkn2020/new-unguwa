@@ -20,15 +20,13 @@ import TeacherAttendanceView from '../roles/TeacherAttendanceView';
 
 // Import new role modules
 import AcademicMaterials from '../roles/AcademicMaterials';
-import SchoolCommunications from '../roles/SchoolCommunications'; // ← KEEP THIS ONE
+import SchoolCommunications from '../roles/SchoolCommunications';
 import ExamOfficerReports from '../roles/ExamOfficerReports';
 import SubmissionTracking from '../roles/SubmissionTracking';
 import TimetableManager from '../roles/TimetableManager';
 import StudentDashboard from '../roles/StudentDashboard';
 import TeacherPerformance from '../roles/TeacherPerformance';
 import PrincipalMessages from '../roles/PrincipalMessages';
-
-// REMOVE DUPLICATE IMPORT - SchoolCommunications is already imported above
 
 export default function TechContent({ config, activeModule, user, dashboardData }) {
   const { isAdmin } = useAuth();
@@ -148,6 +146,12 @@ export default function TechContent({ config, activeModule, user, dashboardData 
           );
         }
 
+      case 'messages':
+        if (user.role === 'Principal') {
+          return <PrincipalMessages />;
+        }
+        break;
+
       // VP Academic modules
       case 'materials':
         return <AcademicMaterials />;
@@ -180,94 +184,151 @@ export default function TechContent({ config, activeModule, user, dashboardData 
           </div>
         );
 
-      // Form Master modules
+      // Form Master modules - FIXED: Only show actual Form Master tasks
       case 'students':
-        return <ClassListManager className={user.assignedClasses?.[0]} />;
+        if (user.role === 'Form Master') {
+          return <ClassListManager className={user.assignedClasses?.[0]} />;
+        }
+        break;
 
       case 'roster':
-        return <StudentList className={user.assignedClasses?.[0]} />;
-
-      case 'scoring':
-        return user.assignedClasses && user.assignedSubjects ? (
-          <ScoreCenter />
-        ) : (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-            <p className="text-yellow-800">You need both assigned classes and subjects to enter marks.</p>
-          </div>
-        );
+        if (user.role === 'Form Master') {
+          return (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-bold mb-4">Duty Roster - {user.assignedClasses?.[0]}</h2>
+              <p className="text-gray-600">Manage student duty assignments and class monitors.</p>
+            </div>
+          );
+        } else if (user.role === 'Senior Master') {
+          return (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-bold mb-4">School Duty Roster</h2>
+              <p className="text-gray-600">Manage school-wide duty assignments.</p>
+            </div>
+          );
+        }
+        break;
 
       case 'monitors':
-        return (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">Student Monitors</h2>
-            <p className="text-gray-600">Manage student prefects and class monitors.</p>
-          </div>
-        );
+        if (user.role === 'Form Master') {
+          return (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-bold mb-4">Student Monitors - {user.assignedClasses?.[0]}</h2>
+              <p className="text-gray-600">Assign and manage class prefects and student leaders.</p>
+            </div>
+          );
+        }
+        break;
+
+      case 'scoring':
+        // Form Masters can only score if they also have assigned subjects
+        if (user.role === 'Form Master' && user.assignedClasses && user.assignedSubjects) {
+          return <ScoreCenter />;
+        } else if (user.role === 'Form Master') {
+          return (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+              <p className="text-yellow-800">
+                You need both assigned classes and subjects to enter marks. 
+                Currently you only have class assignment.
+              </p>
+            </div>
+          );
+        } else if (user.role === 'Subject Teacher') {
+          return user.assignedClasses && user.assignedSubjects ? (
+            <ScoreCenter />
+          ) : (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+              <p className="text-yellow-800">You need both assigned classes and subjects to enter marks.</p>
+            </div>
+          );
+        }
+        break;
 
       // Subject Teacher modules
       case 'assignments':
-        return (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">My Teaching Assignments</h2>
-            <div className="space-y-3">
-              <div><strong>Classes:</strong> {user.assignedClasses?.join(', ') || 'None assigned'}</div>
-              <div><strong>Subjects:</strong> {user.assignedSubjects?.join(', ') || 'None assigned'}</div>
+        if (user.role === 'Subject Teacher') {
+          return (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-bold mb-4">My Teaching Assignments</h2>
+              <div className="space-y-3">
+                <div><strong>Classes:</strong> {user.assignedClasses?.join(', ') || 'None assigned'}</div>
+                <div><strong>Subjects:</strong> {user.assignedSubjects?.join(', ') || 'None assigned'}</div>
+              </div>
             </div>
-          </div>
-        );
+          );
+        }
+        break;
 
       // Exam Officer modules
       case 'reports':
-        return <ExamOfficerReports />;
+        if (user.role === 'Exam Officer') {
+          return <ExamOfficerReports />;
+        }
+        // REMOVED DUPLICATE: Student case moved to default handling
+        break;
 
       case 'submissions':
-        return <SubmissionTracking />;
+        if (user.role === 'Exam Officer') {
+          return <SubmissionTracking />;
+        }
+        break;
 
       case 'tracking':
-        return (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">Submission Progress Tracking</h2>
-            <p className="text-gray-600">Monitor overall submission progress and deadlines.</p>
-          </div>
-        );
+        if (user.role === 'Exam Officer') {
+          return (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-bold mb-4">Submission Progress Tracking</h2>
+              <p className="text-gray-600">Monitor overall submission progress and deadlines.</p>
+            </div>
+          );
+        }
+        break;
 
       case 'bulk':
-        return (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">Bulk Operations</h2>
-            <p className="text-gray-600">Manage bulk printing and export operations.</p>
-          </div>
-        );
+        if (user.role === 'Exam Officer') {
+          return (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-bold mb-4">Bulk Operations</h2>
+              <p className="text-gray-600">Manage bulk printing and export operations.</p>
+            </div>
+          );
+        }
+        break;
 
       // Senior Master modules
       case 'timetable':
-        return <TimetableManager />;
+        if (user.role === 'Senior Master') {
+          return <TimetableManager />;
+        }
+        break;
 
       case 'performance':
-        return <TeacherPerformance />;
+        if (user.role === 'Senior Master') {
+          return <TeacherPerformance />;
+        }
+        break;
 
-      // Student modules
+      // Student modules - FIXED: Handle all student modules in one place
       case 'scores':
-        return <StudentDashboard />;
-
-      case 'reports':
         if (user.role === 'Student') {
           return <StudentDashboard />;
         }
         break;
 
-      case 'assignments':
-        if (user.role === 'Student') {
-          return <StudentDashboard />;
-        }
-        break;
+      // REMOVED DUPLICATE: 'reports' case for students - handled by StudentDashboard
+      // REMOVED DUPLICATE: 'message' case for students - handled by StudentDashboard
 
       // Shared modules
       case 'exambank':
         return <ExamBank isAdmin={isAdmin} />;
 
-      // Default fallback
+      // Default fallback - Handle Student Dashboard modules
       default:
+        // For Student role, all modules are handled by StudentDashboard
+        if (user.role === 'Student') {
+          return <StudentDashboard />;
+        }
+        
         return (
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-bold mb-4">{config.title}</h2>
@@ -283,8 +344,3 @@ export default function TechContent({ config, activeModule, user, dashboardData 
     </div>
   );
 }
-case 'messages': // Add this case for Principal
-  if (user.role === 'Principal') {
-    return <PrincipalMessages />;
-  }
-  break;

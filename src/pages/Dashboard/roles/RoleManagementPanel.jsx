@@ -15,11 +15,13 @@ export default function RoleManagementPanel() {
 
   const loadUsers = () => {
     const savedUsers = JSON.parse(localStorage.getItem('users')) || [];
-    setUsers(savedUsers);
+    // Only show staff users, not students
+    const staffUsers = savedUsers.filter(u => u.role !== 'Student');
+    setUsers(staffUsers);
   };
 
   const loadRoles = () => {
-    // Define available roles
+    // Define available roles (excluding Student)
     const availableRoles = [
       'Admin',
       'Principal', 
@@ -28,8 +30,8 @@ export default function RoleManagementPanel() {
       'Form Master',
       'Exam Officer',
       'Subject Teacher',
-      'Senior Master',
-      'Student'
+      'Senior Master'
+      // REMOVED: 'Student'
     ];
     setRoles(availableRoles);
   };
@@ -40,13 +42,11 @@ export default function RoleManagementPanel() {
       return;
     }
 
-    // FIX: Check if users array exists and has items
     if (!users || users.length === 0) {
       alert('No users found');
       return;
     }
 
-    // FIX: Safe user finding with null check
     const userToUpdate = users.find(u => u.id === selectedUser);
     if (!userToUpdate) {
       alert('User not found');
@@ -58,15 +58,22 @@ export default function RoleManagementPanel() {
     );
 
     setUsers(updatedUsers);
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
+    
+    // Update in main users storage
+    const allUsers = JSON.parse(localStorage.getItem('users')) || [];
+    const finalUsers = allUsers.map(u => 
+      u.id === selectedUser ? { ...u, role: newRole } : u
+    );
+    
+    localStorage.setItem('users', JSON.stringify(finalUsers));
     
     alert(`Role updated successfully! ${userToUpdate.name} is now ${newRole}`);
     setSelectedUser('');
     setNewRole('');
+    loadUsers(); // Reload to reflect changes
   };
 
   const promoteToAdmin = (userId) => {
-    // FIX: Safe user finding
     const userToPromote = users.find(u => u.id === userId);
     if (!userToPromote) {
       alert('User not found');
@@ -83,32 +90,40 @@ export default function RoleManagementPanel() {
     );
 
     setUsers(updatedUsers);
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
+    
+    // Update in main users storage
+    const allUsers = JSON.parse(localStorage.getItem('users')) || [];
+    const finalUsers = allUsers.map(u => 
+      u.id === userId ? { ...u, role: 'Admin' } : u
+    );
+    
+    localStorage.setItem('users', JSON.stringify(finalUsers));
     alert(`${userToPromote.name} promoted to Admin successfully!`);
+    loadUsers(); // Reload to reflect changes
   };
 
-  // FIX: Safe filtering with fallback
+  // Only staff users (students are filtered out)
   const staffUsers = users.filter(u => u && u.role && u.role !== 'Student') || [];
-  const studentUsers = users.filter(u => u && u.role && u.role === 'Student') || [];
 
   return (
     <div className="space-y-6">
       {/* Role Assignment */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold mb-4">Role Assignment</h2>
+        <h2 className="text-xl font-bold mb-4">Staff Role Management</h2>
+        <p className="text-gray-600 mb-4">Manage roles for teaching staff and administrators</p>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select User
+              Select Staff Member
             </label>
             <select
               value={selectedUser}
               onChange={(e) => setSelectedUser(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Choose a user...</option>
-              {users.map(user => (
+              <option value="">Choose staff member...</option>
+              {staffUsers.map(user => (
                 <option key={user.id} value={user.id}>
                   {user.name} - {user.role}
                 </option>
@@ -125,7 +140,7 @@ export default function RoleManagementPanel() {
               onChange={(e) => setNewRole(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Choose a role...</option>
+              <option value="">Choose role...</option>
               {roles.map(role => (
                 <option key={role} value={role}>{role}</option>
               ))}
@@ -200,74 +215,31 @@ export default function RoleManagementPanel() {
         </div>
       </div>
 
-      {/* Students Overview */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold">Students</h3>
-          <p className="text-sm text-gray-600">{studentUsers.length} students</p>
-        </div>
-        
-        <div className="divide-y">
-          {studentUsers.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              No students found.
-            </div>
-          ) : (
-            studentUsers.slice(0, 10).map(student => (
-              <div key={student.id} className="p-4 flex justify-between items-center">
-                <div>
-                  <h4 className="font-semibold">{student.name}</h4>
-                  <p className="text-sm text-gray-600">
-                    Admission: {student.admissionNumber || 'N/A'}
-                  </p>
-                  {student.assignedClasses && (
-                    <p className="text-xs text-gray-500">
-                      Class: {student.assignedClasses.join(', ')}
-                    </p>
-                  )}
-                </div>
-                <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded">
-                  Student
-                </span>
-              </div>
-            ))
-          )}
-        </div>
-        
-        {studentUsers.length > 10 && (
-          <div className="p-4 text-center border-t">
-            <p className="text-sm text-gray-600">
-              Showing 10 of {studentUsers.length} students
-            </p>
-          </div>
-        )}
-      </div>
-
       {/* Role Statistics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold text-blue-600">
-            {users.filter(u => u && u.role === 'Admin').length}
+            {staffUsers.filter(u => u.role === 'Admin').length}
           </div>
           <div className="text-sm text-gray-600">Admins</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold text-green-600">
-            {staffUsers.length}
+            {staffUsers.filter(u => ['Principal', 'VP Academic', 'VP Admin'].includes(u.role)).length}
           </div>
-          <div className="text-sm text-gray-600">Staff</div>
+          <div className="text-sm text-gray-600">Leadership</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold text-purple-600">
-            {studentUsers.length}
+            {staffUsers.filter(u => ['Form Master', 'Subject Teacher'].includes(u.role)).length}
           </div>
-          <div className="text-sm text-gray-600">Students</div>
+          <div className="text-sm text-gray-600">Teachers</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold text-orange-600">
-            {users.length}
+            {staffUsers.length}
           </div>
-          <div className="text-sm text-gray-600">Total Users</div>
+          <div className="text-sm text-gray-600">Total Staff</div>
         </div>
       </div>
     </div>

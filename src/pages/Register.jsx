@@ -1,4 +1,3 @@
-// src/pages/Register.jsx - COMPLETE UPDATED VERSION
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { classes } from "../data/classes";
@@ -10,7 +9,7 @@ const Register = () => {
         email: "",
         password: "",
         confirmPassword: "",
-        formClass: "" // Add form class field
+        formClass: ""
     });
 
     const handleChange = (e) => {
@@ -34,7 +33,7 @@ const Register = () => {
             return;
         }
 
-        // Create new user with form class if applicable
+        // FIXED: Create proper pending user with userType
         const newUser = {
             id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
             role: "pending",
@@ -42,9 +41,10 @@ const Register = () => {
             name: formData.fullName,
             email: formData.email,
             password: formData.password,
-            formClass: formData.formClass, // Store assigned class
+            formClass: formData.formClass,
             createdAt: new Date().toISOString(),
-            status: "pending"
+            status: "pending",
+            userType: formData.formClass ? "student" : "teacher" // FIXED: Identify user type
         };
 
         users.push(newUser);
@@ -76,20 +76,20 @@ const Register = () => {
                     className="border p-2 mb-3 w-full rounded" 
                     required 
                 />
-                
-                {/* Class Assignment - Optional for Form Masters */}
+
+                {/* Class Assignment - For Students */}
                 <select 
                     name="formClass" 
                     value={formData.formClass} 
                     onChange={handleChange} 
                     className="border p-2 mb-3 w-full rounded"
                 >
-                    <option value="">Select Class (Optional)</option>
+                    <option value="">Select Class (For Students)</option>
                     {classes.map(cls => (
                         <option key={cls} value={cls}>{cls}</option>
                     ))}
                 </select>
-                
+
                 <input 
                     type="password" 
                     name="password" 
@@ -108,14 +108,22 @@ const Register = () => {
                     className="border p-2 mb-3 w-full rounded" 
                     required 
                 />
+                
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-blue-800">
+                        <strong>Note:</strong> All registrations require admin approval. 
+                        {formData.formClass ? " You're registering as a student." : " You're registering as staff."}
+                    </p>
+                </div>
+                
                 <button 
                     type="submit" 
                     className="bg-blue-500 text-white p-2 rounded w-full hover:bg-blue-600 mb-4"
                 >
-                    Register
+                    Register for Approval
                 </button>
             </form>
-            
+
             <p className="text-center text-sm">
                 Already have an account?{" "}
                 <Link to="/login" className="text-blue-500 hover:text-blue-700 font-medium">
