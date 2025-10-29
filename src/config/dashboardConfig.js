@@ -1,147 +1,56 @@
-export const getRoleConfig = (role) => {
-  const baseConfig = {
-    loadData: async (user) => {
-      const users = JSON.parse(localStorage.getItem("users")) || [];
-      const classLists = JSON.parse(localStorage.getItem("classLists")) || {};
-      return { users, classLists };
-    }
-  };
+import DashboardHome from "../pages/Dashboard/layout/DashboardHome";
+import RoleMenu from "../data/roleMenus";
+import UserManagementPanel from "../pages/Dashboard/roles/UserManagementPanel";
+import TeacherAssignmentPanel from "../pages/Dashboard/roles/TeacherAssignmentPanel";
+import TechContent from "../pages/Dashboard/layout/TechContent";
+import AdvancedTimetable from "../pages/Dashboard/roles/AdvancedTimetable";
+import DutyRosterManager from "../pages/Dashboard/roles/DutyRosterManager";
+import TeacherPerformance from "../pages/Dashboard/roles/TeacherPerformance";
 
-  // Normalize role - handle both "admin" and "Admin"
-  const normalizedRole = role === 'admin' ? 'Admin' : role;
+// role-based configuration
+const dashboardConfig = (user) => {
+  if (!user) return {};
+
+  const normalizedRole = user.role?.trim();
 
   const roleConfigs = {
     Admin: {
-      title: "Admin Control Center",
-      subtitle: "System Administration", 
-      icon: "⚡",
-      layout: "tabs",
-      defaultModule: "users",
-      modules: [
-        { id: "users", label: "User Management", icon: "👥" },
-        { id: "assignments", label: "Teacher Assignments", icon: "📚" },
-        { id: "roles", label: "Role Management", icon: "🧩" },
-        { id: "settings", label: "System Settings", icon: "⚙️" }
-      ]
+      home: <DashboardHome />,
+      content: <TechContent />,
+      roleMenu: RoleMenu.Admin,
+      panels: {
+        'user-management': <UserManagementPanel />,
+        'teacher-assignment': <TeacherAssignmentPanel />,
+      },
     },
 
-    Principal: {
-      title: "Principal Dashboard",
-      subtitle: "School Overview & Monitoring",
-      icon: "🎓",
-      layout: "sections",
-      defaultModule: "overview",
-      modules: [
-        { id: "overview", label: "School Overview", icon: "🏫" },
-        { id: "staff", label: "Staff Overview", icon: "👨‍🏫" },
-        { id: "attendance", label: "Attendance", icon: "👥" },
-        { id: "messages", label: "Parent Messages", icon: "📨" },
-        { id: "exambank", label: "Exam Bank", icon: "📚" }
-      ]
+    Teacher: {
+      home: <DashboardHome />,
+      content: <TechContent />,
+      roleMenu: RoleMenu.Teacher,
+      panels: {},
     },
 
-    "VP Academic": {
-      title: "VP Academic Dashboard",
-      subtitle: "Academic Oversight & Resources",
-      icon: "📚",
-      layout: "sections",
-      defaultModule: "materials",
-      modules: [
-        { id: "materials", label: "Academic Materials", icon: "📖" },
-        { id: "attendance", label: "Teacher Attendance", icon: "✅" },
-        { id: "lessonplans", label: "Lesson Plans", icon: "📋" },
-        { id: "subjects", label: "Subject Assignments", icon: "🎯" },
-        { id: "exambank", label: "Exam Bank", icon: "📊" }
-      ]
-    },
-
-    "VP Admin": {
-      title: "VP Admin Dashboard",
-      subtitle: "Staff Administration & Communications",
-      icon: "⚙️",
-      layout: "sections",
-      defaultModule: "attendance",
-      modules: [
-        { id: "attendance", label: "Staff Attendance", icon: "📝" },
-        { id: "communications", label: "School Communications", icon: "📢" },
-        { id: "calendar", label: "School Calendar", icon: "📅" },
-        { id: "exambank", label: "Exam Bank", icon: "📚" }
-      ]
-    },
-
-    "Form Master": {
-      title: "Form Master Dashboard",
-      subtitle: "Class Management & Student Oversight",
-      icon: "👨‍🏫",
-      layout: "sections",
-      defaultModule: "students",
-      modules: [
-        { id: "students", label: "👥 Class Students", icon: "👥" },
-        { id: "attendance", label: "✅ Take Attendance", icon: "✅" },
-        { id: "roster", label: "📋 Auto Roster", icon: "📋" },
-        { id: "attendance-view", label: "📊 View Attendance", icon: "📊" },
-        { id: "exambank", label: "🏫 Exam Bank", icon: "🏫" }
-      ]
-    },
-
-    "Exam Officer": {
-      title: "Exam Officer Dashboard",
-      subtitle: "Exam Coordination & Report Generation",
-      icon: "📊",
-      layout: "sections",
-      defaultModule: "reports",
-      modules: [
-        { id: "reports", label: "Report Printing", icon: "🖨️" },
-        { id: "submissions", label: "Exam Submissions", icon: "📥" },
-        { id: "tracking", label: "Submission Tracking", icon: "📈" },
-        { id: "bulk", label: "Bulk Operations", icon: "⚡" },
-        { id: "exambank", label: "Exam Bank", icon: "📚" }
-      ]
-    },
-
-    "Subject Teacher": {
-      title: "Subject Teacher Dashboard",
-      subtitle: "Teaching, Assessment & Resource Management",
-      icon: "✏️",
-      layout: "tabs",
-      defaultModule: "scoring",
-      modules: [
-        { id: "scoring", label: "📝 Score Entry", icon: "📝" },
-        { id: "questions", label: "❓ Create Questions", icon: "❓" },
-        { id: "elibrary-upload", label: "📚 Add to E-Library", icon: "📚" },
-        { id: "exambank", label: "🏫 Exam Bank", icon: "🏫" }
-      ]
-    },
-
-    "Senior Master": {
-      title: "Senior Master Dashboard",
-      subtitle: "School Operations & Scheduling",
-      icon: "⚡",
-      layout: "sections",
-      defaultModule: "timetable",
-      modules: [
-        { id: "timetable", label: "Timetable", icon: "📅" },
-        { id: "roster", label: "Duty Roster", icon: "🕐" },
-        { id: "performance", label: "Performance", icon: "📈" },
-        { id: "exambank", label: "Exam Bank", icon: "📊" }
-      ]
+    'Senior Master': {
+      home: <DashboardHome />,
+      content: <TechContent />,
+      roleMenu: RoleMenu.SeniorMaster,
+      panels: {
+        'advanced-timetable': <AdvancedTimetable />,
+        'duty-roster': <DutyRosterManager />,
+        'performance': <TeacherPerformance />,
+      },
     },
 
     Student: {
-      title: "Student Dashboard",
-      subtitle: "Academic Progress & Attendance",
-      icon: "🎒",
-      layout: "sections",
-      defaultModule: "attendance",
-      modules: [
-        { id: "attendance", label: "My Attendance", icon: "✅" },
-        { id: "scores", label: "My Scores", icon: "📊" },
-        { id: "reports", label: "Progress Reports", icon: "📋" },
-        { id: "message", label: "Message Principal", icon: "📝" }
-        // REMOVED: assignments module
-      ]
-    }
+      home: <DashboardHome />,
+      content: <TechContent />,
+      roleMenu: RoleMenu.Student,
+      panels: {},
+    },
   };
 
   return roleConfigs[normalizedRole] || roleConfigs.Student;
 };
+
+export default dashboardConfig;

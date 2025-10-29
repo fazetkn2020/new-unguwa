@@ -1,3 +1,4 @@
+// src/pages/Dashboard/layout/TechContent.jsx
 import React from 'react';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -13,6 +14,8 @@ import StudentList from '../roles/StudentList';
 import ExamBank from '../ExamBank';
 import ScoreCenter from '../ScoreCenter';
 import BulkReportCenter from '../BulkReportCenter';
+import TeacherReminder from '../roles/TeacherReminder';
+import SubjectInsights from '../roles/SubjectInsights';
 
 // Import attendance modules
 import VPAdminAttendance from '../roles/VPAdminAttendance';
@@ -25,6 +28,7 @@ import ExamOfficerReports from '../roles/ExamOfficerReports';
 import SubmissionTracking from '../roles/SubmissionTracking';
 import TimetableManager from '../roles/TimetableManager';
 import StudentDashboard from '../roles/StudentDashboard';
+import QuestionReview from '../roles/QuestionReview';
 import TeacherPerformance from '../roles/TeacherPerformance';
 import PrincipalMessages from '../roles/PrincipalMessages';
 
@@ -35,6 +39,17 @@ import AttendanceViewer from '../roles/AttendanceViewer';
 
 import QuestionCreator from '../roles/QuestionCreator';
 import ELibraryUploader from '../roles/ELibraryUploader';
+
+import AdvancedTimetable from '../roles/AdvancedTimetable';
+import DutyRosterManager from '../roles/DutyRosterManager';
+import DutyDisplay from '../roles/DutyDisplay';
+
+import SchoolAnalytics from '../roles/SchoolAnalytics';
+import StaffPerformance from '../roles/StaffPerformance';
+import SchoolEvents from '../roles/SchoolEvents';
+import MassCommunications from '../roles/MassCommunications';
+
+
 export default function TechContent({ config, activeModule, user, dashboardData }) {
   const { isAdmin } = useAuth();
 
@@ -136,6 +151,29 @@ export default function TechContent({ config, activeModule, user, dashboardData 
             </div>
           </div>
         );
+        case 'analytics':
+          if (user.role === 'Principal') {
+            return <SchoolAnalytics />;
+          }
+          break;
+        
+        case 'staff-performance':
+          if (user.role === 'Principal') {
+            return <StaffPerformance />;
+          }
+          break;
+        
+        case 'events':
+          if (user.role === 'Principal') {
+            return <SchoolEvents />;
+          }
+          break;
+        
+        case 'communications':
+          if (user.role === 'Principal') {
+            return <MassCommunications />;
+          }
+          break;
 
       // Attendance modules for different roles
       case 'attendance':
@@ -155,6 +193,18 @@ export default function TechContent({ config, activeModule, user, dashboardData 
             </div>
           );
         }
+
+      case 'reminder':
+        if (user.role === 'Exam Officer') {
+          return <TeacherReminder />;
+        }
+        break;
+
+      case 'insights':
+        if (user.role === 'Exam Officer') {
+          return <SubjectInsights />;
+        }
+        break;
 
       case 'messages':
         if (user.role === 'Principal') {
@@ -232,7 +282,6 @@ export default function TechContent({ config, activeModule, user, dashboardData 
         break;
 
       case 'scoring':
-        // Form Masters can only score if they also have assigned subjects
         if (user.role === 'Form Master' && user.assignedClasses && user.assignedSubjects) {
           return <ScoreCenter />;
         } else if (user.role === 'Form Master') {
@@ -261,13 +310,20 @@ export default function TechContent({ config, activeModule, user, dashboardData 
           return <QuestionCreator user={user} />;
         }
         break;
-      
+
       case 'elibrary-upload':
         if (user.role === 'Subject Teacher') {
           return <ELibraryUploader user={user} />;
         }
         break;
+
       // Exam Officer modules
+      case 'question-review':
+        if (user.role === 'Exam Officer') {
+          return <QuestionReview />;
+        }
+        break;
+
       case 'reports':
         if (user.role === 'Exam Officer') {
           return <ExamOfficerReports />;
@@ -303,9 +359,15 @@ export default function TechContent({ config, activeModule, user, dashboardData 
         break;
 
       // Senior Master modules
-      case 'timetable':
+      case 'advanced-timetable':
         if (user.role === 'Senior Master') {
-          return <TimetableManager />;
+          return <AdvancedTimetable />;
+        }
+        break;
+
+      case 'duty-roster':
+        if (user.role === 'Senior Master') {
+          return <DutyRosterManager />;
         }
         break;
 
@@ -328,7 +390,6 @@ export default function TechContent({ config, activeModule, user, dashboardData 
 
       // Default fallback
       default:
-        // For Student role, all modules are handled by StudentDashboard
         if (user.role === 'Student') {
           return <StudentDashboard />;
         }
@@ -342,9 +403,5 @@ export default function TechContent({ config, activeModule, user, dashboardData 
     }
   };
 
-  return (
-    <div className="mt-6">
-      {renderModuleContent()}
-    </div>
-  );
+  return <div className="mt-6">{renderModuleContent()}</div>;
 }

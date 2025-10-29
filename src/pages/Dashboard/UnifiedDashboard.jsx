@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { useLocation, useNavigate } from "react-router-dom"; // ADD THIS IMPORT
+import { useLocation, useNavigate } from "react-router-dom";
 import TechHeader from "./layout/TechHeader";
 import TechNavigation from "./layout/TechNavigation";
 import TechContent from "./layout/TechContent";
 import { getRoleConfig } from "../../config/dashboardConfig";
+import DutyDisplay from './roles/DutyDisplay';
 
 export default function UnifiedDashboard() {
   const { user } = useAuth();
@@ -18,11 +19,11 @@ export default function UnifiedDashboard() {
     if (user) {
       const pathRole = location.pathname.split('/').pop();
       const userRole = user.role; // Already normalized by AuthContext
-      const pathRoleNormalized = pathRole === 'admin' ? 'Admin' : 
-                               pathRole.split('-').map(word => 
+      const pathRoleNormalized = pathRole === 'admin' ? 'Admin' :
+                               pathRole.split('-').map(word =>
                                  word.charAt(0).toUpperCase() + word.slice(1)
                                ).join(' ');
-      
+
       if (userRole !== pathRoleNormalized) {
         navigate('/dashboard');
       }
@@ -51,14 +52,15 @@ export default function UnifiedDashboard() {
   return (
     <div className="min-h-full">
       <TechHeader config={roleConfig} user={user} />
-      
+      <DutyDisplay /> {/* Add this line here */}
+
       <div className="container mx-auto px-4 py-6">
-        <TechNavigation 
+        <TechNavigation
           config={roleConfig}
           activeModule={activeModule}
           onModuleChange={setActiveModule}
         />
-        
+
         <TechContent
           config={roleConfig}
           activeModule={activeModule}
