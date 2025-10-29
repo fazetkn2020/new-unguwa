@@ -1,4 +1,3 @@
-// src/data/roleMenus.js - UPDATED
 export const roleMenus = {
   "Admin": [
     { name: "Dashboard", path: "/dashboard/admin" },
@@ -7,9 +6,12 @@ export const roleMenus = {
     { name: "System Settings", path: "/dashboard/admin/settings" }
   ],
   "Form Master": [
-    { name: "Dashboard", path: "/dashboard/form-master" },
-    { name: "📊 Exam Bank", path: "/dashboard/exambank" }, // ADD THIS LINE
-    { name: "Class List", path: "/dashboard/form-master/classlist" }
+    { name: "🏠 Dashboard", path: "/dashboard/form-master" },
+    { name: "👥 Class Students", path: "/dashboard/form-master/students" },
+    { name: "✅ Take Attendance", path: "/dashboard/form-master/attendance" },
+    { name: "📋 Auto Roster", path: "/dashboard/form-master/roster" },
+    { name: "📊 View Attendance", path: "/dashboard/form-master/attendance-view" },
+    { name: "🏫 Exam Bank", path: "/dashboard/exambank" }
   ],
   "Subject Teacher": [
     { name: "Dashboard", path: "/dashboard/teacher" },

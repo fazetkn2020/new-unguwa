@@ -76,12 +76,11 @@ export const getRoleConfig = (role) => {
       layout: "sections",
       defaultModule: "students",
       modules: [
-        { id: "students", label: "Student Management", icon: "👥" },
-        { id: "roster", label: "Duty Roster", icon: "📋" },
-        { id: "monitors", label: "Student Monitors", icon: "⭐" },
-        // Scoring only shown if Form Master has subject assignments
-        // { id: "scoring", label: "Score Entry", icon: "✏️" },
-        { id: "exambank", label: "Exam Bank", icon: "📊" }
+        { id: "students", label: "👥 Class Students", icon: "👥" },
+        { id: "attendance", label: "✅ Take Attendance", icon: "✅" },
+        { id: "roster", label: "📋 Auto Roster", icon: "📋" },
+        { id: "attendance-view", label: "📊 View Attendance", icon: "📊" },
+        { id: "exambank", label: "🏫 Exam Bank", icon: "🏫" }
       ]
     },
 

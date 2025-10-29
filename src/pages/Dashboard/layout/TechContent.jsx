@@ -28,6 +28,11 @@ import StudentDashboard from '../roles/StudentDashboard';
 import TeacherPerformance from '../roles/TeacherPerformance';
 import PrincipalMessages from '../roles/PrincipalMessages';
 
+// Import Form Master components
+import AttendanceRegistration from '../roles/AttendanceRegistration';
+import AutoRosterManager from '../roles/AutoRosterManager';
+import AttendanceViewer from '../roles/AttendanceViewer';
+
 export default function TechContent({ config, activeModule, user, dashboardData }) {
   const { isAdmin } = useAuth();
 
@@ -130,6 +135,7 @@ export default function TechContent({ config, activeModule, user, dashboardData 
           </div>
         );
 
+      // Attendance modules for different roles
       case 'attendance':
         if (user.role === 'VP Admin') {
           return <VPAdminAttendance />;
@@ -137,6 +143,8 @@ export default function TechContent({ config, activeModule, user, dashboardData 
           return <TeacherAttendanceView />;
         } else if (user.role === 'Student') {
           return <StudentDashboard />;
+        } else if (user.role === 'Form Master') {
+          return <AttendanceRegistration class={user.assignedClasses?.[0]} />;
         } else {
           return (
             <div className="bg-white rounded-lg shadow p-6">
@@ -172,7 +180,7 @@ export default function TechContent({ config, activeModule, user, dashboardData 
           </div>
         );
 
-      // VP Admin modules  
+      // VP Admin modules
       case 'communications':
         return <SchoolCommunications />;
 
@@ -184,7 +192,7 @@ export default function TechContent({ config, activeModule, user, dashboardData 
           </div>
         );
 
-      // Form Master modules - FIXED: Only show actual Form Master tasks
+      // Form Master modules
       case 'students':
         if (user.role === 'Form Master') {
           return <ClassListManager className={user.assignedClasses?.[0]} />;
@@ -193,12 +201,7 @@ export default function TechContent({ config, activeModule, user, dashboardData 
 
       case 'roster':
         if (user.role === 'Form Master') {
-          return (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold mb-4">Duty Roster - {user.assignedClasses?.[0]}</h2>
-              <p className="text-gray-600">Manage student duty assignments and class monitors.</p>
-            </div>
-          );
+          return <AutoRosterManager class={user.assignedClasses?.[0]} />;
         } else if (user.role === 'Senior Master') {
           return (
             <div className="bg-white rounded-lg shadow p-6">
@@ -206,6 +209,12 @@ export default function TechContent({ config, activeModule, user, dashboardData 
               <p className="text-gray-600">Manage school-wide duty assignments.</p>
             </div>
           );
+        }
+        break;
+
+      case 'attendance-view':
+        if (user.role === 'Form Master') {
+          return <AttendanceViewer class={user.assignedClasses?.[0]} />;
         }
         break;
 
@@ -228,7 +237,7 @@ export default function TechContent({ config, activeModule, user, dashboardData 
           return (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
               <p className="text-yellow-800">
-                You need both assigned classes and subjects to enter marks. 
+                You need both assigned classes and subjects to enter marks.
                 Currently you only have class assignment.
               </p>
             </div>
@@ -264,7 +273,6 @@ export default function TechContent({ config, activeModule, user, dashboardData 
         if (user.role === 'Exam Officer') {
           return <ExamOfficerReports />;
         }
-        // REMOVED DUPLICATE: Student case moved to default handling
         break;
 
       case 'submissions':
@@ -308,27 +316,24 @@ export default function TechContent({ config, activeModule, user, dashboardData 
         }
         break;
 
-      // Student modules - FIXED: Handle all student modules in one place
+      // Student modules
       case 'scores':
         if (user.role === 'Student') {
           return <StudentDashboard />;
         }
         break;
 
-      // REMOVED DUPLICATE: 'reports' case for students - handled by StudentDashboard
-      // REMOVED DUPLICATE: 'message' case for students - handled by StudentDashboard
-
       // Shared modules
       case 'exambank':
         return <ExamBank isAdmin={isAdmin} />;
 
-      // Default fallback - Handle Student Dashboard modules
+      // Default fallback
       default:
         // For Student role, all modules are handled by StudentDashboard
         if (user.role === 'Student') {
           return <StudentDashboard />;
         }
-        
+
         return (
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-bold mb-4">{config.title}</h2>

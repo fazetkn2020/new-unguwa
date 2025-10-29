@@ -4,7 +4,7 @@ import { getExamBankKey, getInitialScoreEntry } from '../../data/examBankTemplat
 
 export default function ScoreCenter() {
     const { user } = useAuth();
-    
+
     // FIX: Use correct user properties
     const userSubjects = user.assignedSubjects || [];
     const userClasses = user.assignedClasses || []; // FIX: assignedClasses, not formClass
@@ -14,12 +14,12 @@ export default function ScoreCenter() {
     const [studentRoster, setStudentRoster] = useState([]);
     const [scores, setScores] = useState({});
 
-    const currentTerm = 2; 
+    const currentTerm = 2;
     const currentYear = 2025;
     const storageKey = getExamBankKey(currentYear, currentTerm);
 
     // FIX: Form Master can only score for their assigned class
-    const isAuthorizedToEdit = user.role === 'Form Master' 
+    const isAuthorizedToEdit = user.role === 'Form Master'
         ? userClasses.includes(selectedClass) && userSubjects.includes(selectedSubject)
         : userSubjects.includes(selectedSubject);
 
@@ -47,7 +47,7 @@ export default function ScoreCenter() {
         const allExamData = JSON.parse(localStorage.getItem(storageKey)) || {};
         const classData = allExamData[selectedClass] || {};
         const subjectScores = classData[selectedSubject] || [];
-        
+
         const newScores = {};
         studentRoster.forEach(studentName => {
             const existing = subjectScores.find(s => s.studentName === studentName);
@@ -56,14 +56,36 @@ export default function ScoreCenter() {
         setScores(newScores);
     }, [selectedSubject, selectedClass, studentRoster, storageKey]);
 
-    // ... rest of your functions remain the same
+    const handleScoreChange = (studentName, field, value) => {
+        setScores(prev => ({
+            ...prev,
+            [studentName]: {
+                ...prev[studentName],
+                [field]: value
+            }
+        }));
+    };
+
+    const saveScores = () => {
+        const allExamData = JSON.parse(localStorage.getItem(storageKey)) || {};
+        
+        if (!allExamData[selectedClass]) {
+            allExamData[selectedClass] = {};
+        }
+        
+        const scoreEntries = Object.values(scores);
+        allExamData[selectedClass][selectedSubject] = scoreEntries;
+        
+        localStorage.setItem(storageKey, JSON.stringify(allExamData));
+        alert('✅ Scores saved successfully!');
+    };
 
     return (
         <div className="p-6 bg-white shadow-lg rounded-xl">
             <h2 className="text-2xl font-bold mb-4 text-green-700">
                 Score Input {user.role === 'Form Master' ? `- ${user.assignedClasses?.[0]}` : ''}
             </h2>
-            
+
             {!hasTeachingAssignment && (
                 <div className="p-4 bg-red-100 text-red-700 rounded-lg mb-4">
                     🛑 **NOT ASSIGNED:** Please contact admin to assign subjects and classes.
@@ -78,8 +100,8 @@ export default function ScoreCenter() {
             )}
 
             <div className="flex gap-4 mb-6">
-                <select 
-                    value={selectedSubject} 
+                <select
+                    value={selectedSubject}
                     onChange={(e) => setSelectedSubject(e.target.value)}
                     className="border p-2 rounded"
                     disabled={!hasTeachingAssignment}
@@ -87,9 +109,9 @@ export default function ScoreCenter() {
                     <option value="">Select Subject</option>
                     {userSubjects.map(sub => <option key={sub} value={sub}>{sub}</option>)}
                 </select>
-                
-                <select 
-                    value={selectedClass} 
+
+                <select
+                    value={selectedClass}
                     onChange={(e) => setSelectedClass(e.target.value)}
                     className="border p-2 rounded"
                     disabled={user.role === 'Form Master'} // Form Masters can't change class
@@ -98,13 +120,63 @@ export default function ScoreCenter() {
                     {userClasses.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
             </div>
-            
-            {/* FIX: Add authorization check */}
+
+            {/* FIXED: Complete the ternary operator with proper JSX */}
             {selectedSubject && selectedClass && studentRoster.length > 0 && isAuthorizedToEdit ? (
-                // ... your table and save button
+                <div>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full bg-white border rounded-lg">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-4 py-2 border">Student Name</th>
+                                    <th className="px-4 py-2 border">CA Score</th>
+                                    <th className="px-4 py-2 border">Exam Score</th>
+                                    <th className="px-4 py-2 border">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {studentRoster.map(studentName => (
+                                    <tr key={studentName}>
+                                        <td className="px-4 py-2 border font-medium">{studentName}</td>
+                                        <td className="px-4 py-2 border">
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="30"
+                                                value={scores[studentName]?.ca || ''}
+                                                onChange={(e) => handleScoreChange(studentName, 'ca', parseInt(e.target.value) || 0)}
+                                                className="w-20 px-2 py-1 border rounded"
+                                            />
+                                        </td>
+                                        <td className="px-4 py-2 border">
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="70"
+                                                value={scores[studentName]?.exam || ''}
+                                                onChange={(e) => handleScoreChange(studentName, 'exam', parseInt(e.target.value) || 0)}
+                                                className="w-20 px-2 py-1 border rounded"
+                                            />
+                                        </td>
+                                        <td className="px-4 py-2 border font-bold">
+                                            {((scores[studentName]?.ca || 0) + (scores[studentName]?.exam || 0))}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <button
+                        onClick={saveScores}
+                        className="mt-4 px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                    >
+                        💾 Save All Scores
+                    </button>
+                </div>
             ) : (
                 <div className="p-4 bg-yellow-100 text-yellow-800 rounded-lg">
-                    {!isAuthorizedToEdit && selectedSubject 
+                    {!isAuthorizedToEdit && selectedSubject
                         ? "You are not authorized to score this subject/class combination."
                         : "Select a subject and class to begin score entry."
                     }
