@@ -4,6 +4,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ExamProvider } from "./context/ExamContext";
 import { BulkPrintProvider } from "./context/BulkPrintContext";
 import Navbar from "./components/Navbar";
+import { useAuth } from "./context/AuthContext";
 
 // Public Pages
 import LandingPage from "./pages/LandingPage";
@@ -123,7 +124,53 @@ function AppContent() {
     </>
   );
 }
+// ADD THIS COMPONENT for role protection
+const ProtectedRoute = ({ requiredRole, children }) => {
+  const { user } = useAuth();
+  const location = useLocation();
+  
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  // Normalize roles for comparison
+  const userRole = user.role === 'admin' ? 'Admin' : user.role;
+  const requiredRoleNormalized = requiredRole === 'admin' ? 'Admin' : requiredRole;
+  
+  if (userRole !== requiredRoleNormalized) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return children;
+};
 
+// UPDATE Dashboard Routes in App.jsx:
+<Route path="/dashboard" element={<DashboardLayout />}>
+  <Route index element={<UnifiedDashboard />} />
+  
+  {/* Protected role-specific routes */}
+  <Route path="admin" element={
+    <ProtectedRoute requiredRole="Admin">
+      <UnifiedDashboard />
+    </ProtectedRoute>
+  } />
+  <Route path="principal" element={
+    <ProtectedRoute requiredRole="Principal">
+      <UnifiedDashboard />
+    </ProtectedRoute>
+  } />
+  <Route path="teacher" element={
+    <ProtectedRoute requiredRole="Subject Teacher">
+      <UnifiedDashboard />
+    </ProtectedRoute>
+  } />
+  <Route path="form-master" element={
+    <ProtectedRoute requiredRole="Form Master">
+      <UnifiedDashboard />
+    </ProtectedRoute>
+  } />
+  {/* Add other roles similarly */}
+</Route>
 export default function App() {
   return (
     <AuthProvider>
