@@ -33,6 +33,8 @@ import AttendanceRegistration from '../roles/AttendanceRegistration';
 import AutoRosterManager from '../roles/AutoRosterManager';
 import AttendanceViewer from '../roles/AttendanceViewer';
 
+import QuestionCreator from '../roles/QuestionCreator';
+import ELibraryUploader from '../roles/ELibraryUploader';
 export default function TechContent({ config, activeModule, user, dashboardData }) {
   const { isAdmin } = useAuth();
 
@@ -254,20 +256,17 @@ export default function TechContent({ config, activeModule, user, dashboardData 
         break;
 
       // Subject Teacher modules
-      case 'assignments':
+      case 'questions':
         if (user.role === 'Subject Teacher') {
-          return (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold mb-4">My Teaching Assignments</h2>
-              <div className="space-y-3">
-                <div><strong>Classes:</strong> {user.assignedClasses?.join(', ') || 'None assigned'}</div>
-                <div><strong>Subjects:</strong> {user.assignedSubjects?.join(', ') || 'None assigned'}</div>
-              </div>
-            </div>
-          );
+          return <QuestionCreator user={user} />;
         }
         break;
-
+      
+      case 'elibrary-upload':
+        if (user.role === 'Subject Teacher') {
+          return <ELibraryUploader user={user} />;
+        }
+        break;
       // Exam Officer modules
       case 'reports':
         if (user.role === 'Exam Officer') {

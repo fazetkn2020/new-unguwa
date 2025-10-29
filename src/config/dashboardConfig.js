@@ -101,14 +101,15 @@ export const getRoleConfig = (role) => {
 
     "Subject Teacher": {
       title: "Subject Teacher Dashboard",
-      subtitle: "Teaching & Student Assessment",
+      subtitle: "Teaching, Assessment & Resource Management",
       icon: "✏️",
       layout: "tabs",
       defaultModule: "scoring",
       modules: [
-        { id: "scoring", label: "Score Entry", icon: "📝" },
-        { id: "assignments", label: "My Assignments", icon: "🎯" },
-        { id: "exambank", label: "Exam Bank", icon: "📚" }
+        { id: "scoring", label: "📝 Score Entry", icon: "📝" },
+        { id: "questions", label: "❓ Create Questions", icon: "❓" },
+        { id: "elibrary-upload", label: "📚 Add to E-Library", icon: "📚" },
+        { id: "exambank", label: "🏫 Exam Bank", icon: "🏫" }
       ]
     },
 

@@ -13,9 +13,14 @@ export const roleMenus = {
     { name: "📊 View Attendance", path: "/dashboard/form-master/attendance-view" },
     { name: "🏫 Exam Bank", path: "/dashboard/exambank" }
   ],
+
   "Subject Teacher": [
-    { name: "Dashboard", path: "/dashboard/teacher" },
-    { name: "📊 Exam Bank", path: "/dashboard/exambank" }
+    { name: "🏠 Dashboard", path: "/dashboard/teacher" },
+    { name: "📝 Score Entry", path: "/dashboard/teacher/scoring" },
+    { name: "❓ Create Questions", path: "/dashboard/teacher/questions" },
+    { name: "📚 Add to E-Library", path: "/dashboard/teacher/elibrary-upload" },
+    { name: "🏫 Exam Bank", path: "/dashboard/exambank" }
+  ]
   ],
   "Principal": [
     { name: "Dashboard", path: "/dashboard/principal" },
