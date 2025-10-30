@@ -11,28 +11,39 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
   });
   const [loadingStates, setLoadingStates] = useState({});
 
-  // Load users from props or localStorage
+  // Load fresh data from localStorage
   useEffect(() => {
-    if (propUsers && propUsers.length > 0) {
-      setUsers(propUsers);
-    } else {
+    const loadUsers = () => {
       const savedUsers = JSON.parse(localStorage.getItem('users')) || [];
       setUsers(savedUsers);
-    }
-  }, [propUsers]);
+    };
+    
+    loadUsers();
+    
+    // Refresh every 3 seconds to catch new students
+    const interval = setInterval(loadUsers, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
-  // Filter users based on current data
-  const pendingStaff = users.filter(user =>
+  // Filter users
+  const pendingStaff = users.filter(user => 
     user.role === "pending" && (!user.userType || user.userType !== "student")
   );
 
-  const pendingStudents = users.filter(user =>
-    user.role === "pending" && user.userType === "student"
-  );
+  const pendingStudents = users.filter(user => {
+    // Multiple ways to identify pending students
+    return (
+      // Method 1: Standard way
+      (user.role === "pending" && user.userType === "student") ||
+      // Method 2: If they have student data but no userType
+      (user.role === "pending" && (user.studentId || user.class || user.formClass)) ||
+      // Method 3: If they have pending status
+      (user.status === "pending" && (user.studentId || user.class))
+    );
+  });
 
   const activeUsers = users.filter(user => user.role !== "pending");
 
-  // Toggle collapsible sections
   const toggleSection = (section) => {
     setCollapsedSections(prev => ({
       ...prev,
@@ -40,7 +51,6 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
     }));
   };
 
-  // Set loading state
   const setLoading = (id, isLoading) => {
     setLoadingStates(prev => ({
       ...prev,
@@ -48,26 +58,16 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
     }));
   };
 
-  // INSTANT DELETE - Fixed with proper state updates
   const deleteUser = async (userId) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
-
     setLoading(userId, true);
 
     try {
       const updatedUsers = users.filter(user => user.id !== userId);
-      
-      // Update localStorage
       localStorage.setItem("users", JSON.stringify(updatedUsers));
-      
-      // INSTANT UPDATE: Update local state immediately
       setUsers(updatedUsers);
+      if (onUsersUpdate) onUsersUpdate(updatedUsers);
       
-      // Call parent update with new data
-      if (onUsersUpdate) {
-        onUsersUpdate(updatedUsers);
-      }
-
       await new Promise(resolve => setTimeout(resolve, 300));
       alert("✅ User deleted successfully");
     } catch (error) {
@@ -77,43 +77,10 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
     }
   };
 
-  // INSTANT TOGGLE STATUS - Fixed with proper state updates
-  const toggleUserStatus = async (userId) => {
-    setLoading(userId, true);
-
-    try {
-      const updatedUsers = users.map(user =>
-        user.id === userId
-          ? { ...user, status: user.status === "active" ? "inactive" : "active" }
-          : user
-      );
-
-      // Update localStorage
-      localStorage.setItem("users", JSON.stringify(updatedUsers));
-      
-      // INSTANT UPDATE: Update local state immediately
-      setUsers(updatedUsers);
-      
-      // Call parent update with new data
-      if (onUsersUpdate) {
-        onUsersUpdate(updatedUsers);
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 300));
-      const user = users.find(u => u.id === userId);
-      alert(`✅ User ${user?.name} ${user?.status === 'active' ? 'deactivated' : 'activated'} successfully!`);
-    } catch (error) {
-      alert("Error updating user status");
-    } finally {
-      setLoading(userId, false);
-    }
-  };
-
-  // INSTANT APPROVE STAFF - Fixed with proper state updates
   const approveUser = async (userId) => {
     setLoading(userId, true);
-
     const userToApprove = users.find(user => user.id === userId);
+    
     if (!userToApprove) {
       alert("User not found");
       setLoading(userId, false);
@@ -132,18 +99,10 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
           : user
       );
 
-      // Update localStorage
       localStorage.setItem("users", JSON.stringify(updatedUsers));
-      
-      // INSTANT UPDATE: Update local state immediately
       setUsers(updatedUsers);
+      if (onUsersUpdate) onUsersUpdate(updatedUsers);
       
-      // Call parent update with new data
-      if (onUsersUpdate) {
-        onUsersUpdate(updatedUsers);
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 300));
       alert(`✅ ${userToApprove.name} has been approved!`);
     } catch (error) {
       alert("Error approving user");
@@ -152,11 +111,10 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
     }
   };
 
-  // INSTANT APPROVE STUDENT - Fixed with proper state updates
   const approveStudent = async (userId) => {
     setLoading(userId, true);
-
     const studentToApprove = users.find(user => user.id === userId);
+    
     if (!studentToApprove) {
       alert("Student not found");
       setLoading(userId, false);
@@ -166,7 +124,7 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
     try {
       // Create exam bank entries
       const examData = JSON.parse(localStorage.getItem('examData')) || {};
-      const classSubjects = getClassSubjects(studentToApprove.formClass);
+      const classSubjects = getClassSubjects(studentToApprove.class || studentToApprove.formClass);
 
       classSubjects.forEach(subject => {
         if (!examData[studentToApprove.id]) {
@@ -182,25 +140,17 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
               ...user,
               role: "Student",
               status: "active",
-              assignedClasses: [studentToApprove.formClass],
+              assignedClasses: [studentToApprove.class || studentToApprove.formClass],
               approvedAt: new Date().toISOString()
             }
           : user
       );
 
-      // Update localStorage
       localStorage.setItem("users", JSON.stringify(updatedUsers));
-      
-      // INSTANT UPDATE: Update local state immediately
       setUsers(updatedUsers);
+      if (onUsersUpdate) onUsersUpdate(updatedUsers);
       
-      // Call parent update with new data
-      if (onUsersUpdate) {
-        onUsersUpdate(updatedUsers);
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 300));
-      alert(`✅ ${studentToApprove.name} approved as Student! Exam Bank entries created.`);
+      alert(`✅ ${studentToApprove.name} approved as Student!`);
     } catch (error) {
       alert("Error approving student");
     } finally {
@@ -222,15 +172,26 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-3">
         <h3 className="text-xl sm:text-2xl font-semibold text-blue-800">User Management</h3>
-        <div className="relative w-full sm:w-auto">
-          <input
-            type="text"
-            placeholder="Search users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full sm:w-64 pl-10 pr-4 py-2 rounded-xl bg-gray-100 border border-gray-300 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-          <span className="absolute left-3 top-2.5 text-gray-500">🔍</span>
+        <div className="flex gap-2">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full sm:w-64 pl-10 pr-4 py-2 rounded-xl bg-gray-100 border border-gray-300"
+            />
+            <span className="absolute left-3 top-2.5 text-gray-500">🔍</span>
+          </div>
+          <button
+            onClick={() => {
+              const savedUsers = JSON.parse(localStorage.getItem('users')) || [];
+              setUsers(savedUsers);
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            🔄 Refresh
+          </button>
         </div>
       </div>
 
@@ -258,26 +219,34 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
         </button>
       </div>
 
+      {/* DEBUG INFO */}
+      <div className="bg-yellow-50 border border-yellow-200 p-3 rounded mb-4">
+        <p className="text-sm">
+          <strong>Debug:</strong> Total Users: {users.length} | 
+          Pending Staff: {pendingStaff.length} | 
+          Pending Students: {pendingStudents.length}
+        </p>
+      </div>
+
       {/* STAFF TAB */}
       {activeTab === "staff" && (
         <div className="space-y-4">
-          {/* Pending Staff - COLLAPSIBLE */}
+          {/* Pending Staff */}
           <div className="bg-blue-50 rounded-lg border border-blue-200">
             <button
               onClick={() => toggleSection('pendingStaff')}
-              className="w-full p-4 flex justify-between items-center hover:bg-blue-100 rounded-t-lg transition-colors"
+              className="w-full p-4 flex justify-between items-center hover:bg-blue-100 rounded-t-lg"
             >
               <div>
                 <h4 className="text-lg font-semibold text-blue-800">
-                  Pending Staff Registrations ({pendingStaff.length})
+                  Pending Staff ({pendingStaff.length})
                 </h4>
-                <p className="text-sm text-blue-600">New staff waiting for approval</p>
               </div>
               <span className="text-blue-600 font-bold text-xl">
                 {collapsedSections.pendingStaff ? '+' : '-'}
               </span>
             </button>
-            
+
             {!collapsedSections.pendingStaff && (
               <div className="p-4">
                 {pendingStaff.length > 0 ? (
@@ -287,7 +256,7 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
                         <tr>
                           <th className="px-4 py-3 text-left">Staff Member</th>
                           <th className="px-4 py-3 text-left">Email</th>
-                          <th className="px-4 py-3 text-left">Registration Date</th>
+                          <th className="px-4 py-3 text-left">Date</th>
                           <th className="px-4 py-3 text-left">Actions</th>
                         </tr>
                       </thead>
@@ -301,30 +270,28 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
                                 </div>
                                 <div className="ml-3">
                                   <div className="text-sm font-semibold text-gray-800">{user.name}</div>
-                                  <div className="text-xs text-gray-500">Pending Approval</div>
+                                  <div className="text-xs text-gray-500">Pending</div>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-700">
-                              {user.email}
-                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700">{user.email}</td>
                             <td className="px-4 py-3 text-xs text-gray-500">
                               {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}
                             </td>
-                            <td className="px-4 py-3 flex flex-wrap gap-2">
+                            <td className="px-4 py-3 flex gap-2">
                               <button
                                 onClick={() => approveUser(user.id)}
                                 disabled={loadingStates[user.id]}
-                                className="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 disabled:bg-gray-400 font-medium flex items-center gap-1"
+                                className="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 disabled:bg-gray-400"
                               >
                                 {loadingStates[user.id] ? '⏳' : '✅'} Approve
                               </button>
                               <button
                                 onClick={() => deleteUser(user.id)}
                                 disabled={loadingStates[user.id]}
-                                className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 disabled:bg-gray-400 font-medium"
+                                className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 disabled:bg-gray-400"
                               >
-                                {loadingStates[user.id] ? '⏳' : '❌'} Reject
+                                {loadingStates[user.id] ? '⏳' : '❌'} Delete
                               </button>
                             </td>
                           </tr>
@@ -336,30 +303,28 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
                   <div className="text-center py-8 text-gray-500 bg-white rounded-lg border border-gray-200">
                     <div className="text-4xl mb-2">👨‍💼</div>
                     <p>No pending staff registrations</p>
-                    <p className="text-sm text-gray-400 mt-1">New staff registrations will appear here</p>
                   </div>
                 )}
               </div>
             )}
           </div>
 
-          {/* Active Users - COLLAPSIBLE */}
+          {/* Active Staff */}
           <div className="bg-green-50 rounded-lg border border-green-200">
             <button
               onClick={() => toggleSection('activeUsers')}
-              className="w-full p-4 flex justify-between items-center hover:bg-green-100 rounded-t-lg transition-colors"
+              className="w-full p-4 flex justify-between items-center hover:bg-green-100 rounded-t-lg"
             >
               <div>
                 <h4 className="text-lg font-semibold text-green-800">
-                  Active Users ({activeUsers.filter(u => u.role !== 'Student').length})
+                  Active Staff ({activeUsers.filter(u => u.role !== 'Student').length})
                 </h4>
-                <p className="text-sm text-green-600">Currently active staff members</p>
               </div>
               <span className="text-green-600 font-bold text-xl">
                 {collapsedSections.activeUsers ? '+' : '-'}
               </span>
             </button>
-            
+
             {!collapsedSections.activeUsers && (
               <div className="p-4">
                 {activeUsers.filter(u => u.role !== 'Student').length > 0 ? (
@@ -369,7 +334,7 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
                         <tr>
                           <th className="px-4 py-3 text-left">User</th>
                           <th className="px-4 py-3 text-left">Role</th>
-                          <th className="px-4 py-3 text-left">Details</th>
+                          <th className="px-4 py-3 text-left">Classes</th>
                           <th className="px-4 py-3 text-left">Status</th>
                           <th className="px-4 py-3 text-left">Actions</th>
                         </tr>
@@ -377,7 +342,7 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
                       <tbody className="divide-y divide-gray-200">
                         {activeUsers.filter(u => u.role !== 'Student').map((user) => (
                           <tr key={user.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-3 whitespace-nowrap">
+                            <td className="px-4 py-3">
                               <div className="flex items-center">
                                 <div className="flex-shrink-0 h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
                                   {user.name?.charAt(0).toUpperCase()}
@@ -388,45 +353,30 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
                                 </div>
                               </div>
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
+                            <td className="px-4 py-3">
                               <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
                                 user.role === "Admin" ? "bg-purple-100 text-purple-800" :
-                                user.role === "Student" ? "bg-green-100 text-green-800" :
                                 "bg-blue-100 text-blue-800"
                               }`}>
                                 {user.role}
                               </span>
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
+                            <td className="px-4 py-3 text-xs text-gray-500">
                               {user.assignedClasses?.join(", ") || "-"}
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
+                            <td className="px-4 py-3">
                               <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                user.status === "active"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-red-100 text-red-800"
+                                user.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                               }`}>
                                 {user.status || "active"}
                               </span>
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-xs font-medium flex flex-wrap gap-1">
-                              <button
-                                onClick={() => toggleUserStatus(user.id)}
-                                disabled={loadingStates[user.id]}
-                                className={`px-2 py-1 rounded text-xs ${
-                                  user.status === "active"
-                                    ? "bg-yellow-500 text-white hover:bg-yellow-600"
-                                    : "bg-green-500 text-white hover:bg-green-600"
-                                } disabled:bg-gray-400`}
-                              >
-                                {loadingStates[user.id] ? '...' : user.status === "active" ? "Deactivate" : "Activate"}
-                              </button>
+                            <td className="px-4 py-3 flex gap-1">
                               <button
                                 onClick={() => deleteUser(user.id)}
-                                disabled={loadingStates[user.id]}
-                                className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 disabled:bg-gray-400"
+                                className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
                               >
-                                {loadingStates[user.id] ? '...' : 'Delete'}
+                                Delete
                               </button>
                             </td>
                           </tr>
@@ -437,8 +387,7 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
                 ) : (
                   <div className="text-center py-8 text-gray-500 bg-white rounded-lg border border-gray-200">
                     <div className="text-4xl mb-2">👥</div>
-                    <p>No active users found</p>
-                    <p className="text-sm text-gray-400 mt-1">Approve some users to see them here</p>
+                    <p>No active staff found</p>
                   </div>
                 )}
               </div>
@@ -447,18 +396,18 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
         </div>
       )}
 
-      {/* STUDENTS TAB */}
+      {/* STUDENTS TAB - COMPLETE SECTION */}
       {activeTab === "students" && (
         <div className="space-y-4">
-          {/* Pending Students - COLLAPSIBLE */}
+          {/* Pending Students */}
           <div className="bg-green-50 rounded-lg border border-green-200">
             <button
               onClick={() => toggleSection('pendingStudents')}
-              className="w-full p-4 flex justify-between items-center hover:bg-green-100 rounded-t-lg transition-colors"
+              className="w-full p-4 flex justify-between items-center hover:bg-green-100 rounded-t-lg"
             >
               <div>
                 <h4 className="text-lg font-semibold text-green-800">
-                  Pending Student Approvals ({pendingStudents.length})
+                  Pending Students ({pendingStudents.length})
                 </h4>
                 <p className="text-sm text-green-600">Students waiting for approval</p>
               </div>
@@ -466,7 +415,7 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
                 {collapsedSections.pendingStudents ? '+' : '-'}
               </span>
             </button>
-            
+
             {!collapsedSections.pendingStudents && (
               <div className="p-4">
                 {pendingStudents.length > 0 ? (
@@ -475,51 +424,51 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
                       <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
                         <tr>
                           <th className="px-4 py-3 text-left">Student</th>
-                          <th className="px-4 py-3 text-left">Class</th>
                           <th className="px-4 py-3 text-left">Student ID</th>
-                          <th className="px-4 py-3 text-left">Added</th>
+                          <th className="px-4 py-3 text-left">Class</th>
+                          <th className="px-4 py-3 text-left">Date</th>
                           <th className="px-4 py-3 text-left">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {pendingStudents.map((user) => (
-                          <tr key={user.id} className="border-b border-gray-200 hover:bg-gray-50">
+                        {pendingStudents.map((student) => (
+                          <tr key={student.id} className="border-b border-gray-200 hover:bg-gray-50">
                             <td className="px-4 py-3">
                               <div className="flex items-center">
-                                <div className="flex-shrink-0 h-8 w-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
-                                  {user.name?.charAt(0).toUpperCase()}
+                                <div className="flex-shrink-0 h-8 w-8 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold">
+                                  {(student.fullName || student.name)?.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="ml-3">
-                                  <div className="text-sm font-semibold text-gray-800">{user.name}</div>
-                                  <div className="text-xs text-gray-500">Waiting for approval</div>
+                                  <div className="text-sm font-semibold text-gray-800">
+                                    {student.fullName || student.name}
+                                  </div>
+                                  <div className="text-xs text-gray-500">Pending Approval</div>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-4 py-3">
-                              <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
-                                {user.formClass}
-                              </span>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {student.studentId}
                             </td>
-                            <td className="px-4 py-3 text-sm font-mono text-gray-700">
-                              {user.studentId}
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {student.class || student.formClass}
                             </td>
                             <td className="px-4 py-3 text-xs text-gray-500">
-                              {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Recently'}
+                              {student.createdAt ? new Date(student.createdAt).toLocaleDateString() : 'Unknown'}
                             </td>
-                            <td className="px-4 py-3 flex flex-wrap gap-2">
+                            <td className="px-4 py-3 flex gap-2">
                               <button
-                                onClick={() => approveStudent(user.id)}
-                                disabled={loadingStates[user.id]}
+                                onClick={() => approveStudent(student.id)}
+                                disabled={loadingStates[student.id]}
                                 className="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 disabled:bg-gray-400 font-medium flex items-center gap-1"
                               >
-                                {loadingStates[user.id] ? '⏳' : '✅'} Approve
+                                {loadingStates[student.id] ? '⏳' : '✅'} Approve
                               </button>
                               <button
-                                onClick={() => deleteUser(user.id)}
-                                disabled={loadingStates[user.id]}
+                                onClick={() => deleteUser(student.id)}
+                                disabled={loadingStates[student.id]}
                                 className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 disabled:bg-gray-400 font-medium"
                               >
-                                {loadingStates[user.id] ? '⏳' : '❌'} Reject
+                                {loadingStates[student.id] ? '⏳' : '❌'} Reject
                               </button>
                             </td>
                           </tr>
@@ -529,9 +478,11 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500 bg-white rounded-lg border border-gray-200">
-                    <div className="text-4xl mb-2">👨‍🎓</div>
+                    <div className="text-4xl mb-2">🎒</div>
                     <p>No pending student approvals</p>
-                    <p className="text-sm text-gray-400 mt-1">Form Masters will add students here</p>
+                    <p className="text-sm text-gray-400 mt-1">
+                      Students added by Form Masters will appear here
+                    </p>
                   </div>
                 )}
               </div>

@@ -23,35 +23,38 @@ export default function ClassListManager({ className }) {
     setStudents(classLists[className] || []);
   };
 
-  const addStudent = () => {
-    if (!newStudent.studentId || !newStudent.fullName) {
-      alert("Please fill in all required fields");
-      return;
-    }
 
-    // Check if student ID already exists
-    const allUsers = JSON.parse(localStorage.getItem('users')) || [];
-    const existingStudent = allUsers.find(u => 
-      u.studentId === newStudent.studentId && u.role === 'Student'
-    );
+     const addStudent = () => {
+       if (!newStudent.studentId || !newStudent.fullName) {
+         alert("Please fill in all required fields");
+         return;
+       }
+     
+       // ✅ FIXED: Check if student ID exists in ANY user (pending or approved)
+       const allUsers = JSON.parse(localStorage.getItem('users')) || [];
+       const existingStudent = allUsers.find(u => u.studentId === newStudent.studentId);
+     
+       if (existingStudent) {
+         alert("Student ID already exists!");
+         return;
+       }
+     
+       // Rest of the function remains the same...
 
-    if (existingStudent) {
-      alert("Student ID already exists!");
-      return;
-    }
-
-    const studentData = {
-      id: `student-${Date.now()}`,
-      studentId: newStudent.studentId,
-      fullName: newStudent.fullName,
-      gender: newStudent.gender,
-      class: className,
-      status: 'pending',
-      role: 'Student',
-      registeredBy: user.id,
-      registeredAt: new Date().toISOString()
-    };
-
+       const studentData = {
+         id: `student-${Date.now()}`,
+         studentId: newStudent.studentId,
+         fullName: newStudent.fullName,
+         name: newStudent.fullName, // ✅ ADD THIS - UserManagementPanel might look for 'name'
+         gender: newStudent.gender,
+         class: className,
+         status: 'pending',
+         role: 'pending', 
+         userType: 'student',
+         registeredBy: user.id,
+         registeredAt: new Date().toISOString()
+       };
+  
     // Add to global users for admin approval
     const updatedUsers = [...allUsers, studentData];
     localStorage.setItem('users', JSON.stringify(updatedUsers));
