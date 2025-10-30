@@ -107,8 +107,10 @@ export const getRoleConfig = (role) => {
       defaultModule: "scoring",
       modules: [
         { id: "scoring", label: "Score Entry", icon: "📝" },
+        { id: "questions", label: "Create Questions", icon: "❓" },
+        { id: "elibrary", label: "E-Library Upload", icon: "📚" },
         { id: "assignments", label: "My Assignments", icon: "🎯" },
-        { id: "exambank", label: "Exam Bank", icon: "📚" }
+        { id: "exambank", label: "Exam Bank", icon: "📊" }
       ]
     },
 
