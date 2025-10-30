@@ -4,10 +4,13 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("staff");
   const [users, setUsers] = useState([]);
+  
+  // FIXED: Added 'activeStudents' to the state
   const [collapsedSections, setCollapsedSections] = useState({
     pendingStaff: false,
     pendingStudents: false,
-    activeUsers: false
+    activeUsers: false,
+    activeStudents: false // New state for Active Students section
   });
   const [loadingStates, setLoadingStates] = useState({});
 
@@ -17,9 +20,9 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
       const savedUsers = JSON.parse(localStorage.getItem('users')) || [];
       setUsers(savedUsers);
     };
-    
+
     loadUsers();
-    
+
     // Refresh every 3 seconds to catch new students
     const interval = setInterval(loadUsers, 3000);
     return () => clearInterval(interval);
@@ -67,7 +70,7 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
       localStorage.setItem("users", JSON.stringify(updatedUsers));
       setUsers(updatedUsers);
       if (onUsersUpdate) onUsersUpdate(updatedUsers);
-      
+
       await new Promise(resolve => setTimeout(resolve, 300));
       alert("✅ User deleted successfully");
     } catch (error) {
@@ -80,7 +83,7 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
   const approveUser = async (userId) => {
     setLoading(userId, true);
     const userToApprove = users.find(user => user.id === userId);
-    
+
     if (!userToApprove) {
       alert("User not found");
       setLoading(userId, false);
@@ -102,7 +105,7 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
       localStorage.setItem("users", JSON.stringify(updatedUsers));
       setUsers(updatedUsers);
       if (onUsersUpdate) onUsersUpdate(updatedUsers);
-      
+
       alert(`✅ ${userToApprove.name} has been approved!`);
     } catch (error) {
       alert("Error approving user");
@@ -114,7 +117,7 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
   const approveStudent = async (userId) => {
     setLoading(userId, true);
     const studentToApprove = users.find(user => user.id === userId);
-    
+
     if (!studentToApprove) {
       alert("Student not found");
       setLoading(userId, false);
@@ -149,7 +152,7 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
       localStorage.setItem("users", JSON.stringify(updatedUsers));
       setUsers(updatedUsers);
       if (onUsersUpdate) onUsersUpdate(updatedUsers);
-      
+
       alert(`✅ ${studentToApprove.name} approved as Student!`);
     } catch (error) {
       alert("Error approving student");
@@ -482,6 +485,98 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
                     <p>No pending student approvals</p>
                     <p className="text-sm text-gray-400 mt-1">
                       Students added by Form Masters will appear here
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ACTIVE STUDENTS SECTION - NEW */}
+          <div className="bg-blue-50 rounded-lg border border-blue-200">
+            <button
+              onClick={() => toggleSection('activeStudents')}
+              className="w-full p-4 flex justify-between items-center hover:bg-blue-100 rounded-t-lg"
+            >
+              <div>
+                <h4 className="text-lg font-semibold text-blue-800">
+                  Active Students ({activeUsers.filter(u => u.role === 'Student').length})
+                </h4>
+                <p className="text-sm text-blue-600">Approved and active students</p>
+              </div>
+              <span className="text-blue-600 font-bold text-xl">
+                {collapsedSections.activeStudents ? '+' : '-'}
+              </span>
+            </button>
+
+            {!collapsedSections.activeStudents && (
+              <div className="p-4">
+                {activeUsers.filter(u => u.role === 'Student').length > 0 ? (
+                  <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
+                    <table className="min-w-full text-sm">
+                      <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
+                        <tr>
+                          <th className="px-4 py-3 text-left">Student</th>
+                          <th className="px-4 py-3 text-left">Student ID</th>
+                          <th className="px-4 py-3 text-left">Class</th>
+                          <th className="px-4 py-3 text-left">Status</th>
+                          <th className="px-4 py-3 text-left">Approved Date</th>
+                          <th className="px-4 py-3 text-left">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {activeUsers
+                          .filter(u => u.role === 'Student')
+                          .map((student) => (
+                          <tr key={student.id} className="border-b border-gray-200 hover:bg-gray-50">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center">
+                                <div className="flex-shrink-0 h-8 w-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
+                                  {(student.fullName || student.name)?.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="ml-3">
+                                  <div className="text-sm font-semibold text-gray-800">
+                                    {student.fullName || student.name}
+                                  </div>
+                                  <div className="text-xs text-gray-500">Active Student</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {student.studentId}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {student.class || student.formClass || student.assignedClasses?.join(', ')}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                student.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                              }`}>
+                                {student.status || "active"}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-xs text-gray-500">
+                              {student.approvedAt ? new Date(student.approvedAt).toLocaleDateString() : 'Unknown'}
+                            </td>
+                            <td className="px-4 py-3">
+                              <button
+                                onClick={() => deleteUser(student.id)}
+                                className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 font-medium"
+                              >
+                                Remove
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500 bg-white rounded-lg border border-gray-200">
+                    <div className="text-4xl mb-2">👨‍🎓</div>
+                    <p>No active students found</p>
+                    <p className="text-sm text-gray-400 mt-1">
+                      Approved students will appear here
                     </p>
                   </div>
                 )}
