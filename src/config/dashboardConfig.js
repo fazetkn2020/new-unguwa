@@ -9,17 +9,19 @@ export const getRoleConfig = (role) => {
 
   // Normalize role - handle both "admin" and "Admin"
   const normalizedRole = role === 'admin' ? 'Admin' : role;
-
+                                                     
   const roleConfigs = {
+    // Add this to Admin modules:
     Admin: {
-      title: "Admin Control Center",
-      subtitle: "System Administration", 
+      title: "Admin Control Center",                     
+      subtitle: "System Administration",
       icon: "⚡",
-      layout: "tabs",
+      layout: "tabs",                                    
       defaultModule: "users",
       modules: [
         { id: "users", label: "User Management", icon: "👥" },
         { id: "assignments", label: "Teacher Assignments", icon: "📚" },
+        { id: "subjects", label: "Manage Subjects", icon: "📖" }, // NEW
         { id: "roles", label: "Role Management", icon: "🧩" },
         { id: "settings", label: "System Settings", icon: "⚙️" }
       ]
@@ -27,7 +29,7 @@ export const getRoleConfig = (role) => {
 
     Principal: {
       title: "Principal Dashboard",
-      subtitle: "Academic Leadership & Performance Monitoring", 
+      subtitle: "Academic Leadership & Performance Monitoring",
       icon: "🎓",
       layout: "sections",
       defaultModule: "overview",

@@ -1,63 +1,81 @@
+// src/pages/Dashboard/roles/UserManagementPanel.jsx - COMPLETE UPDATED VERSION
 import React, { useState, useEffect } from "react";
 
 function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("staff");
+  const [activeTab, setActiveTab] = useState("all");
   const [users, setUsers] = useState([]);
-  
-  // FIXED: Added 'activeStudents' to the state
   const [collapsedSections, setCollapsedSections] = useState({
     pendingStaff: false,
     pendingStudents: false,
-    activeUsers: false,
-    activeStudents: false // New state for Active Students section
+    activeTeachers: false,
+    activeStudents: false,
+    allUsers: false
   });
   const [loadingStates, setLoadingStates] = useState({});
 
   // Load fresh data from localStorage
   useEffect(() => {
     const loadUsers = () => {
-      const savedUsers = JSON.parse(localStorage.getItem('users')) || [];
+      const savedUsers = JSON.parse(localStorage.getItem("users")) || [];
       setUsers(savedUsers);
     };
 
     loadUsers();
-
-    // Refresh every 3 seconds to catch new students
     const interval = setInterval(loadUsers, 3000);
     return () => clearInterval(interval);
   }, []);
 
-  // Filter users
-  const pendingStaff = users.filter(user => 
-    user.role === "pending" && (!user.userType || user.userType !== "student")
+  // Filter users - COMPREHENSIVE FILTERING
+  const pendingStaff = users.filter(
+    (user) =>
+      user.role === "pending" &&
+      (!user.userType || user.userType !== "student")
   );
 
-  const pendingStudents = users.filter(user => {
-    // Multiple ways to identify pending students
+  const pendingStudents = users.filter((user) => {
     return (
-      // Method 1: Standard way
       (user.role === "pending" && user.userType === "student") ||
-      // Method 2: If they have student data but no userType
       (user.role === "pending" && (user.studentId || user.class || user.formClass)) ||
-      // Method 3: If they have pending status
       (user.status === "pending" && (user.studentId || user.class))
     );
   });
 
-  const activeUsers = users.filter(user => user.role !== "pending");
+  const activeTeachers = users.filter(user => 
+    user.status === 'active' && 
+    ['Subject Teacher', 'Form Master', 'Senior Master', 'Principal', 'VP Academic', 'VP Admin', 'Exam Officer', 'Admin'].includes(user.role)
+  );
+
+  const activeStudents = users.filter(user => 
+    user.status === 'active' && user.role === 'Student'
+  );
+
+  const allActiveUsers = users.filter(user => user.status === 'active');
+  const allPendingUsers = users.filter(user => user.status === 'pending' || user.role === 'pending');
+
+  // Get admin-created classes only (no hardcoded classes)
+  const getAdminCreatedClasses = () => {
+    const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
+    return Object.keys(classLists);
+  };
+
+  const getClassSubjects = (className) => {
+    // Get subjects from localStorage instead of hardcoded
+    const savedSubjects = JSON.parse(localStorage.getItem('schoolSubjects')) || [];
+    return savedSubjects.length > 0 ? savedSubjects : ["Mathematics", "English", "Science"];
+  };
 
   const toggleSection = (section) => {
-    setCollapsedSections(prev => ({
+    setCollapsedSections((prev) => ({
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section],
     }));
   };
 
   const setLoading = (id, isLoading) => {
-    setLoadingStates(prev => ({
+    setLoadingStates((prev) => ({
       ...prev,
-      [id]: isLoading
+      [id]: isLoading,
     }));
   };
 
@@ -66,12 +84,12 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
     setLoading(userId, true);
 
     try {
-      const updatedUsers = users.filter(user => user.id !== userId);
+      const updatedUsers = users.filter((user) => user.id !== userId);
       localStorage.setItem("users", JSON.stringify(updatedUsers));
       setUsers(updatedUsers);
       if (onUsersUpdate) onUsersUpdate(updatedUsers);
 
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 300));
       alert("✅ User deleted successfully");
     } catch (error) {
       alert("Error deleting user");
@@ -82,7 +100,7 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
 
   const approveUser = async (userId) => {
     setLoading(userId, true);
-    const userToApprove = users.find(user => user.id === userId);
+    const userToApprove = users.find((user) => user.id === userId);
 
     if (!userToApprove) {
       alert("User not found");
@@ -91,13 +109,13 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
     }
 
     try {
-      const updatedUsers = users.map(user =>
+      const updatedUsers = users.map((user) =>
         user.id === userId
           ? {
               ...user,
-              role: "Subject Teacher",
+              role: userToApprove.role || "Subject Teacher",
               status: "active",
-              approvedAt: new Date().toISOString()
+              approvedAt: new Date().toISOString(),
             }
           : user
       );
@@ -116,7 +134,7 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
 
   const approveStudent = async (userId) => {
     setLoading(userId, true);
-    const studentToApprove = users.find(user => user.id === userId);
+    const studentToApprove = users.find((user) => user.id === userId);
 
     if (!studentToApprove) {
       alert("Student not found");
@@ -125,26 +143,33 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
     }
 
     try {
-      // Create exam bank entries
-      const examData = JSON.parse(localStorage.getItem('examData')) || {};
-      const classSubjects = getClassSubjects(studentToApprove.class || studentToApprove.formClass);
+      const examData = JSON.parse(localStorage.getItem("examData")) || {};
+      const classSubjects = getClassSubjects(
+        studentToApprove.class || studentToApprove.formClass
+      );
 
-      classSubjects.forEach(subject => {
+      classSubjects.forEach((subject) => {
         if (!examData[studentToApprove.id]) {
           examData[studentToApprove.id] = {};
         }
-        examData[studentToApprove.id][subject] = { ca: "", exam: "", total: "" };
+        examData[studentToApprove.id][subject] = {
+          ca: "",
+          exam: "",
+          total: "",
+        };
       });
-      localStorage.setItem('examData', JSON.stringify(examData));
+      localStorage.setItem("examData", JSON.stringify(examData));
 
-      const updatedUsers = users.map(user =>
+      const updatedUsers = users.map((user) =>
         user.id === userId
           ? {
               ...user,
               role: "Student",
               status: "active",
-              assignedClasses: [studentToApprove.class || studentToApprove.formClass],
-              approvedAt: new Date().toISOString()
+              assignedClasses: [
+                studentToApprove.class || studentToApprove.formClass,
+              ],
+              approvedAt: new Date().toISOString(),
             }
           : user
       );
@@ -161,20 +186,82 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
     }
   };
 
-  const getClassSubjects = (className) => {
-    const defaultSubjects = {
-      'SS1': ['Mathematics', 'English', 'Science', 'Social Studies'],
-      'SS2': ['Mathematics', 'English', 'Science', 'Social Studies'],
-      'SS3': ['Mathematics', 'English', 'Science', 'Social Studies']
-    };
-    return defaultSubjects[className] || ['Mathematics', 'English', 'Science'];
+  // User card component for better UI
+  const UserCard = ({ user, type, onApprove, onDelete }) => {
+    const isPending = type === 'pending';
+    
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <h4 className="font-semibold text-gray-800">
+              {user.fullName || user.name}
+            </h4>
+            <div className="text-sm text-gray-600 mt-1">
+              {user.email && <div>📧 {user.email}</div>}
+              {user.studentId && <div>🎫 ID: {user.studentId}</div>}
+              {user.class && <div>🏫 Class: {user.class}</div>}
+              {user.role && <div>👤 Role: {user.role}</div>}
+              {user.registeredAt && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Registered: {new Date(user.registeredAt).toLocaleDateString()}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-2 ml-4">
+            {isPending ? (
+              <>
+                <button
+                  onClick={() => onApprove(user.id)}
+                  disabled={loadingStates[user.id]}
+                  className="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 disabled:bg-gray-400 min-w-20"
+                >
+                  {loadingStates[user.id] ? "⏳" : "✅"} Approve
+                </button>
+                <button
+                  onClick={() => onDelete(user.id)}
+                  disabled={loadingStates[user.id]}
+                  className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 disabled:bg-gray-400 min-w-20"
+                >
+                  {loadingStates[user.id] ? "⏳" : "❌"} Delete
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => onDelete(user.id)}
+                className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 min-w-20"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+        
+        {isPending && (
+          <div className="mt-2 pt-2 border-t border-gray-100">
+            <span className="inline-block bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
+              ⏳ Pending Approval
+            </span>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
     <div className="p-4 bg-white min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-3">
-        <h3 className="text-xl sm:text-2xl font-semibold text-blue-800">User Management</h3>
+        <div>
+          <h3 className="text-xl sm:text-2xl font-semibold text-blue-800">
+            User Management
+          </h3>
+          <p className="text-sm text-gray-600 mt-1">
+            Total: {users.length} users | Active: {allActiveUsers.length} | Pending: {allPendingUsers.length}
+          </p>
+        </div>
         <div className="flex gap-2">
           <div className="relative">
             <input
@@ -188,7 +275,7 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
           </div>
           <button
             onClick={() => {
-              const savedUsers = JSON.parse(localStorage.getItem('users')) || [];
+              const savedUsers = JSON.parse(localStorage.getItem("users")) || [];
               setUsers(savedUsers);
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -199,111 +286,91 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex border-b border-gray-300 mb-6">
+      <div className="flex border-b border-gray-300 mb-6 overflow-x-auto">
         <button
-          onClick={() => setActiveTab("staff")}
-          className={`px-4 py-2 font-medium ${
-            activeTab === "staff"
+          onClick={() => setActiveTab("all")}
+          className={`px-4 py-2 font-medium whitespace-nowrap ${
+            activeTab === "all"
               ? "border-b-2 border-blue-500 text-blue-600"
               : "text-gray-500 hover:text-gray-700"
           }`}
         >
-          Staff Approval ({pendingStaff.length})
+          All Users ({users.length})
         </button>
         <button
-          onClick={() => setActiveTab("students")}
-          className={`px-4 py-2 font-medium ${
-            activeTab === "students"
+          onClick={() => setActiveTab("pending")}
+          className={`px-4 py-2 font-medium whitespace-nowrap ${
+            activeTab === "pending"
+              ? "border-b-2 border-yellow-500 text-yellow-600"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Pending Approval ({allPendingUsers.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("active")}
+          className={`px-4 py-2 font-medium whitespace-nowrap ${
+            activeTab === "active"
               ? "border-b-2 border-green-500 text-green-600"
               : "text-gray-500 hover:text-gray-700"
           }`}
         >
-          Student Approval ({pendingStudents.length})
+          Active Users ({allActiveUsers.length})
         </button>
       </div>
 
-      {/* DEBUG INFO */}
-      <div className="bg-yellow-50 border border-yellow-200 p-3 rounded mb-4">
-        <p className="text-sm">
-          <strong>Debug:</strong> Total Users: {users.length} | 
-          Pending Staff: {pendingStaff.length} | 
-          Pending Students: {pendingStudents.length}
-        </p>
-      </div>
+      {/* ALL USERS TAB */}
+      {activeTab === "all" && (
+        <div className="space-y-6">
+          {/* Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="text-2xl font-bold text-blue-600">{users.length}</div>
+              <div className="text-sm text-blue-800">Total Users</div>
+            </div>
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <div className="text-2xl font-bold text-green-600">{allActiveUsers.length}</div>
+              <div className="text-sm text-green-800">Active Users</div>
+            </div>
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <div className="text-2xl font-bold text-yellow-600">{allPendingUsers.length}</div>
+              <div className="text-sm text-yellow-800">Pending Approval</div>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+              <div className="text-2xl font-bold text-purple-600">{activeTeachers.length}</div>
+              <div className="text-sm text-purple-800">Active Teachers</div>
+            </div>
+          </div>
 
-      {/* STAFF TAB */}
-      {activeTab === "staff" && (
-        <div className="space-y-4">
           {/* Pending Staff */}
-          <div className="bg-blue-50 rounded-lg border border-blue-200">
+          <div className="bg-yellow-50 rounded-lg border border-yellow-200">
             <button
-              onClick={() => toggleSection('pendingStaff')}
-              className="w-full p-4 flex justify-between items-center hover:bg-blue-100 rounded-t-lg"
+              onClick={() => toggleSection("pendingStaff")}
+              className="w-full p-4 flex justify-between items-center hover:bg-yellow-100 rounded-t-lg"
             >
-              <div>
-                <h4 className="text-lg font-semibold text-blue-800">
-                  Pending Staff ({pendingStaff.length})
-                </h4>
-              </div>
-              <span className="text-blue-600 font-bold text-xl">
-                {collapsedSections.pendingStaff ? '+' : '-'}
+              <h4 className="text-lg font-semibold text-yellow-800">
+                ⏳ Pending Staff ({pendingStaff.length})
+              </h4>
+              <span className="text-yellow-600 font-bold text-xl">
+                {collapsedSections.pendingStaff ? "+" : "-"}
               </span>
             </button>
-
             {!collapsedSections.pendingStaff && (
               <div className="p-4">
                 {pendingStaff.length > 0 ? (
-                  <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
-                    <table className="min-w-full text-sm">
-                      <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
-                        <tr>
-                          <th className="px-4 py-3 text-left">Staff Member</th>
-                          <th className="px-4 py-3 text-left">Email</th>
-                          <th className="px-4 py-3 text-left">Date</th>
-                          <th className="px-4 py-3 text-left">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pendingStaff.map((user) => (
-                          <tr key={user.id} className="border-b border-gray-200 hover:bg-gray-50">
-                            <td className="px-4 py-3">
-                              <div className="flex items-center">
-                                <div className="flex-shrink-0 h-8 w-8 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold">
-                                  {user.name?.charAt(0).toUpperCase()}
-                                </div>
-                                <div className="ml-3">
-                                  <div className="text-sm font-semibold text-gray-800">{user.name}</div>
-                                  <div className="text-xs text-gray-500">Pending</div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-700">{user.email}</td>
-                            <td className="px-4 py-3 text-xs text-gray-500">
-                              {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}
-                            </td>
-                            <td className="px-4 py-3 flex gap-2">
-                              <button
-                                onClick={() => approveUser(user.id)}
-                                disabled={loadingStates[user.id]}
-                                className="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 disabled:bg-gray-400"
-                              >
-                                {loadingStates[user.id] ? '⏳' : '✅'} Approve
-                              </button>
-                              <button
-                                onClick={() => deleteUser(user.id)}
-                                disabled={loadingStates[user.id]}
-                                className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 disabled:bg-gray-400"
-                              >
-                                {loadingStates[user.id] ? '⏳' : '❌'} Delete
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="grid gap-3">
+                    {pendingStaff.map((user) => (
+                      <UserCard
+                        key={user.id}
+                        user={user}
+                        type="pending"
+                        onApprove={approveUser}
+                        onDelete={deleteUser}
+                      />
+                    ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500 bg-white rounded-lg border border-gray-200">
+                  <div className="text-center py-8 text-gray-500 bg-white rounded-lg">
                     <div className="text-4xl mb-2">👨‍💼</div>
                     <p>No pending staff registrations</p>
                   </div>
@@ -312,85 +379,109 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
             )}
           </div>
 
-          {/* Active Staff */}
-          <div className="bg-green-50 rounded-lg border border-green-200">
+          {/* Pending Students */}
+          <div className="bg-orange-50 rounded-lg border border-orange-200">
             <button
-              onClick={() => toggleSection('activeUsers')}
-              className="w-full p-4 flex justify-between items-center hover:bg-green-100 rounded-t-lg"
+              onClick={() => toggleSection("pendingStudents")}
+              className="w-full p-4 flex justify-between items-center hover:bg-orange-100 rounded-t-lg"
             >
-              <div>
-                <h4 className="text-lg font-semibold text-green-800">
-                  Active Staff ({activeUsers.filter(u => u.role !== 'Student').length})
-                </h4>
-              </div>
-              <span className="text-green-600 font-bold text-xl">
-                {collapsedSections.activeUsers ? '+' : '-'}
+              <h4 className="text-lg font-semibold text-orange-800">
+                🎓 Pending Students ({pendingStudents.length})
+              </h4>
+              <span className="text-orange-600 font-bold text-xl">
+                {collapsedSections.pendingStudents ? "+" : "-"}
               </span>
             </button>
-
-            {!collapsedSections.activeUsers && (
+            {!collapsedSections.pendingStudents && (
               <div className="p-4">
-                {activeUsers.filter(u => u.role !== 'Student').length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 text-sm bg-white rounded-lg border border-gray-200">
-                      <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
-                        <tr>
-                          <th className="px-4 py-3 text-left">User</th>
-                          <th className="px-4 py-3 text-left">Role</th>
-                          <th className="px-4 py-3 text-left">Classes</th>
-                          <th className="px-4 py-3 text-left">Status</th>
-                          <th className="px-4 py-3 text-left">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {activeUsers.filter(u => u.role !== 'Student').map((user) => (
-                          <tr key={user.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-3">
-                              <div className="flex items-center">
-                                <div className="flex-shrink-0 h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                                  {user.name?.charAt(0).toUpperCase()}
-                                </div>
-                                <div className="ml-3">
-                                  <div className="text-sm font-semibold text-gray-800">{user.name}</div>
-                                  <div className="text-xs text-gray-500">{user.email}</div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3">
-                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                user.role === "Admin" ? "bg-purple-100 text-purple-800" :
-                                "bg-blue-100 text-blue-800"
-                              }`}>
-                                {user.role}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-xs text-gray-500">
-                              {user.assignedClasses?.join(", ") || "-"}
-                            </td>
-                            <td className="px-4 py-3">
-                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                user.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                              }`}>
-                                {user.status || "active"}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 flex gap-1">
-                              <button
-                                onClick={() => deleteUser(user.id)}
-                                className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
-                              >
-                                Delete
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                {pendingStudents.length > 0 ? (
+                  <div className="grid gap-3">
+                    {pendingStudents.map((student) => (
+                      <UserCard
+                        key={student.id}
+                        user={student}
+                        type="pending"
+                        onApprove={approveStudent}
+                        onDelete={deleteUser}
+                      />
+                    ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500 bg-white rounded-lg border border-gray-200">
-                    <div className="text-4xl mb-2">👥</div>
-                    <p>No active staff found</p>
+                  <div className="text-center py-8 text-gray-500 bg-white rounded-lg">
+                    <div className="text-4xl mb-2">🎓</div>
+                    <p>No pending student registrations</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Active Teachers */}
+          <div className="bg-green-50 rounded-lg border border-green-200">
+            <button
+              onClick={() => toggleSection("activeTeachers")}
+              className="w-full p-4 flex justify-between items-center hover:bg-green-100 rounded-t-lg"
+            >
+              <h4 className="text-lg font-semibold text-green-800">
+                👨‍🏫 Active Teachers ({activeTeachers.length})
+              </h4>
+              <span className="text-green-600 font-bold text-xl">
+                {collapsedSections.activeTeachers ? "+" : "-"}
+              </span>
+            </button>
+            {!collapsedSections.activeTeachers && (
+              <div className="p-4">
+                {activeTeachers.length > 0 ? (
+                  <div className="grid gap-3">
+                    {activeTeachers.map((teacher) => (
+                      <UserCard
+                        key={teacher.id}
+                        user={teacher}
+                        type="active"
+                        onDelete={deleteUser}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500 bg-white rounded-lg">
+                    <div className="text-4xl mb-2">👨‍🏫</div>
+                    <p>No active teachers</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Active Students */}
+          <div className="bg-blue-50 rounded-lg border border-blue-200">
+            <button
+              onClick={() => toggleSection("activeStudents")}
+              className="w-full p-4 flex justify-between items-center hover:bg-blue-100 rounded-t-lg"
+            >
+              <h4 className="text-lg font-semibold text-blue-800">
+                🎒 Active Students ({activeStudents.length})
+              </h4>
+              <span className="text-blue-600 font-bold text-xl">
+                {collapsedSections.activeStudents ? "+" : "-"}
+              </span>
+            </button>
+            {!collapsedSections.activeStudents && (
+              <div className="p-4">
+                {activeStudents.length > 0 ? (
+                  <div className="grid gap-3">
+                    {activeStudents.map((student) => (
+                      <UserCard
+                        key={student.id}
+                        user={student}
+                        type="active"
+                        onDelete={deleteUser}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500 bg-white rounded-lg">
+                    <div className="text-4xl mb-2">🎒</div>
+                    <p>No active students</p>
                   </div>
                 )}
               </div>
@@ -399,189 +490,114 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
         </div>
       )}
 
-      {/* STUDENTS TAB - COMPLETE SECTION */}
-      {activeTab === "students" && (
-        <div className="space-y-4">
-          {/* Pending Students */}
-          <div className="bg-green-50 rounded-lg border border-green-200">
-            <button
-              onClick={() => toggleSection('pendingStudents')}
-              className="w-full p-4 flex justify-between items-center hover:bg-green-100 rounded-t-lg"
-            >
-              <div>
-                <h4 className="text-lg font-semibold text-green-800">
-                  Pending Students ({pendingStudents.length})
-                </h4>
-                <p className="text-sm text-green-600">Students waiting for approval</p>
-              </div>
-              <span className="text-green-600 font-bold text-xl">
-                {collapsedSections.pendingStudents ? '+' : '-'}
-              </span>
-            </button>
+      {/* PENDING APPROVAL TAB */}
+      {activeTab === "pending" && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Pending Staff */}
+            <div className="bg-yellow-50 rounded-lg border border-yellow-200 p-6">
+              <h4 className="text-lg font-semibold text-yellow-800 mb-4">
+                👨‍💼 Pending Staff ({pendingStaff.length})
+              </h4>
+              {pendingStaff.length > 0 ? (
+                <div className="space-y-3">
+                  {pendingStaff.map((user) => (
+                    <UserCard
+                      key={user.id}
+                      user={user}
+                      type="pending"
+                      onApprove={approveUser}
+                      onDelete={deleteUser}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 bg-white rounded-lg">
+                  <div className="text-4xl mb-2">👨‍💼</div>
+                  <p>No pending staff</p>
+                </div>
+              )}
+            </div>
 
-            {!collapsedSections.pendingStudents && (
-              <div className="p-4">
-                {pendingStudents.length > 0 ? (
-                  <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
-                    <table className="min-w-full text-sm">
-                      <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
-                        <tr>
-                          <th className="px-4 py-3 text-left">Student</th>
-                          <th className="px-4 py-3 text-left">Student ID</th>
-                          <th className="px-4 py-3 text-left">Class</th>
-                          <th className="px-4 py-3 text-left">Date</th>
-                          <th className="px-4 py-3 text-left">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pendingStudents.map((student) => (
-                          <tr key={student.id} className="border-b border-gray-200 hover:bg-gray-50">
-                            <td className="px-4 py-3">
-                              <div className="flex items-center">
-                                <div className="flex-shrink-0 h-8 w-8 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold">
-                                  {(student.fullName || student.name)?.charAt(0).toUpperCase()}
-                                </div>
-                                <div className="ml-3">
-                                  <div className="text-sm font-semibold text-gray-800">
-                                    {student.fullName || student.name}
-                                  </div>
-                                  <div className="text-xs text-gray-500">Pending Approval</div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-700">
-                              {student.studentId}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-700">
-                              {student.class || student.formClass}
-                            </td>
-                            <td className="px-4 py-3 text-xs text-gray-500">
-                              {student.createdAt ? new Date(student.createdAt).toLocaleDateString() : 'Unknown'}
-                            </td>
-                            <td className="px-4 py-3 flex gap-2">
-                              <button
-                                onClick={() => approveStudent(student.id)}
-                                disabled={loadingStates[student.id]}
-                                className="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 disabled:bg-gray-400 font-medium flex items-center gap-1"
-                              >
-                                {loadingStates[student.id] ? '⏳' : '✅'} Approve
-                              </button>
-                              <button
-                                onClick={() => deleteUser(student.id)}
-                                disabled={loadingStates[student.id]}
-                                className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 disabled:bg-gray-400 font-medium"
-                              >
-                                {loadingStates[student.id] ? '⏳' : '❌'} Reject
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500 bg-white rounded-lg border border-gray-200">
-                    <div className="text-4xl mb-2">🎒</div>
-                    <p>No pending student approvals</p>
-                    <p className="text-sm text-gray-400 mt-1">
-                      Students added by Form Masters will appear here
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Pending Students */}
+            <div className="bg-orange-50 rounded-lg border border-orange-200 p-6">
+              <h4 className="text-lg font-semibold text-orange-800 mb-4">
+                🎓 Pending Students ({pendingStudents.length})
+              </h4>
+              {pendingStudents.length > 0 ? (
+                <div className="space-y-3">
+                  {pendingStudents.map((student) => (
+                    <UserCard
+                      key={student.id}
+                      user={student}
+                      type="pending"
+                      onApprove={approveStudent}
+                      onDelete={deleteUser}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 bg-white rounded-lg">
+                  <div className="text-4xl mb-2">🎓</div>
+                  <p>No pending students</p>
+                </div>
+              )}
+            </div>
           </div>
+        </div>
+      )}
 
-          {/* ACTIVE STUDENTS SECTION - NEW */}
-          <div className="bg-blue-50 rounded-lg border border-blue-200">
-            <button
-              onClick={() => toggleSection('activeStudents')}
-              className="w-full p-4 flex justify-between items-center hover:bg-blue-100 rounded-t-lg"
-            >
-              <div>
-                <h4 className="text-lg font-semibold text-blue-800">
-                  Active Students ({activeUsers.filter(u => u.role === 'Student').length})
-                </h4>
-                <p className="text-sm text-blue-600">Approved and active students</p>
-              </div>
-              <span className="text-blue-600 font-bold text-xl">
-                {collapsedSections.activeStudents ? '+' : '-'}
-              </span>
-            </button>
+      {/* ACTIVE USERS TAB */}
+      {activeTab === "active" && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Active Teachers */}
+            <div className="bg-green-50 rounded-lg border border-green-200 p-6">
+              <h4 className="text-lg font-semibold text-green-800 mb-4">
+                👨‍🏫 Active Teachers ({activeTeachers.length})
+              </h4>
+              {activeTeachers.length > 0 ? (
+                <div className="space-y-3">
+                  {activeTeachers.map((teacher) => (
+                    <UserCard
+                      key={teacher.id}
+                      user={teacher}
+                      type="active"
+                      onDelete={deleteUser}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 bg-white rounded-lg">
+                  <div className="text-4xl mb-2">👨‍🏫</div>
+                  <p>No active teachers</p>
+                </div>
+              )}
+            </div>
 
-            {!collapsedSections.activeStudents && (
-              <div className="p-4">
-                {activeUsers.filter(u => u.role === 'Student').length > 0 ? (
-                  <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
-                    <table className="min-w-full text-sm">
-                      <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
-                        <tr>
-                          <th className="px-4 py-3 text-left">Student</th>
-                          <th className="px-4 py-3 text-left">Student ID</th>
-                          <th className="px-4 py-3 text-left">Class</th>
-                          <th className="px-4 py-3 text-left">Status</th>
-                          <th className="px-4 py-3 text-left">Approved Date</th>
-                          <th className="px-4 py-3 text-left">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {activeUsers
-                          .filter(u => u.role === 'Student')
-                          .map((student) => (
-                          <tr key={student.id} className="border-b border-gray-200 hover:bg-gray-50">
-                            <td className="px-4 py-3">
-                              <div className="flex items-center">
-                                <div className="flex-shrink-0 h-8 w-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
-                                  {(student.fullName || student.name)?.charAt(0).toUpperCase()}
-                                </div>
-                                <div className="ml-3">
-                                  <div className="text-sm font-semibold text-gray-800">
-                                    {student.fullName || student.name}
-                                  </div>
-                                  <div className="text-xs text-gray-500">Active Student</div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-700">
-                              {student.studentId}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-700">
-                              {student.class || student.formClass || student.assignedClasses?.join(', ')}
-                            </td>
-                            <td className="px-4 py-3">
-                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                student.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                              }`}>
-                                {student.status || "active"}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-xs text-gray-500">
-                              {student.approvedAt ? new Date(student.approvedAt).toLocaleDateString() : 'Unknown'}
-                            </td>
-                            <td className="px-4 py-3">
-                              <button
-                                onClick={() => deleteUser(student.id)}
-                                className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 font-medium"
-                              >
-                                Remove
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500 bg-white rounded-lg border border-gray-200">
-                    <div className="text-4xl mb-2">👨‍🎓</div>
-                    <p>No active students found</p>
-                    <p className="text-sm text-gray-400 mt-1">
-                      Approved students will appear here
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Active Students */}
+            <div className="bg-blue-50 rounded-lg border border-blue-200 p-6">
+              <h4 className="text-lg font-semibold text-blue-800 mb-4">
+                🎒 Active Students ({activeStudents.length})
+              </h4>
+              {activeStudents.length > 0 ? (
+                <div className="space-y-3">
+                  {activeStudents.map((student) => (
+                    <UserCard
+                      key={student.id}
+                      user={student}
+                      type="active"
+                      onDelete={deleteUser}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 bg-white rounded-lg">
+                  <div className="text-4xl mb-2">🎒</div>
+                  <p>No active students</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
