@@ -49,13 +49,12 @@ import StaffPerformance from '../roles/StaffPerformance';
 import SchoolEvents from '../roles/SchoolEvents';
 import MassCommunications from '../roles/MassCommunications';
 
-
 export default function TechContent({ config, activeModule, user, dashboardData }) {
   const { isAdmin } = useAuth();
 
   const renderModuleContent = () => {
     switch (activeModule) {
-      // Admin modules
+      // 🧩 Admin modules
       case 'users':
         return <UserManagementPanel users={dashboardData.users} />;
       case 'assignments':
@@ -65,7 +64,7 @@ export default function TechContent({ config, activeModule, user, dashboardData 
       case 'settings':
         return <SystemSettings />;
 
-      // Principal modules
+      // 🧭 Principal modules
       case 'overview':
         return (
           <div className="space-y-6">
@@ -151,31 +150,56 @@ export default function TechContent({ config, activeModule, user, dashboardData 
             </div>
           </div>
         );
-        case 'analytics':
-          if (user.role === 'Principal') {
-            return <SchoolAnalytics />;
-          }
-          break;
-        
-        case 'staff-performance':
-          if (user.role === 'Principal') {
-            return <StaffPerformance />;
-          }
-          break;
-        
-        case 'events':
-          if (user.role === 'Principal') {
-            return <SchoolEvents />;
-          }
-          break;
-        
-        case 'communications':
-          if (user.role === 'Principal') {
-            return <MassCommunications />;
-          }
-          break;
 
-      // Attendance modules for different roles
+      case 'analytics':
+        if (user.role === 'Principal') {
+          return <SchoolAnalytics />;
+        }
+        break;
+
+      case 'staff-performance':
+        if (user.role === 'Principal') {
+          return <StaffPerformance />;
+        }
+        break;
+
+      // 🟡 Disabled for Principal
+      // case 'events':
+      //   if (user.role === 'Principal') {
+      //     return <SchoolEvents />;
+      //   }
+      //   break;
+
+      // case 'communications':
+      //   if (user.role === 'Principal') {
+      //     return <MassCommunications />;
+      //   }
+      //   break;
+
+      case 'messages':
+        if (user.role === 'Principal') {
+          return <PrincipalMessages />;
+        }
+        break;
+
+      // 🧩 VP Admin modules
+      case 'communications':
+        if (user.role === 'VP Admin') {
+          return <SchoolCommunications />;
+        }
+        break;
+
+      case 'calendar':
+        if (user.role === 'VP Admin') {
+          return (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-bold mb-4">School Calendar</h2>
+              <p className="text-gray-600">View and manage school events and schedules.</p>
+            </div>
+          );
+        }
+        break;
+
       case 'attendance':
         if (user.role === 'VP Admin') {
           return <VPAdminAttendance />;
@@ -206,45 +230,10 @@ export default function TechContent({ config, activeModule, user, dashboardData 
         }
         break;
 
-      case 'messages':
-        if (user.role === 'Principal') {
-          return <PrincipalMessages />;
-        }
-        break;
-
-      // VP Academic modules
       case 'materials':
         return <AcademicMaterials />;
 
-      case 'lessonplans':
-        return (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">Lesson Plans</h2>
-            <p className="text-gray-600">Review and sign lesson plans from subject teachers.</p>
-          </div>
-        );
-
-      case 'subjects':
-        return (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">Subject Assignments</h2>
-            <p className="text-gray-600">View teacher subject assignments and distributions.</p>
-          </div>
-        );
-
-      // VP Admin modules
-      case 'communications':
-        return <SchoolCommunications />;
-
-      case 'calendar':
-        return (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">School Calendar</h2>
-            <p className="text-gray-600">View and manage school events and schedules.</p>
-          </div>
-        );
-
-      // Form Master modules
+      // 🧩 Form Master modules
       case 'students':
         if (user.role === 'Form Master') {
           return <ClassListManager className={user.assignedClasses?.[0]} />;
@@ -255,12 +244,7 @@ export default function TechContent({ config, activeModule, user, dashboardData 
         if (user.role === 'Form Master') {
           return <AutoRosterManager class={user.assignedClasses?.[0]} />;
         } else if (user.role === 'Senior Master') {
-          return (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold mb-4">School Duty Roster</h2>
-              <p className="text-gray-600">Manage school-wide duty assignments.</p>
-            </div>
-          );
+          return <DutyRosterManager />;
         }
         break;
 
@@ -270,41 +254,12 @@ export default function TechContent({ config, activeModule, user, dashboardData 
         }
         break;
 
-      case 'monitors':
-        if (user.role === 'Form Master') {
-          return (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold mb-4">Student Monitors - {user.assignedClasses?.[0]}</h2>
-              <p className="text-gray-600">Assign and manage class prefects and student leaders.</p>
-            </div>
-          );
-        }
-        break;
-
       case 'scoring':
         if (user.role === 'Form Master' && user.assignedClasses && user.assignedSubjects) {
           return <ScoreCenter />;
-        } else if (user.role === 'Form Master') {
-          return (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-              <p className="text-yellow-800">
-                You need both assigned classes and subjects to enter marks.
-                Currently you only have class assignment.
-              </p>
-            </div>
-          );
-        } else if (user.role === 'Subject Teacher') {
-          return user.assignedClasses && user.assignedSubjects ? (
-            <ScoreCenter />
-          ) : (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-              <p className="text-yellow-800">You need both assigned classes and subjects to enter marks.</p>
-            </div>
-          );
         }
         break;
 
-      // Subject Teacher modules
       case 'questions':
         if (user.role === 'Subject Teacher') {
           return <QuestionCreator user={user} />;
@@ -314,13 +269,6 @@ export default function TechContent({ config, activeModule, user, dashboardData 
       case 'elibrary-upload':
         if (user.role === 'Subject Teacher') {
           return <ELibraryUploader user={user} />;
-        }
-        break;
-
-      // Exam Officer modules
-      case 'question-review':
-        if (user.role === 'Exam Officer') {
-          return <QuestionReview />;
         }
         break;
 
@@ -336,38 +284,9 @@ export default function TechContent({ config, activeModule, user, dashboardData 
         }
         break;
 
-      case 'tracking':
-        if (user.role === 'Exam Officer') {
-          return (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold mb-4">Submission Progress Tracking</h2>
-              <p className="text-gray-600">Monitor overall submission progress and deadlines.</p>
-            </div>
-          );
-        }
-        break;
-
-      case 'bulk':
-        if (user.role === 'Exam Officer') {
-          return (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold mb-4">Bulk Operations</h2>
-              <p className="text-gray-600">Manage bulk printing and export operations.</p>
-            </div>
-          );
-        }
-        break;
-
-      // Senior Master modules
       case 'advanced-timetable':
         if (user.role === 'Senior Master') {
           return <AdvancedTimetable />;
-        }
-        break;
-
-      case 'duty-roster':
-        if (user.role === 'Senior Master') {
-          return <DutyRosterManager />;
         }
         break;
 
@@ -377,7 +296,6 @@ export default function TechContent({ config, activeModule, user, dashboardData 
         }
         break;
 
-      // Student modules
       case 'scores':
         if (user.role === 'Student') {
           return <StudentDashboard />;
@@ -388,7 +306,6 @@ export default function TechContent({ config, activeModule, user, dashboardData 
       case 'exambank':
         return <ExamBank isAdmin={isAdmin} />;
 
-      // Default fallback
       default:
         if (user.role === 'Student') {
           return <StudentDashboard />;

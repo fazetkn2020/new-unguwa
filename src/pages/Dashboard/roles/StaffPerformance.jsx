@@ -341,8 +341,7 @@ export default function StaffPerformance() {
 
                   {/* Attendance & Overall */}
                   <div>
-                    <h5 className="font-medium text-gray-700 mb-2">Attendance & Overall</h5>
-                    <div className="space-y-2 text-sm">
+                  <h5 className="font-medium text-gray-700 mb-2">Attendance &amp; Overall</h5>                    <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span>Attendance Rate:</span>
                         <span className="font-medium">{staffMember.attendanceMetrics.attendanceRate}%</span>
