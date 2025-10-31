@@ -60,14 +60,24 @@ export const ExamProvider = ({ children }) => {
     });
   };
 
-  // Check if user can edit a subject
+  // Check if user can edit a subject - FIXED to match actual roles
   const canUserEditSubject = (user, subject) => {
     if (!user) return false;
-    if (user.role === 'Principal' || user.role === 'VP') return false;
-    if (user.role === 'SubjectTeacher' && user.subjects) {
+    
+    // Admin and VP Academic can edit all subjects
+    if (['Admin', 'VP Academic'].includes(user.role)) return true;
+    
+    // Principal can view but not edit
+    if (user.role === 'Principal') return false;
+    
+    // Form Master can edit all subjects in their class
+    if (user.role === 'Form Master') return true;
+    
+    // Teacher can only edit their assigned subjects
+    if (user.role === 'Teacher' && user.subjects) {
       return user.subjects.includes(subject);
     }
-    if (user.role === 'FormMaster') return true; // Can edit all
+    
     return false;
   };
 

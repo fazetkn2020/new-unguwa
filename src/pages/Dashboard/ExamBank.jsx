@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useExam } from "../../context/ExamContext";
-import { getStudentIdentifier } from "../../utils/studentUtils";
 
 export default function ExamBank() {
   const { user } = useAuth() || {};
@@ -17,7 +16,7 @@ export default function ExamBank() {
   useEffect(() => {
     const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
     setAllClasses(Object.keys(classLists));
-    
+
     const schoolSubjects = JSON.parse(localStorage.getItem('schoolSubjects')) || [];
     setAllSubjects(schoolSubjects);
   }, []);
@@ -35,9 +34,47 @@ export default function ExamBank() {
     cls.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Use the same student identifier format as ScoreCenter
+  const getStudentIdentifier = (student, className) => {
+    if (!student) return "";
+    return `${student.id}-${className}`;
+  };
+
+  // Get teacher name who entered scores for a subject in this class
+  const getSubjectTeacherName = (subject) => {
+    // Check if any student in this class has scores for this subject
+    const studentsWithScores = classStudents.filter(student => {
+      const studentId = getStudentIdentifier(student, selectedClass);
+      return examData[studentId]?.[subject] && 
+             (examData[studentId][subject].ca !== '' || examData[studentId][subject].exam !== '');
+    });
+
+    if (studentsWithScores.length === 0) {
+      return 'Not entered';
+    }
+
+    // For now, we'll show who can edit this subject
+    const teachers = JSON.parse(localStorage.getItem('teachers')) || [];
+    const subjectTeacher = teachers.find(teacher => 
+      teacher.subjects && teacher.subjects.includes(subject)
+    );
+    
+    return subjectTeacher ? subjectTeacher.fullName || subjectTeacher.name : 'Unknown Teacher';
+  };
+
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-6">Exam Bank - Score Management</h2>
+
+      {/* User Info */}
+      <div className="mb-4 bg-blue-50 p-4 rounded-lg border border-blue-200">
+        <p className="text-blue-800">
+          <strong>Welcome, {user.fullName || user.name}!</strong>
+          {user.role === 'Teacher' && user.subjects && (
+            <span> - Teaching: {user.subjects.join(', ')}</span>
+          )}
+        </p>
+      </div>
 
       {/* Class Search and Selection */}
       <div className="mb-6 bg-white p-4 rounded-lg shadow border">
@@ -124,7 +161,12 @@ export default function ExamBank() {
                   </th>
                   {allSubjects.map(subject => (
                     <th key={subject} className="p-3 text-center font-semibold border-b border-l" colSpan="3">
-                      {subject}
+                      <div>
+                        {subject}
+                        <div className="text-xs font-normal text-gray-600 mt-1">
+                          Teacher: {getSubjectTeacherName(subject)}
+                        </div>
+                      </div>
                     </th>
                   ))}
                 </tr>
@@ -215,6 +257,7 @@ export default function ExamBank() {
               <li>• <strong>VP Academic</strong> creates subjects → automatically appears here</li>
               <li>• <strong>VP Admin</strong> enrolls students → creates score slots</li>
               <li>• <strong>Subject Teachers</strong> enter scores → visible here immediately</li>
+              <li>• <strong>Teacher names</strong> shown above each subject column</li>
               <li>• <strong>CA Score:</strong> 0-40 | <strong>Exam Score:</strong> 0-60 | <strong>Total:</strong> 0-100</li>
               <li>• <strong>Colors:</strong> 🟢 70+ | 🔵 50-69 | 🟡 40-49 | 🔴 Below 40</li>
             </ul>
