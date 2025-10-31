@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { getAdminClasses } from "../../../utils/classHelpers";
+
 
 export default function TeacherAssignmentPanel() {
   const [users, setUsers] = useState([]);
@@ -28,12 +30,10 @@ export default function TeacherAssignmentPanel() {
     setUsers(teachers);
 
     // Load ONLY admin-created classes from localStorage
-    const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
-    console.log('📚 Class lists from localStorage:', classLists);
-    
-    const adminClasses = Object.keys(classLists);
-    console.log('🏫 Admin classes extracted:', adminClasses);
-    setClasses(adminClasses);
+    const adminClasses = getAdminClasses();
+console.log('🏫 Admin classes (from utils):', adminClasses);
+setClasses(adminClasses);
+
 
     // Load subjects from localStorage (dynamic)
     const savedSubjects = JSON.parse(localStorage.getItem('schoolSubjects')) || [];

@@ -1,44 +1,40 @@
-// src/utils/classHelpers.js - Safe utility for dynamic class management
+// ✅ Safe utility for dynamic class and subject management (Admin-controlled only)
 
-// Get ONLY admin-created classes from localStorage
+// 🔹 Get ONLY admin-created classes from localStorage
 export const getAdminClasses = () => {
-  const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
-  const adminClasses = Object.keys(classLists);
+  const stored = JSON.parse(localStorage.getItem('schoolClasses')) || [];
   
-  // If no admin classes exist yet, return empty array (no hardcoded classes)
-  return adminClasses;
+  // If admin saves classes as an array of objects, extract their names
+  // e.g. [{ name: "JSS1" }, { name: "JSS2" }]
+  const adminClasses = stored.map(cls => cls.name || cls.className || cls); 
+
+  // Filter out any empty or invalid entries
+  return adminClasses.filter(Boolean);
 };
 
-// Get subjects for a class (from admin-created subjects)
+// 🔹 Get subjects for a class (ONLY admin-created subjects)
 export const getClassSubjects = (className) => {
   const savedSubjects = JSON.parse(localStorage.getItem('schoolSubjects')) || [];
   
-  // Return saved subjects or basic defaults if none exist
-  return savedSubjects.length > 0 ? savedSubjects : [
-    "Mathematics",
-    "English", 
-    "Science",
-    "Social Studies"
-  ];
+  // Return ONLY subjects created by the admin
+  return savedSubjects.length > 0 ? savedSubjects : [];
 };
 
-// For backward compatibility - mimics old subjects structure
+// 🔹 Build subjects mapping per class (Admin-created only)
 export const getSubjectsByClass = () => {
   const savedSubjects = JSON.parse(localStorage.getItem('schoolSubjects')) || [];
   const adminClasses = getAdminClasses();
   const subjectsObj = {};
-  
-  // Create subjects object for each admin class
+
+  // Create subject mapping for each admin-created class
   adminClasses.forEach(className => {
-    subjectsObj[className] = savedSubjects.length > 0 ? savedSubjects : [
-      "Mathematics", "English", "Science", "Social Studies"
-    ];
+    subjectsObj[className] = savedSubjects.length > 0 ? savedSubjects : [];
   });
-  
+
   return subjectsObj;
 };
 
-// Check if a class exists (admin-created only)
+// 🔹 Check if a class exists (admin-created only)
 export const isValidClass = (className) => {
   const adminClasses = getAdminClasses();
   return adminClasses.includes(className);
