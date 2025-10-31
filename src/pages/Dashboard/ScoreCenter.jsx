@@ -1,74 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getExamBankKey, getInitialScoreEntry } from '../../data/examBankTemplate';
-import { ScoreEntryTable } from '../../components/scoring';
+import { useExam } from '../../context/ExamContext';
 
 export default function ScoreCenter() {
   const { user } = useAuth();
-  const [selectedClass, setSelectedClass] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('');
-  const [studentRoster, setStudentRoster] = useState([]);
-  const [examData, setExamData] = useState({});
+  const { examData, updateScore } = useExam();
+  const [students, setStudents] = useState([]);
   
   // Get assigned classes and subjects from user data
   const assignedClasses = user?.assignedClasses || [];
   const assignedSubjects = user?.assignedSubjects || [];
 
+  // Auto-select first assignment
+  const currentClass = assignedClasses[0] || '';
+  const currentSubject = assignedSubjects[0] || '';
+
   useEffect(() => {
-    if (selectedClass) {
+    if (currentClass) {
       const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
-      const classStudents = classLists[selectedClass] || [];
-      setStudentRoster(classStudents);
-    } else {
-      setStudentRoster([]);
+      const classStudents = classLists[currentClass] || [];
+      setStudents(classStudents);
     }
-  }, [selectedClass]);
+  }, [currentClass]);
 
-  useEffect(() => {
-    if (selectedClass && selectedSubject) {
-      const key = getExamBankKey(selectedClass, selectedSubject);
-      const data = JSON.parse(localStorage.getItem(key)) || {};
-      setExamData(data);
-    }
-  }, [selectedClass, selectedSubject]);
-
-  const updateScore = (studentIdentifier, subject, scoreType, value) => {
-    if (!selectedClass || !selectedSubject) return;
-
-    const key = getExamBankKey(selectedClass, selectedSubject);
-    const currentData = JSON.parse(localStorage.getItem(key)) || {};
-
-    if (!currentData[studentIdentifier]) {
-      currentData[studentIdentifier] = getInitialScoreEntry(studentIdentifier, selectedSubject);
-    }
-
-    currentData[studentIdentifier][scoreType] = value;
-
-    // Calculate total if both scores are available
-    const caScore = currentData[studentIdentifier].ca !== "" ? parseInt(currentData[studentIdentifier].ca) : 0;
-    const examScore = currentData[studentIdentifier].exam !== "" ? parseInt(currentData[studentIdentifier].exam) : 0;
-    currentData[studentIdentifier].total = Math.min(100, caScore + examScore);
-
-    localStorage.setItem(key, JSON.stringify(currentData));
-    setExamData(currentData);
+  const getStudentScore = (studentIdentifier) => {
+    return examData[studentIdentifier]?.[currentSubject] || { ca: "", exam: "", total: "" };
   };
 
-  // Check if user is assigned to teach any classes/subjects
+  const calculateTotal = (ca, exam) => {
+    const caScore = ca === "" ? 0 : parseInt(ca);
+    const examScore = exam === "" ? 0 : parseInt(exam);
+    return Math.min(100, caScore + examScore);
+  };
+
+  // Check if user has teaching assignments
   if (assignedClasses.length === 0 || assignedSubjects.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 border border-white/20 text-center">
-            <div className="text-yellow-400 text-6xl mb-4">⚠️</div>
-            <h1 className="text-3xl font-bold text-white mb-4">No Teaching Assignment</h1>
-            <p className="text-blue-200 text-lg mb-6">
-              You have not been assigned to teach any classes or subjects.
+      <div className="min-h-screen bg-white p-6">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
+            <div className="text-red-500 text-6xl mb-4">🚫</div>
+            <h1 className="text-2xl font-bold text-gray-800 mb-4">No Teaching Assignment</h1>
+            <p className="text-gray-600 text-lg mb-6">
+              Contact <strong>VP Academic</strong> to get assigned to classes and subjects.
             </p>
-            <div className="bg-yellow-500/20 border border-yellow-400/30 rounded-xl p-4 max-w-md mx-auto">
-              <p className="text-yellow-200">
-                Please contact <strong>VP Admin</strong> or <strong>VP Academic</strong> to get assigned to classes and subjects.
-              </p>
-            </div>
           </div>
         </div>
       </div>
@@ -76,109 +51,143 @@ export default function ScoreCenter() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 border border-white/20">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
+    <div className="min-h-screen bg-gray-50 p-2">
+      <div className="w-full max-w-full">
+        {/* Simple Header */}
+        <div className="bg-white shadow-sm border-b border-gray-200 p-4 mb-2">
+          <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-white mb-2">Score Center</h1>
-              <p className="text-blue-200">Enter scores for your assigned classes and subjects</p>
+              <h1 className="text-xl font-bold text-gray-800">Score Entry</h1>
+              <p className="text-gray-600 text-sm">
+                {currentClass} - {currentSubject}
+              </p>
             </div>
-            <div className="bg-blue-500/20 border border-blue-400/30 rounded-xl p-3">
-              <p className="text-white text-sm">
-                <strong>Assigned:</strong> {assignedClasses.length} classes, {assignedSubjects.length} subjects
+            <div className="bg-green-50 border border-green-200 rounded-lg p-2">
+              <p className="text-green-800 text-sm">
+                <strong>Subjects:</strong> {assignedSubjects.join(', ')}
               </p>
             </div>
           </div>
-
-          {/* Class and Subject Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-              <label className="block text-white font-semibold mb-3">Select Class</label>
-              <select
-                value={selectedClass}
-                onChange={(e) => setSelectedClass(e.target.value)}
-                className="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Choose a class</option>
-                {assignedClasses.map(cls => (
-                  <option key={cls} value={cls} className="text-gray-900">{cls}</option>
-                ))}
-              </select>
-              <p className="text-blue-200 text-xs mt-2">
-                Your assigned classes: {assignedClasses.join(', ')}
-              </p>
-            </div>
-
-            <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-              <label className="block text-white font-semibold mb-3">Select Subject</label>
-              <select
-                value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
-                className="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Choose a subject</option>
-                {assignedSubjects.map(subject => (
-                  <option key={subject} value={subject} className="text-gray-900">{subject}</option>
-                ))}
-              </select>
-              <p className="text-blue-200 text-xs mt-2">
-                Your assigned subjects: {assignedSubjects.join(', ')}
-              </p>
-            </div>
-          </div>
-
-          {/* Rest of component remains the same */}
-          {selectedClass && (
-            <div className="bg-blue-500/20 border border-blue-400/30 rounded-xl p-4 mb-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-white font-semibold">
-                    {selectedClass} - {studentRoster.length} Students
-                  </h3>
-                  <p className="text-blue-200 text-sm">
-                    {selectedSubject ? `Scoring for: ${selectedSubject}` : 'Select a subject to begin scoring'}
-                  </p>
-                </div>
-                {studentRoster.length === 0 && (
-                  <p className="text-yellow-300 text-sm">
-                    💡 No students in this class. Ask VP Admin to enroll students.
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Score Entry Table */}
-          {selectedClass && selectedSubject ? (
-            studentRoster.length > 0 ? (
-              <ScoreEntryTable
-                students={studentRoster}
-                selectedSubject={selectedSubject}
-                examData={examData}
-                updateScore={updateScore}
-                currentClass={selectedClass}
-              />
-            ) : (
-              <div className="text-center py-12 bg-white/5 rounded-xl border border-white/10">
-                <div className="text-yellow-400 text-6xl mb-4">🎓</div>
-                <h3 className="text-white text-xl font-semibold mb-2">No Students Found</h3>
-                <p className="text-blue-200">
-                  There are no students enrolled in {selectedClass}.<br />
-                  Please ask the VP Admin to enroll students in this class.
-                </p>
-              </div>
-            )
-          ) : (
-            <div className="text-center py-12 bg-white/5 rounded-xl border border-white/10">
-              <div className="text-blue-400 text-6xl mb-4">📝</div>
-              <h3 className="text-white text-xl font-semibold mb-2">Ready to Score</h3>
-              <p className="text-blue-200">
-                Select a class and subject from your assignments to begin score entry.
-              </p>
-            </div>
-          )}
         </div>
+
+        {/* Score Entry Table */}
+        {students.length > 0 ? (
+          <div className="bg-white shadow border border-gray-200 rounded-lg">
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white text-gray-800">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="py-3 px-4 border-b border-gray-300 text-left font-semibold">#</th>
+                    <th className="py-3 px-4 border-b border-gray-300 text-left font-semibold">Student Name</th>
+                    <th className="py-3 px-4 border-b border-gray-300 text-center font-semibold">CA (0-40)</th>
+                    <th className="py-3 px-4 border-b border-gray-300 text-center font-semibold">Exam (0-60)</th>
+                    <th className="py-3 px-4 border-b border-gray-300 text-center font-semibold">Total</th>
+                    <th className="py-3 px-4 border-b border-gray-300 text-center font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map((student, index) => {
+                    const studentIdentifier = `${student.id}-${currentClass}`;
+                    const scores = getStudentScore(studentIdentifier);
+                    const isComplete = scores.ca !== "" && scores.exam !== "";
+                    const total = calculateTotal(scores.ca, scores.exam);
+
+                    const handleScoreChange = (scoreType, value) => {
+                      let numericValue = value === "" ? "" : parseInt(value);
+                      if (numericValue !== "" && isNaN(numericValue)) numericValue = 0;
+
+                      if (numericValue !== "") {
+                        if (scoreType === "ca") numericValue = Math.max(0, Math.min(40, numericValue));
+                        if (scoreType === "exam") numericValue = Math.max(0, Math.min(60, numericValue));
+                      }
+
+                      updateScore(studentIdentifier, currentSubject, scoreType, numericValue);
+                    };
+
+                    return (
+                      <tr key={studentIdentifier} className="hover:bg-gray-50 border-b border-gray-200">
+                        <td className="py-3 px-4 font-medium">{index + 1}</td>
+                        <td className="py-3 px-4 font-medium text-blue-700">{student.fullName}</td>
+
+                        <td className="py-3 px-4">
+                          <input
+                            type="number"
+                            min="0"
+                            max="40"
+                            value={scores.ca === "" ? "" : scores.ca}
+                            onChange={(e) => handleScoreChange("ca", e.target.value)}
+                            className="w-20 p-2 border border-gray-300 rounded text-center block focus:ring-2 focus:ring-blue-500 bg-white text-gray-800 mx-auto"
+                            placeholder="0"
+                          />
+                        </td>
+
+                        <td className="py-3 px-4">
+                          <input
+                            type="number"
+                            min="0"
+                            max="60"
+                            value={scores.exam === "" ? "" : scores.exam}
+                            onChange={(e) => handleScoreChange("exam", e.target.value)}
+                            className="w-20 p-2 border border-gray-300 rounded text-center block focus:ring-2 focus:ring-blue-500 bg-white text-gray-800 mx-auto"
+                            placeholder="0"
+                          />
+                        </td>
+
+                        <td className="py-3 px-4 text-center font-semibold">
+                          <span
+                            className={`px-3 py-1 rounded text-sm ${
+                              total >= 70
+                                ? "bg-green-100 text-green-800"
+                                : total >= 50
+                                ? "bg-blue-100 text-blue-800"
+                                : total >= 40
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {total}
+                          </span>
+                        </td>
+
+                        <td className="py-3 px-4 text-center">
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-medium ${
+                              isComplete
+                                ? "bg-green-100 text-green-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {isComplete ? "Complete" : "Pending"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Completion summary */}
+            <div className="p-3 bg-gray-100 border-t border-gray-300">
+              <div className="text-sm text-gray-700 text-center">
+                <strong>{students.filter(s => {
+                  const studentIdentifier = `${s.id}-${currentClass}`;
+                  const scores = getStudentScore(studentIdentifier);
+                  return scores.ca !== "" && scores.exam !== "";
+                }).length}</strong> of <strong>{students.length}</strong> students completed
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-12 bg-yellow-50 border border-yellow-300 rounded-xl">
+            <div className="text-yellow-500 text-6xl mb-4">📝</div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">No Students Found</h3>
+            <p className="text-gray-600">
+              No students in <strong>{currentClass}</strong>.<br />
+              Ask <strong>VP Admin</strong> to enroll students.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

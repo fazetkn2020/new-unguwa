@@ -18,6 +18,7 @@ export default function StudentEnrollment() {
   }, []);
 
   const loadClasses = () => {
+    // FIXED: Get classes from classLists (created by VP Academic)
     const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
     setClasses(Object.keys(classLists));
   };
@@ -44,7 +45,7 @@ export default function StudentEnrollment() {
       return;
     }
 
-    // Check if class exists
+    // Check if class exists (created by VP Academic)
     if (!classLists[newStudent.class]) {
       alert(`Class ${newStudent.class} does not exist! Please ask VP Academic to create it first.`);
       return;
@@ -64,7 +65,7 @@ export default function StudentEnrollment() {
       enrolledAt: new Date().toISOString()
     };
 
-    // Add to class list
+    // Add to class list (shared with VP Academic)
     classLists[newStudent.class].push(student);
     localStorage.setItem('classLists', JSON.stringify(classLists));
     
@@ -87,7 +88,17 @@ export default function StudentEnrollment() {
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-xl font-bold mb-6">Student Enrollment - VP Admin</h2>
 
-      {/* Simple form for now */}
+      {/* Info Box */}
+      <div className="mb-6 p-4 bg-blue-50 rounded border border-blue-200">
+        <h3 className="font-semibold text-blue-800 mb-2">📋 Enrollment Process</h3>
+        <p className="text-blue-700 text-sm">
+          • <strong>VP Academic</strong> creates classes first<br/>
+          • <strong>VP Admin</strong> enrolls students in existing classes<br/>
+          • Available classes: <strong>{classes.length}</strong>
+        </p>
+      </div>
+
+      {/* Enrollment Form */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-blue-50 rounded">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -129,21 +140,73 @@ export default function StudentEnrollment() {
               <option key={cls} value={cls}>{cls}</option>
             ))}
           </select>
+          {classes.length === 0 && (
+            <p className="text-red-600 text-xs mt-1">
+              ❌ No classes available. Ask <strong>VP Academic</strong> to create classes first.
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Gender
+          </label>
+          <select
+            value={newStudent.gender}
+            onChange={(e) => setNewStudent({...newStudent, gender: e.target.value})}
+            className="w-full p-2 border rounded"
+          >
+            <option value="">Select</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Date of Birth
+          </label>
+          <input
+            type="date"
+            value={newStudent.dateOfBirth}
+            onChange={(e) => setNewStudent({...newStudent, dateOfBirth: e.target.value})}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Parent's Phone
+          </label>
+          <input
+            type="tel"
+            value={newStudent.parentPhone}
+            onChange={(e) => setNewStudent({...newStudent, parentPhone: e.target.value})}
+            className="w-full p-2 border rounded"
+            placeholder="080XXXXXXXX"
+          />
         </div>
 
         <div className="md:col-span-2">
           <button
             onClick={enrollStudent}
-            className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            disabled={classes.length === 0}
+            className={`w-full px-4 py-2 text-white rounded ${
+              classes.length === 0 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-green-600 hover:bg-green-700'
+            }`}
           >
-            🎓 Enroll Student
+            {classes.length === 0 ? '⏳ No Classes Available' : '🎓 Enroll Student'}
           </button>
         </div>
       </div>
 
       {/* Students List */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">Enrolled Students</h3>
+        <h3 className="text-lg font-semibold mb-4">
+          Enrolled Students ({students.length})
+        </h3>
         {students.length === 0 ? (
           <p className="text-gray-500 text-center py-4">No students enrolled yet</p>
         ) : (
@@ -154,6 +217,8 @@ export default function StudentEnrollment() {
                   <th className="py-2 px-4 border">Student ID</th>
                   <th className="py-2 px-4 border">Name</th>
                   <th className="py-2 px-4 border">Class</th>
+                  <th className="py-2 px-4 border">Gender</th>
+                  <th className="py-2 px-4 border">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -162,6 +227,12 @@ export default function StudentEnrollment() {
                     <td className="py-2 px-4 border">{student.studentId}</td>
                     <td className="py-2 px-4 border">{student.fullName}</td>
                     <td className="py-2 px-4 border">{student.class}</td>
+                    <td className="py-2 px-4 border">{student.gender}</td>
+                    <td className="py-2 px-4 border">
+                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
+                        Approved
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>

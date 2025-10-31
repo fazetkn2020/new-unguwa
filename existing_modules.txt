@@ -1,0 +1,5 @@
+add-subjects
+enrollment
+form-master-assignment
+manage-classes
+teacher-assignment

@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useExam } from "../../context/ExamContext";
-import { subjects } from "../../data/subjects";
 import { getStudentIdentifier } from "../../utils/studentUtils";
 
 export default function ExamBank() {
@@ -12,11 +11,15 @@ export default function ExamBank() {
   const [selectedClass, setSelectedClass] = useState(user?.classes?.[0] || "");
   const [searchTerm, setSearchTerm] = useState("");
   const [allClasses, setAllClasses] = useState([]);
+  const [allSubjects, setAllSubjects] = useState([]);
 
-  // Load class list from localStorage
+  // Load class list and subjects from localStorage
   useEffect(() => {
     const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
     setAllClasses(Object.keys(classLists));
+    
+    const schoolSubjects = JSON.parse(localStorage.getItem('schoolSubjects')) || [];
+    setAllSubjects(schoolSubjects);
   }, []);
 
   if (!user) return <p>Loading...</p>;
@@ -26,7 +29,6 @@ export default function ExamBank() {
     return classLists[className] || [];
   };
 
-  const currentSubjects = subjects[selectedClass] || [];
   const classStudents = getClassStudents(selectedClass);
 
   const filteredClasses = allClasses.filter(cls =>
@@ -35,9 +37,6 @@ export default function ExamBank() {
 
   return (
     <div className="p-6">
-      {/* Debug component (you can remove this later) */}
-      
-
       <h2 className="text-2xl font-bold mb-6">Exam Bank - Score Management</h2>
 
       {/* Class Search and Selection */}
@@ -100,7 +99,7 @@ export default function ExamBank() {
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
           <p className="text-yellow-800">
             <strong>No students found in {selectedClass}.</strong><br />
-            Form Masters need to add students to the class list first.
+            VP Admin needs to enroll students in this class first.
           </p>
         </div>
       ) : (
@@ -111,7 +110,7 @@ export default function ExamBank() {
               📊 {selectedClass} - Score Overview
             </h3>
             <p className="text-gray-600">
-              {classStudents.length} students • {currentSubjects.length} subjects
+              {classStudents.length} students • {allSubjects.length} subjects
             </p>
           </div>
 
@@ -123,7 +122,7 @@ export default function ExamBank() {
                   <th className="p-3 text-left font-semibold border-b sticky left-0 bg-gray-50 z-10">
                     Student Name
                   </th>
-                  {currentSubjects.map(subject => (
+                  {allSubjects.map(subject => (
                     <th key={subject} className="p-3 text-center font-semibold border-b border-l" colSpan="3">
                       {subject}
                     </th>
@@ -131,7 +130,7 @@ export default function ExamBank() {
                 </tr>
                 <tr>
                   <th className="p-2 border-b sticky left-0 bg-gray-50 z-10"></th>
-                  {currentSubjects.map(subject => (
+                  {allSubjects.map(subject => (
                     <React.Fragment key={subject}>
                       <th className="p-2 text-xs font-medium border-b border-l">CA (40)</th>
                       <th className="p-2 text-xs font-medium border-b">Exam (60)</th>
@@ -143,7 +142,6 @@ export default function ExamBank() {
               <tbody>
                 {classStudents.map(student => {
                   const studentIdentifier = getStudentIdentifier(student, selectedClass);
-                  const canEdit = canUserEditSubject(user, currentSubjects.length ? currentSubjects[0] : "");
                   const scores = examData[studentIdentifier] || {};
 
                   return (
@@ -152,7 +150,7 @@ export default function ExamBank() {
                         {student.fullName}
                       </td>
 
-                      {currentSubjects.map(subject => {
+                      {allSubjects.map(subject => {
                         const sid = studentIdentifier;
                         const subjectScores = examData[sid]?.[subject] || { ca: '', exam: '', total: 0 };
                         const editable = canUserEditSubject(user, subject);
@@ -214,10 +212,10 @@ export default function ExamBank() {
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h4 className="font-semibold text-blue-800 mb-2">How it works:</h4>
             <ul className="text-sm text-blue-700 space-y-1">
-              <li>• <strong>Form Masters</strong> add students → automatically creates Exam Bank slots</li>
-              <li>• <strong>Subject Teachers</strong> can only edit their assigned subjects</li>
+              <li>• <strong>VP Academic</strong> creates subjects → automatically appears here</li>
+              <li>• <strong>VP Admin</strong> enrolls students → creates score slots</li>
+              <li>• <strong>Subject Teachers</strong> enter scores → visible here immediately</li>
               <li>• <strong>CA Score:</strong> 0-40 | <strong>Exam Score:</strong> 0-60 | <strong>Total:</strong> 0-100</li>
-              <li>• <strong>Principals/VPs</strong> can view all scores but cannot edit</li>
               <li>• <strong>Colors:</strong> 🟢 70+ | 🔵 50-69 | 🟡 40-49 | 🔴 Below 40</li>
             </ul>
           </div>

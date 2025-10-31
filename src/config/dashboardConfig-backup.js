@@ -20,9 +20,6 @@ export const getRoleConfig = (role) => {
       defaultModule: "users",
       modules: [
         { id: "users", label: "User Management", icon: "👥" },
-        { id: "assignments", label: "Teacher Assignments", icon: "📚" },
-        { id: "subjects", label: "Manage Subjects", icon: "📖" }, // NEW
-        { id: "roles", label: "Role Management", icon: "🧩" },
         { id: "settings", label: "System Settings", icon: "⚙️" }
       ]
     },
@@ -49,10 +46,16 @@ export const getRoleConfig = (role) => {
       layout: "sections",
       defaultModule: "materials",
       modules: [
+        { id: "add-subjects", label: "Add Subjects", icon: "📝" },
+        { id: "manage-classes", label: "Manage Classes", icon: "🏫" },
+        { id: "teacher-assignment", label: "Teacher Assignment", icon: "👨‍🏫" },
+        { id: "form-master-assignment", label: "Form Master Assignment", icon: "🎯" },
         { id: "materials", label: "Academic Materials", icon: "📖" },
         { id: "attendance", label: "Teacher Attendance", icon: "✅" },
         { id: "lessonplans", label: "Lesson Plans", icon: "📋" },
         { id: "subjects", label: "Subject Assignments", icon: "🎯" },
+        { id: "assignments", label: "Teacher Assignments", icon: "👨‍🏫" },
+        { id: "classes", label: "Manage Classes", icon: "🏫" },
         { id: "exambank", label: "Exam Bank", icon: "📊" }
       ]
     },
@@ -63,7 +66,20 @@ export const getRoleConfig = (role) => {
       icon: "⚙️",
       layout: "sections",
       defaultModule: "attendance",
-      modules: [
+        { id: "enrollment", label: "Student Enrollment", icon: "🎓" },
+        { id: "attendance", label: "Staff Attendance", icon: "📝" },
+        { id: "communications", label: "School Communications", icon: "📢" },
+        { id: "calendar", label: "School Calendar", icon: "📅" },
+        { id: "exambank", label: "Exam Bank", icon: "📚" }
+        { id: "enrollment", label: "Student Enrollment", icon: "🎓" },
+        { id: "attendance", label: "Staff Attendance", icon: "📝" },
+        { id: "communications", label: "School Communications", icon: "📢" },
+        { id: "calendar", label: "School Calendar", icon: "📅" },
+        { id: "exambank", label: "Exam Bank", icon: "📚" }
+        { id: "add-subjects", label: "Add Subjects", icon: "📝" },
+        { id: "manage-classes", label: "Manage Classes", icon: "🏫" },
+        { id: "teacher-assignment", label: "Teacher Assignment", icon: "👨‍🏫" },
+        { id: "form-master-assignment", label: "Form Master Assignment", icon: "🎯" },
         { id: "enrollment", label: "Student Enrollment", icon: "🎓" },
         { id: "attendance", label: "Staff Attendance", icon: "📝" },
         { id: "communications", label: "School Communications", icon: "📢" },
@@ -77,10 +93,13 @@ export const getRoleConfig = (role) => {
       subtitle: "Class Management & Student Oversight",
       icon: "👨‍🏫",
       layout: "sections",
-      defaultModule: "students",
+      defaultModule: "class-attendance",
       modules: [
-        { id: "students", label: "Student Management", icon: "👥" },
-        { id: "roster", label: "Duty Roster", icon: "📋" },
+        { id: "add-subjects", label: "Add Subjects", icon: "📝" },
+        { id: "manage-classes", label: "Manage Classes", icon: "🏫" },
+        { id: "teacher-assignment", label: "Teacher Assignment", icon: "👨‍🏫" },
+        { id: "form-master-assignment", label: "Form Master Assignment", icon: "🎯" },
+        { id: "roster", label: "Class Duty Roster", icon: "📋" },
         { id: "monitors", label: "Student Monitors", icon: "⭐" },
         { id: "scoring", label: "Score Entry", icon: "✏️" },
         { id: "class-attendance", label: "Class Attendance", icon: "📝" },
@@ -95,6 +114,10 @@ export const getRoleConfig = (role) => {
       layout: "sections",
       defaultModule: "reports",
       modules: [
+        { id: "add-subjects", label: "Add Subjects", icon: "📝" },
+        { id: "manage-classes", label: "Manage Classes", icon: "🏫" },
+        { id: "teacher-assignment", label: "Teacher Assignment", icon: "👨‍🏫" },
+        { id: "form-master-assignment", label: "Form Master Assignment", icon: "🎯" },
         { id: "reports", label: "Report Printing", icon: "🖨️" },
         { id: "submissions", label: "Exam Submissions", icon: "📥" },
         { id: "tracking", label: "Submission Tracking", icon: "📈" },
@@ -110,6 +133,10 @@ export const getRoleConfig = (role) => {
       layout: "tabs",
       defaultModule: "scoring",
       modules: [
+        { id: "add-subjects", label: "Add Subjects", icon: "📝" },
+        { id: "manage-classes", label: "Manage Classes", icon: "🏫" },
+        { id: "teacher-assignment", label: "Teacher Assignment", icon: "👨‍🏫" },
+        { id: "form-master-assignment", label: "Form Master Assignment", icon: "🎯" },
         { id: "scoring", label: "Score Entry", icon: "📝" },
         { id: "questions", label: "Create Questions", icon: "❓" },
         { id: "elibrary", label: "E-Library Upload", icon: "📚" },
@@ -125,6 +152,10 @@ export const getRoleConfig = (role) => {
       layout: "sections",
       defaultModule: "timetable",
       modules: [
+        { id: "add-subjects", label: "Add Subjects", icon: "📝" },
+        { id: "manage-classes", label: "Manage Classes", icon: "🏫" },
+        { id: "teacher-assignment", label: "Teacher Assignment", icon: "👨‍🏫" },
+        { id: "form-master-assignment", label: "Form Master Assignment", icon: "🎯" },
         { id: "timetable", label: "Timetable", icon: "📅" },
         { id: "roster", label: "Duty Roster", icon: "🕐" },
         { id: "performance", label: "Performance", icon: "📈" },
@@ -139,6 +170,10 @@ export const getRoleConfig = (role) => {
       layout: "sections",
       defaultModule: "attendance",
       modules: [
+        { id: "add-subjects", label: "Add Subjects", icon: "📝" },
+        { id: "manage-classes", label: "Manage Classes", icon: "🏫" },
+        { id: "teacher-assignment", label: "Teacher Assignment", icon: "👨‍🏫" },
+        { id: "form-master-assignment", label: "Form Master Assignment", icon: "🎯" },
         { id: "attendance", label: "My Attendance", icon: "✅" },
         { id: "scores", label: "My Scores", icon: "📊" },
         { id: "reports", label: "Progress Reports", icon: "📋" },
