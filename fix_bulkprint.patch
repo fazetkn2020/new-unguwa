@@ -1,0 +1,36 @@
+--- src/components/BulkPrintManager.jsx.old
++++ src/components/BulkPrintManager.jsx.new
+@@ -1,5 +1,6 @@
+ import React, { useState, useEffect } from 'react';
+ import { useBulkPrint } from '../context/BulkPrintContext';
++import { getAdminClasses, getClassSubjects } from '../utils/classHelpers';
+ import StudentSelectionTable from './StudentSelectionTable';
+ import BulkActionsToolbar from './BulkActionsToolbar';
+ import PDFExportManager from './PDFExportManager';
+@@ -8,6 +9,7 @@
+ const BulkPrintManager = ({ students: initialStudents, className: initialClass = '' }) => {
+   const { state, actions } = useBulkPrint();
+   const [students, setStudents] = useState(initialStudents || []);
++  const [availableClasses, setAvailableClasses] = useState([]);
+   const [currentClass, setCurrentClass] = useState(initialClass);
+ 
+   // Initialize class selection
+@@ -25,12 +27,17 @@
+     }
+   }, [initialStudents]);
+ 
++  // Load available classes
++  useEffect(() => {
++    setAvailableClasses(getAdminClasses());
++  }, []);
++
+   // Get subjects for current class
+   const getClassSubjects = () => {
+     if (currentClass && subjects[currentClass]) {
+       return subjects[currentClass];
+     }
+-    // Fallback to all subjects or empty array
+-    return subjects.SS1 || [];
++    // Fallback to empty array instead of hardcoded SS1
++    return [];
+   };

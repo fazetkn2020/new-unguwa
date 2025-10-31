@@ -1,6 +1,8 @@
-// src/data/students.js
-export const students = [
-  { id: 1, name: "Aisha Bello", class: "SS1A", subject: "Mathematics" },
-  { id: 2, name: "Ibrahim Musa", class: "SS1A", subject: "English" },
-  { id: 3, name: "Fatima Yusuf", class: "SS2B", subject: "Biology" },
-];
+// src/data/students.js - UPDATED: No hardcoded students
+export const students = []; // Empty array - students come from admin-created classes
+
+// Function to get students by class (from admin-created classes)
+export const getStudentsByClass = (className) => {
+  const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
+  return classLists[className] || [];
+};

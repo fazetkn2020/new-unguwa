@@ -1,23 +1,19 @@
-// Master list of common subjects
+// src/data/subjects.js - UPDATED: Dynamic subjects
+import { getClassSubjects, getSubjectsByClass } from '../utils/classHelpers';
+
+// Master list of common subjects (for reference, not hardcoded usage)
 const masterSubjects = [
-  "Mathematics", "English", "Physics", "Chemistry", "Biology", 
+  "Mathematics", "English", "Physics", "Chemistry", "Biology",
   "Geography", "Economics", "Agricultural Science", "Civic Education",
   "Government", "History", "CRS", "IRS", "Literature", "Commerce",
   "Accounting", "Further Mathematics", "Basic Science", "Basic Technology",
   "Social Studies", "Computer Science", "French"
 ];
 
-// Always returns exactly 9 subjects
+// Returns subjects for a student (uses admin-created subjects)
 export const getStudentSubjects = (studentId, classLevel) => {
-  return masterSubjects.slice(0, 9);
+  return getClassSubjects(classLevel);
 };
 
-// Simple export for compatibility
-export const subjects = {
-  "SS1": masterSubjects.slice(0, 9),
-  "SS2": masterSubjects.slice(0, 9), 
-  "SS3": masterSubjects.slice(0, 9),
-  "JS1": masterSubjects.slice(0, 9),
-  "JS2": masterSubjects.slice(0, 9),
-  "JS3": masterSubjects.slice(0, 9)
-};
+// For backward compatibility - returns dynamic subjects object
+export const subjects = getSubjectsByClass();

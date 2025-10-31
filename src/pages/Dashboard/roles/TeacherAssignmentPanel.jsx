@@ -7,29 +7,49 @@ export default function TeacherAssignmentPanel() {
   const [selectedTeacher, setSelectedTeacher] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
+  const [forceRefresh, setForceRefresh] = useState(0);
 
   useEffect(() => {
+    console.log('🔄 TeacherAssignmentPanel mounted - Force refresh:', forceRefresh);
     loadData();
-  }, []);
+  }, [forceRefresh]);
 
   const loadData = () => {
+    console.log('=== DEBUG: Loading Teacher Assignment Data ===');
+    
     // Load users (teachers only)
     const allUsers = JSON.parse(localStorage.getItem('users')) || [];
-    const teachers = allUsers.filter(user => 
-      ['Subject Teacher', 'Form Master', 'Senior Master'].includes(user.role)
+    console.log('📋 All users from localStorage:', allUsers);
+    
+    const teachers = allUsers.filter(user =>
+      ['Subject Teacher', 'Form Master', 'Senior Master', 'Principal', 'VP Academic', 'VP Admin', 'Exam Officer'].includes(user.role)
     );
+    console.log('👨‍🏫 Teachers found:', teachers);
     setUsers(teachers);
 
-    // Load classes
+    // Load ONLY admin-created classes from localStorage
     const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
-    setClasses(Object.keys(classLists));
+    console.log('📚 Class lists from localStorage:', classLists);
+    
+    const adminClasses = Object.keys(classLists);
+    console.log('🏫 Admin classes extracted:', adminClasses);
+    setClasses(adminClasses);
 
-    // Load subjects (you might have this in your data)
-    const availableSubjects = [
-      'Mathematics', 'English', 'Science', 'Social Studies', 
-      'ICT', 'Creative Arts', 'Physical Education', 'Languages'
-    ];
-    setSubjects(availableSubjects);
+    // Load subjects from localStorage (dynamic)
+    const savedSubjects = JSON.parse(localStorage.getItem('schoolSubjects')) || [];
+    console.log('📖 Saved subjects from localStorage:', savedSubjects);
+    setSubjects(savedSubjects);
+
+    console.log('=== DEBUG END ===');
+  };
+
+  const clearCacheAndRefresh = () => {
+    if (window.confirm('Clear cache and refresh? This will reset all data.')) {
+      localStorage.clear();
+      setForceRefresh(prev => prev + 1);
+      alert('Cache cleared! Page will refresh.');
+      window.location.reload();
+    }
   };
 
   const assignTeacher = () => {
@@ -44,7 +64,7 @@ export default function TeacherAssignmentPanel() {
       return;
     }
 
-    // Update teacher assignments
+    // Update teacher assignments (allow multiple subjects/classes)
     const updatedUsers = users.map(user => {
       if (user.id === selectedTeacher) {
         const updatedAssignments = {
@@ -64,16 +84,18 @@ export default function TeacherAssignmentPanel() {
     });
 
     localStorage.setItem('users', JSON.stringify(finalUsers));
-    
-    alert(`Assigned ${teacher.name} to teach ${selectedSubject} in ${selectedClass}`);
-    
+
+    alert(`✅ Assigned ${teacher.name} to teach ${selectedSubject} in ${selectedClass}`);
+
     // Reset form
     setSelectedClass('');
     setSelectedSubject('');
-    loadData(); // Reload to show updated assignments
+    loadData();
   };
 
   const removeAssignment = (teacherId, className, subjectName) => {
+    if (!window.confirm(`Remove ${subjectName} from ${className}?`)) return;
+
     const allUsers = JSON.parse(localStorage.getItem('users')) || [];
     const updatedUsers = allUsers.map(user => {
       if (user.id === teacherId) {
@@ -88,15 +110,33 @@ export default function TeacherAssignmentPanel() {
 
     localStorage.setItem('users', JSON.stringify(updatedUsers));
     loadData();
-    alert('Assignment removed successfully');
+    alert('✅ Assignment removed successfully');
   };
 
   return (
     <div className="space-y-6">
+      {/* Debug Header */}
+      <div className="bg-red-50 border border-red-200 rounded p-4">
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-semibold text-red-800">Debug Info</h3>
+            <p className="text-sm text-red-600">
+              Classes loaded: {classes.length} | Subjects loaded: {subjects.length}
+            </p>
+          </div>
+          <button
+            onClick={clearCacheAndRefresh}
+            className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+          >
+            Clear Cache
+          </button>
+        </div>
+      </div>
+
       {/* Assignment Form */}
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-bold mb-4">Assign Teacher to Class & Subject</h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -130,6 +170,13 @@ export default function TeacherAssignmentPanel() {
                 <option key={className} value={className}>{className}</option>
               ))}
             </select>
+            {classes.length === 0 && (
+              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ No classes available. Please create classes first in <strong>Class Management</strong>.
+                </p>
+              </div>
+            )}
           </div>
 
           <div>
@@ -146,6 +193,13 @@ export default function TeacherAssignmentPanel() {
                 <option key={subject} value={subject}>{subject}</option>
               ))}
             </select>
+            {subjects.length === 0 && (
+              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ No subjects available. Please create subjects first in <strong>Subject Management</strong>.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -162,14 +216,19 @@ export default function TeacherAssignmentPanel() {
       <div className="bg-white rounded-lg shadow">
         <div className="p-6 border-b">
           <h3 className="text-lg font-semibold">Current Teacher Assignments</h3>
+          <p className="text-sm text-gray-600">
+            Teachers can be assigned to multiple subjects and classes
+          </p>
         </div>
-        
+
         <div className="divide-y">
-          {users.filter(teacher => 
+          {users.filter(teacher =>
             teacher.assignedClasses?.length > 0 || teacher.assignedSubjects?.length > 0
           ).length === 0 ? (
             <div className="p-6 text-center text-gray-500">
-              No teacher assignments yet.
+              <div className="text-4xl mb-2">👨‍🏫</div>
+              <p>No teacher assignments yet.</p>
+              <p className="text-sm text-gray-400 mt-1">Assign teachers using the form above</p>
             </div>
           ) : (
             users.map(teacher => (
@@ -196,7 +255,7 @@ export default function TeacherAssignmentPanel() {
                         )) || <span className="text-gray-500">None</span>}
                       </div>
                     </div>
-                    
+
                     <div>
                       <h5 className="font-medium mb-2">Assigned Subjects:</h5>
                       <div className="flex flex-wrap gap-2">
@@ -208,6 +267,7 @@ export default function TeacherAssignmentPanel() {
                             <button
                               onClick={() => removeAssignment(teacher.id, teacher.assignedClasses?.[0], subject)}
                               className="text-red-500 hover:text-red-700 text-xs"
+                              title={`Remove ${subject} assignment`}
                             >
                               ×
                             </button>
