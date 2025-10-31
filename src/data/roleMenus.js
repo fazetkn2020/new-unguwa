@@ -1,72 +1,56 @@
-cat > src/data/roleMenus.js << 'EOF'
+// src/data/roleMenus.js
 export const roleMenus = {
-  "Admin": [
-    { name: "Dashboard", path: "/dashboard/admin" },
-    { name: "User Management", path: "/dashboard/admin/users" },
-    { name: "📊 Exam Bank", path: "/dashboard/exambank" },
-    { name: "System Settings", path: "/dashboard/admin/settings" }
-  ],
-
-  "Form Master": [
-    { name: "🏠 Dashboard", path: "/dashboard/form-master" },
-    { name: "👥 Class Students", path: "/dashboard/form-master/students" },
-    { name: "✅ Take Attendance", path: "/dashboard/form-master/attendance" },
-    { name: "📋 Auto Roster", path: "/dashboard/form-master/roster" },
-    { name: "📊 View Attendance", path: "/dashboard/form-master/attendance-view" },
-    { name: "🏫 Exam Bank", path: "/dashboard/exambank" }
-  ],
-
-  "Subject Teacher": [
-    { name: "🏠 Dashboard", path: "/dashboard/teacher" },
-    { name: "📝 Score Entry", path: "/dashboard/teacher/scoring" },
-    { name: "❓ Create Questions", path: "/dashboard/teacher/questions" },
-    { name: "📚 Add to E-Library", path: "/dashboard/teacher/elibrary-upload" },
-    { name: "🏫 Exam Bank", path: "/dashboard/exambank" }
-  ],
-
-  "Principal": [
-    { name: "🏠 Dashboard", path: "/dashboard/principal" },
-    { name: "📊 School Analytics", path: "/dashboard/principal/analytics" },
-    { name: "👥 Staff Performance", path: "/dashboard/principal/staff-performance" },
-    { name: "📅 School Events", path: "/dashboard/principal/events" },
-    { name: "📢 Mass Communications", path: "/dashboard/principal/communications" },
-    { name: "💬 Parent Messages", path: "/dashboard/principal/messages" },
-    { name: "🏫 Exam Bank", path: "/dashboard/exambank" }
-  ],
-
-  "Senior Master": [
-    { name: "🏠 Dashboard", path: "/dashboard/senior-master" },
-    { name: "📅 Advanced Timetable", path: "/dashboard/senior-master/advanced-timetable" },
-    { name: "🕐 Duty Roster", path: "/dashboard/senior-master/duty-roster" },
-    { name: "📊 Teacher Performance", path: "/dashboard/senior-master/performance" },
-    { name: "🏫 Exam Bank", path: "/dashboard/exambank" },
-    { name: "📚 E-Library", path: "/dashboard/elibrary" }
-  ],
-
-  "Exam Officer": [
-    { name: "🏠 Dashboard", path: "/dashboard/exam-officer" },
+  'Exam Officer': [
     { name: "📝 Question Review", path: "/dashboard/exam-officer/question-review" },
     { name: "📧 Teacher Reminder", path: "/dashboard/exam-officer/reminder" },
     { name: "📊 Subject Insights", path: "/dashboard/exam-officer/insights" },
     { name: "🖨️ Report Printing", path: "/dashboard/exam-officer/reports" },
-    { name: "⚡ Bulk Operations", path: "/dashboard/exam-officer/bulk" },
-    { name: "🏫 Exam Bank", path: "/dashboard/exambank" }
+    // REMOVED: { name: "⚡ Bulk Operations", path: "/dashboard/exam-officer/bulk" },
+    { name: "📋 Submission Tracking", path: "/dashboard/exam-officer/submissions" }
   ],
-
-  "VP Admin": [
-    { name: "Dashboard", path: "/dashboard/vp-admin" },
-    { name: "🎓 Student Enrollment", path: "/dashboard/vp-admin/enrollment" },
-    { name: "👥 User Management", path: "/dashboard/vp-admin/users" },
-    { name: "📊 School Analytics", path: "/dashboard/vp-admin/analytics" },
-    { name: "E-Library", path: "/dashboard/elibrary" }
+  // ... rest of your role menus remain unchanged
+  'Principal': [
+    { name: "📊 Overview", path: "/dashboard/principal/overview" },
+    { name: "👥 Staff", path: "/dashboard/principal/staff" },
+    { name: "📈 Analytics", path: "/dashboard/principal/analytics" },
+    { name: "📊 Performance", path: "/dashboard/principal/staff-performance" },
+    { name: "📨 Messages", path: "/dashboard/principal/messages" }
   ],
-
-  "VP Academic": [
-    { name: "Dashboard", path: "/dashboard/vp-academic" },
-    { name: "📊 Exam Bank", path: "/dashboard/exambank" },
-    { name: "📚 Academic Materials", path: "/dashboard/vp-academic/materials" },
-    { name: "📊 Performance Analytics", path: "/dashboard/vp-academic/analytics" },
-    { name: "E-Library", path: "/dashboard/elibrary" }
+  'VP Admin': [
+    { name: "👥 User Management", path: "/dashboard/admin/users" },
+    { name: "📚 Subject Management", path: "/dashboard/admin/subjects" },
+    { name: "🎯 Role Management", path: "/dashboard/admin/roles" },
+    { name: "⚙️ System Settings", path: "/dashboard/admin/settings" },
+    { name: "📊 Student Enrollment", path: "/dashboard/admin/enrollment" },
+    { name: "📝 Attendance", path: "/dashboard/admin/attendance" },
+    { name: "📨 Communications", path: "/dashboard/admin/communications" },
+    { name: "📅 Calendar", path: "/dashboard/admin/calendar" }
+  ],
+  'VP Academic': [
+    { name: "🎯 Teacher Assignments", path: "/dashboard/academic/assignments" },
+    { name: "📝 Attendance", path: "/dashboard/academic/attendance" },
+    { name: "📚 Academic Materials", path: "/dashboard/academic/materials" }
+  ],
+  'Form Master': [
+    { name: "👥 My Students", path: "/dashboard/form-master/students" },
+    { name: "📝 Attendance", path: "/dashboard/form-master/attendance" },
+    { name: "👀 Attendance View", path: "/dashboard/form-master/attendance-view" },
+    { name: "📊 Scoring", path: "/dashboard/form-master/scoring" },
+    { name: "📅 Duty Roster", path: "/dashboard/form-master/roster" }
+  ],
+  'Subject Teacher': [
+    { name: "🎯 My Assignments", path: "/dashboard/teacher/assignments" },
+    { name: "❓ Questions", path: "/dashboard/teacher/questions" },
+    { name: "📊 Scoring", path: "/dashboard/teacher/scoring" },
+    { name: "📚 E-Library", path: "/dashboard/teacher/elibrary" }
+  ],
+  'Senior Master': [
+    { name: "📅 Duty Roster", path: "/dashboard/senior-master/roster" },
+    { name: "📅 Timetable", path: "/dashboard/senior-master/advanced-timetable" },
+    { name: "📊 Performance", path: "/dashboard/senior-master/performance" }
+  ],
+  'Student': [
+    { name: "📊 My Dashboard", path: "/dashboard/student/scores" },
+    { name: "📝 My Attendance", path: "/dashboard/student/attendance" }
   ]
 };
-EOF
