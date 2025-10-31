@@ -1,22 +1,22 @@
-// ✅ Safe utility for dynamic class and subject management (Admin-controlled only)
+// ✅ Unified classHelpers.js
+// Works with admin-created classes stored in `schoolClasses`
 
-// 🔹 Get ONLY admin-created classes from localStorage
 export const getAdminClasses = () => {
-  const stored = JSON.parse(localStorage.getItem('schoolClasses')) || [];
+  // Try to get admin-created classes from localStorage
+  const schoolClasses = JSON.parse(localStorage.getItem('schoolClasses')) || [];
   
-  // If admin saves classes as an array of objects, extract their names
-  // e.g. [{ name: "JSS1" }, { name: "JSS2" }]
-  const adminClasses = stored.map(cls => cls.name || cls.className || cls); 
+  // If it's an array, map out the names
+  const adminClasses = Array.isArray(schoolClasses)
+    ? schoolClasses.map(cls => cls.name || cls.className || "")
+    : Object.keys(schoolClasses);
 
-  // Filter out any empty or invalid entries
+  // Filter out empty entries
   return adminClasses.filter(Boolean);
 };
 
-// 🔹 Get subjects for a class (ONLY admin-created subjects)
+// 🔹 Get subjects for a class (from admin-created subjects)
 export const getClassSubjects = (className) => {
   const savedSubjects = JSON.parse(localStorage.getItem('schoolSubjects')) || [];
-  
-  // Return ONLY subjects created by the admin
   return savedSubjects.length > 0 ? savedSubjects : [];
 };
 
@@ -26,7 +26,6 @@ export const getSubjectsByClass = () => {
   const adminClasses = getAdminClasses();
   const subjectsObj = {};
 
-  // Create subject mapping for each admin-created class
   adminClasses.forEach(className => {
     subjectsObj[className] = savedSubjects.length > 0 ? savedSubjects : [];
   });

@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { getAdminClasses } from "../../../utils/classHelpers";
-
 
 export default function TeacherAssignmentPanel() {
   const [users, setUsers] = useState([]);
@@ -11,10 +9,11 @@ export default function TeacherAssignmentPanel() {
   const [selectedSubject, setSelectedSubject] = useState('');
   const [forceRefresh, setForceRefresh] = useState(0);
 
+  // FIXED: Empty dependency array to prevent infinite loops
   useEffect(() => {
     console.log('🔄 TeacherAssignmentPanel mounted - Force refresh:', forceRefresh);
     loadData();
-  }, [forceRefresh]);
+  }, []); // ← FIXED: Empty dependency array
 
   const loadData = () => {
     console.log('=== DEBUG: Loading Teacher Assignment Data ===');
@@ -30,10 +29,13 @@ export default function TeacherAssignmentPanel() {
     setUsers(teachers);
 
     // Load ONLY admin-created classes from localStorage
-    const adminClasses = getAdminClasses();
-console.log('🏫 Admin classes (from utils):', adminClasses);
-setClasses(adminClasses);
+    // Load classes properly from schoolClasses
+const storedClasses = JSON.parse(localStorage.getItem('schoolClasses')) || [];
+console.log('📚 schoolClasses from localStorage:', storedClasses);
 
+const adminClasses = storedClasses.map(cls => cls.name);
+console.log('🏫 Admin classes extracted:', adminClasses);
+setClasses(adminClasses);
 
     // Load subjects from localStorage (dynamic)
     const savedSubjects = JSON.parse(localStorage.getItem('schoolSubjects')) || [];
@@ -43,12 +45,18 @@ setClasses(adminClasses);
     console.log('=== DEBUG END ===');
   };
 
+  // FIXED: Manual refresh without infinite loop
+  const manualRefresh = () => {
+    console.log('🔄 Manual refresh triggered');
+    loadData();
+  };
+
   const clearCacheAndRefresh = () => {
     if (window.confirm('Clear cache and refresh? This will reset all data.')) {
       localStorage.clear();
-      setForceRefresh(prev => prev + 1);
-      alert('Cache cleared! Page will refresh.');
-      window.location.reload();
+      // FIXED: Use manual refresh instead of forceRefresh to prevent loops
+      manualRefresh();
+      alert('Cache cleared! Data refreshed.');
     }
   };
 
@@ -87,10 +95,10 @@ setClasses(adminClasses);
 
     alert(`✅ Assigned ${teacher.name} to teach ${selectedSubject} in ${selectedClass}`);
 
-    // Reset form
+    // Reset form and refresh data
     setSelectedClass('');
     setSelectedSubject('');
-    loadData();
+    manualRefresh(); // FIXED: Use manual refresh instead of loadData
   };
 
   const removeAssignment = (teacherId, className, subjectName) => {
@@ -109,7 +117,7 @@ setClasses(adminClasses);
     });
 
     localStorage.setItem('users', JSON.stringify(updatedUsers));
-    loadData();
+    manualRefresh(); // FIXED: Use manual refresh instead of loadData
     alert('✅ Assignment removed successfully');
   };
 
@@ -124,12 +132,20 @@ setClasses(adminClasses);
               Classes loaded: {classes.length} | Subjects loaded: {subjects.length}
             </p>
           </div>
-          <button
-            onClick={clearCacheAndRefresh}
-            className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
-          >
-            Clear Cache
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={manualRefresh}
+              className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+            >
+              Refresh Data
+            </button>
+            <button
+              onClick={clearCacheAndRefresh}
+              className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+            >
+              Clear Cache
+            </button>
+          </div>
         </div>
       </div>
 

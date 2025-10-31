@@ -5,7 +5,7 @@ import TechHeader from "./layout/TechHeader";
 import TechNavigation from "./layout/TechNavigation";
 import TechContent from "./layout/TechContent";
 import { getRoleConfig } from "../../config/dashboardConfig";
-import DutyDisplay from './roles/DutyDisplay';
+import DutyDisplay from "./roles/DutyDisplay";
 
 export default function UnifiedDashboard() {
   const { user } = useAuth();
@@ -14,27 +14,34 @@ export default function UnifiedDashboard() {
   const [activeModule, setActiveModule] = useState("users");
   const [dashboardData, setDashboardData] = useState({ users: [] });
 
-  // FIX: Verify user has access to current role path
+  // ✅ FIXED: prevent navigation loops
   useEffect(() => {
-    if (user) {
-      const pathRole = location.pathname.split('/').pop();
-      const userRole = user.role; // Already normalized by AuthContext
-      const pathRoleNormalized = pathRole === 'admin' ? 'Admin' :
-                               pathRole.split('-').map(word =>
-                                 word.charAt(0).toUpperCase() + word.slice(1)
-                               ).join(' ');
+    if (!user) return;
 
-      if (userRole !== pathRoleNormalized) {
-        navigate('/dashboard');
-      }
+    const pathRole = location.pathname.split("/").pop();
+    const userRole = user.role;
+    const pathRoleNormalized =
+      pathRole === "admin"
+        ? "Admin"
+        : pathRole
+            .split("-")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
+
+    // Only navigate if necessary — avoids infinite loops
+    if (
+      userRole !== pathRoleNormalized &&
+      !location.pathname.endsWith("/dashboard")
+    ) {
+      navigate("/dashboard", { replace: true });
     }
-  }, [user, location, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const roleConfig = getRoleConfig(user?.role);
 
   useEffect(() => {
     if (user) {
-      // Load users data
       const users = JSON.parse(localStorage.getItem("users")) || [];
       const classLists = JSON.parse(localStorage.getItem("classLists")) || {};
       setDashboardData({ users, classLists });
@@ -52,7 +59,7 @@ export default function UnifiedDashboard() {
   return (
     <div className="min-h-full">
       <TechHeader config={roleConfig} user={user} />
-      <DutyDisplay /> {/* Add this line here */}
+      <DutyDisplay />
 
       <div className="container mx-auto px-4 py-6">
         <TechNavigation
