@@ -11,14 +11,19 @@ export default function ExamBank() {
   const [searchTerm, setSearchTerm] = useState("");
   const [allClasses, setAllClasses] = useState([]);
   const [allSubjects, setAllSubjects] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
 
-  // Load class list and subjects from localStorage
+  // Load class list, subjects, and users from localStorage
   useEffect(() => {
     const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
     setAllClasses(Object.keys(classLists));
 
     const schoolSubjects = JSON.parse(localStorage.getItem('schoolSubjects')) || [];
     setAllSubjects(schoolSubjects);
+
+    // Load all users to find teacher assignments
+    const users = JSON.parse(localStorage.getItem('users')) || [];
+    setAllUsers(users);
   }, []);
 
   if (!user) return <p>Loading...</p>;
@@ -40,26 +45,35 @@ export default function ExamBank() {
     return `${student.id}-${className}`;
   };
 
-  // Get teacher name who entered scores for a subject in this class
+  // Get teacher name who is assigned to teach this subject IN THIS SPECIFIC CLASS
   const getSubjectTeacherName = (subject) => {
-    // Check if any student in this class has scores for this subject
-    const studentsWithScores = classStudents.filter(student => {
-      const studentId = getStudentIdentifier(student, selectedClass);
-      return examData[studentId]?.[subject] && 
-             (examData[studentId][subject].ca !== '' || examData[studentId][subject].exam !== '');
+    // Find teachers assigned to this subject AND this specific class
+    const subjectTeachers = allUsers.filter(teacherUser => {
+      const teacherSubjects = teacherUser.assignedSubjects || [];
+      const teacherClasses = teacherUser.assignedClasses || [];
+      
+      // Teacher must be assigned to BOTH this subject AND this class
+      return teacherSubjects.includes(subject) && teacherClasses.includes(selectedClass);
     });
 
-    if (studentsWithScores.length === 0) {
-      return 'Not entered';
+    if (subjectTeachers.length > 0) {
+      // Return the first teacher's name
+      const teacher = subjectTeachers[0];
+      return teacher.name || teacher.fullName || 'Assigned Teacher';
     }
 
-    // For now, we'll show who can edit this subject
-    const teachers = JSON.parse(localStorage.getItem('teachers')) || [];
-    const subjectTeacher = teachers.find(teacher => 
-      teacher.subjects && teacher.subjects.includes(subject)
-    );
-    
-    return subjectTeacher ? subjectTeacher.fullName || subjectTeacher.name : 'Unknown Teacher';
+    // If no teacher assigned to this subject+class combo, check if any teacher is assigned to just the subject
+    const subjectOnlyTeachers = allUsers.filter(teacherUser => {
+      const teacherSubjects = teacherUser.assignedSubjects || [];
+      return teacherSubjects.includes(subject);
+    });
+
+    if (subjectOnlyTeachers.length > 0) {
+      const teacher = subjectOnlyTeachers[0];
+      return `${teacher.name || teacher.fullName} (Not assigned to ${selectedClass})`;
+    }
+
+    return 'No Teacher Assigned';
   };
 
   return (
@@ -70,8 +84,8 @@ export default function ExamBank() {
       <div className="mb-4 bg-blue-50 p-4 rounded-lg border border-blue-200">
         <p className="text-blue-800">
           <strong>Welcome, {user.fullName || user.name}!</strong>
-          {user.role === 'Teacher' && user.subjects && (
-            <span> - Teaching: {user.subjects.join(', ')}</span>
+          {user.role === 'Teacher' && user.assignedSubjects && (
+            <span> - Teaching: {user.assignedSubjects.join(', ')}</span>
           )}
         </p>
       </div>
@@ -254,7 +268,7 @@ export default function ExamBank() {
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h4 className="font-semibold text-blue-800 mb-2">How it works:</h4>
             <ul className="text-sm text-blue-700 space-y-1">
-              <li>• <strong>VP Academic</strong> creates subjects → automatically appears here</li>
+              <li>• <strong>VP Academic</strong> creates subjects and assigns teachers</li>
               <li>• <strong>VP Admin</strong> enrolls students → creates score slots</li>
               <li>• <strong>Subject Teachers</strong> enter scores → visible here immediately</li>
               <li>• <strong>Teacher names</strong> shown above each subject column</li>
