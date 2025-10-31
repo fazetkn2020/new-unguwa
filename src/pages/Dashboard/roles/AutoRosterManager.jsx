@@ -1,10 +1,8 @@
-// src/pages/Dashboard/roles/AutoRosterManager.jsx
 import React, { useState, useEffect } from 'react';
 
 export default function AutoRosterManager({ class: className }) {
   const [students, setStudents] = useState([]);
   const [rosters, setRosters] = useState([]);
-  const [currentWeek, setCurrentWeek] = useState(0);
 
   useEffect(() => {
     loadApprovedStudents();
@@ -12,13 +10,12 @@ export default function AutoRosterManager({ class: className }) {
   }, [className]);
 
   const loadApprovedStudents = () => {
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const approvedStudents = users.filter(u => 
-      u.role === 'Student' && 
-      u.status === 'approved' && 
-      u.class === className
-    ).sort((a, b) => a.fullName.localeCompare(b.fullName));
+    // FIXED: Get students from classLists (enrolled by VP Admin)
+    const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
+    const classStudents = classLists[className] || [];
     
+    // All students in classLists are automatically approved by VP Admin
+    const approvedStudents = classStudents.sort((a, b) => a.fullName.localeCompare(b.fullName));
     setStudents(approvedStudents);
   };
 
@@ -29,22 +26,22 @@ export default function AutoRosterManager({ class: className }) {
 
   const generateAutoRoster = () => {
     if (students.length === 0) {
-      alert('No approved students found!');
+      alert('No students found in this class! Please ask VP Admin to enroll students.');
       return;
     }
 
     const dailyRosters = [];
     const studentsPerDay = 3;
-    
+
     for (let i = 0; i < students.length; i += studentsPerDay) {
       const dayStudents = students.slice(i, i + studentsPerDay);
       const dayNumber = dailyRosters.length + 1;
-      
+
       dailyRosters.push({
         day: dayNumber,
         date: new Date(Date.now() + (dayNumber - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         students: dayStudents,
-        duties: dayStudents.map((student, index) => 
+        duties: dayStudents.map((student, index) =>
           `${index === 0 ? 'Class Monitor' : index === 1 ? 'Assistant Monitor' : 'Helper'}`
         )
       });
@@ -84,6 +81,11 @@ export default function AutoRosterManager({ class: className }) {
         <p><strong>Approved Students:</strong> {students.length}</p>
         <p><strong>Auto Assignment:</strong> 3 students per day</p>
         <p><strong>Generated Rosters:</strong> {rosters.length} days</p>
+        {students.length === 0 && (
+          <p className="text-red-600 text-sm mt-2">
+            💡 No students found. Ask VP Admin to enroll students in this class.
+          </p>
+        )}
       </div>
 
       {rosters.length === 0 ? (
@@ -96,7 +98,7 @@ export default function AutoRosterManager({ class: className }) {
             <div key={roster.day} className="border rounded-lg p-4 bg-white shadow-sm">
               <h3 className="font-bold text-lg mb-2">Day {roster.day}</h3>
               <p className="text-sm text-gray-600 mb-3">{roster.date}</p>
-              
+
               <div className="space-y-2">
                 {roster.students.map((student, index) => (
                   <div key={student.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">

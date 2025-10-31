@@ -1,187 +1,185 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { getExamBankKey, getInitialScoreEntry } from '../../data/examBankTemplate';
+import { ScoreEntryTable } from '../../components/scoring';
 
 export default function ScoreCenter() {
-    const { user } = useAuth();
+  const { user } = useAuth();
+  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [studentRoster, setStudentRoster] = useState([]);
+  const [examData, setExamData] = useState({});
+  
+  // Get assigned classes and subjects from user data
+  const assignedClasses = user?.assignedClasses || [];
+  const assignedSubjects = user?.assignedSubjects || [];
 
-    // FIX: Use correct user properties
-    const userSubjects = user.assignedSubjects || [];
-    const userClasses = user.assignedClasses || []; // FIX: assignedClasses, not formClass
-    
-    const [selectedSubject, setSelectedSubject] = useState(userSubjects[0] || '');
-    const [selectedClass, setSelectedClass] = useState(userClasses[0] || '');
-    const [studentRoster, setStudentRoster] = useState([]);
-    const [scores, setScores] = useState({});
+  useEffect(() => {
+    if (selectedClass) {
+      const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
+      const classStudents = classLists[selectedClass] || [];
+      setStudentRoster(classStudents);
+    } else {
+      setStudentRoster([]);
+    }
+  }, [selectedClass]);
 
-    const currentTerm = 2;
-    const currentYear = 2025;
-    const storageKey = getExamBankKey(currentYear, currentTerm);
+  useEffect(() => {
+    if (selectedClass && selectedSubject) {
+      const key = getExamBankKey(selectedClass, selectedSubject);
+      const data = JSON.parse(localStorage.getItem(key)) || {};
+      setExamData(data);
+    }
+  }, [selectedClass, selectedSubject]);
 
-    // FIX: Form Master can only score for their assigned class
-    const isAuthorizedToEdit = user.role === 'Form Master'
-        ? userClasses.includes(selectedClass) && userSubjects.includes(selectedSubject)
-        : userSubjects.includes(selectedSubject);
+  const updateScore = (studentIdentifier, subject, scoreType, value) => {
+    if (!selectedClass || !selectedSubject) return;
 
-    const hasTeachingAssignment = userSubjects.length > 0 && userClasses.length > 0;
+    const key = getExamBankKey(selectedClass, selectedSubject);
+    const currentData = JSON.parse(localStorage.getItem(key)) || {};
 
-    // FIX: Add proper dependency array to prevent infinite loop
-    useEffect(() => {
-        if (selectedClass) {
-            const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
-            const classStudents = classLists[selectedClass] || [];
-            // Only show approved students
-            const approvedStudents = classStudents
-                .filter(s => s.status === 'approved')
-                .map(s => s.fullName);
-            setStudentRoster(approvedStudents);
-        } else {
-            setStudentRoster([]);
-        }
-    }, [selectedClass]); // FIX: Only depend on selectedClass
+    if (!currentData[studentIdentifier]) {
+      currentData[studentIdentifier] = getInitialScoreEntry(studentIdentifier, selectedSubject);
+    }
 
-    // FIX: Load scores with proper dependencies
-    useEffect(() => {
-        if (!selectedSubject || !selectedClass || studentRoster.length === 0) return;
+    currentData[studentIdentifier][scoreType] = value;
 
-        const allExamData = JSON.parse(localStorage.getItem(storageKey)) || {};
-        const classData = allExamData[selectedClass] || {};
-        const subjectScores = classData[selectedSubject] || [];
+    // Calculate total if both scores are available
+    const caScore = currentData[studentIdentifier].ca !== "" ? parseInt(currentData[studentIdentifier].ca) : 0;
+    const examScore = currentData[studentIdentifier].exam !== "" ? parseInt(currentData[studentIdentifier].exam) : 0;
+    currentData[studentIdentifier].total = Math.min(100, caScore + examScore);
 
-        const newScores = {};
-        studentRoster.forEach(studentName => {
-            const existing = subjectScores.find(s => s.studentName === studentName);
-            newScores[studentName] = existing || getInitialScoreEntry(studentName, selectedSubject);
-        });
-        setScores(newScores);
-    }, [selectedSubject, selectedClass, studentRoster, storageKey]);
+    localStorage.setItem(key, JSON.stringify(currentData));
+    setExamData(currentData);
+  };
 
-    const handleScoreChange = (studentName, field, value) => {
-        setScores(prev => ({
-            ...prev,
-            [studentName]: {
-                ...prev[studentName],
-                [field]: value
-            }
-        }));
-    };
-
-    const saveScores = () => {
-        const allExamData = JSON.parse(localStorage.getItem(storageKey)) || {};
-        
-        if (!allExamData[selectedClass]) {
-            allExamData[selectedClass] = {};
-        }
-        
-        const scoreEntries = Object.values(scores);
-        allExamData[selectedClass][selectedSubject] = scoreEntries;
-        
-        localStorage.setItem(storageKey, JSON.stringify(allExamData));
-        alert('✅ Scores saved successfully!');
-    };
-
+  // Check if user is assigned to teach any classes/subjects
+  if (assignedClasses.length === 0 || assignedSubjects.length === 0) {
     return (
-        <div className="p-6 bg-white shadow-lg rounded-xl">
-            <h2 className="text-2xl font-bold mb-4 text-green-700">
-                Score Input {user.role === 'Form Master' ? `- ${user.assignedClasses?.[0]}` : ''}
-            </h2>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 border border-white/20 text-center">
+            <div className="text-yellow-400 text-6xl mb-4">⚠️</div>
+            <h1 className="text-3xl font-bold text-white mb-4">No Teaching Assignment</h1>
+            <p className="text-blue-200 text-lg mb-6">
+              You have not been assigned to teach any classes or subjects.
+            </p>
+            <div className="bg-yellow-500/20 border border-yellow-400/30 rounded-xl p-4 max-w-md mx-auto">
+              <p className="text-yellow-200">
+                Please contact <strong>VP Admin</strong> or <strong>VP Academic</strong> to get assigned to classes and subjects.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-            {!hasTeachingAssignment && (
-                <div className="p-4 bg-red-100 text-red-700 rounded-lg mb-4">
-                    🛑 **NOT ASSIGNED:** Please contact admin to assign subjects and classes.
-                </div>
-            )}
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 border border-white/20">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2">Score Center</h1>
+              <p className="text-blue-200">Enter scores for your assigned classes and subjects</p>
+            </div>
+            <div className="bg-blue-500/20 border border-blue-400/30 rounded-xl p-3">
+              <p className="text-white text-sm">
+                <strong>Assigned:</strong> {assignedClasses.length} classes, {assignedSubjects.length} subjects
+              </p>
+            </div>
+          </div>
 
-            {/* FIX: Show authorization warning for Form Masters */}
-            {user.role === 'Form Master' && !isAuthorizedToEdit && selectedSubject && (
-                <div className="p-4 bg-yellow-100 text-yellow-700 rounded-lg mb-4">
-                    ⚠️ You can only enter scores for subjects assigned to your class.
-                </div>
-            )}
-
-            <div className="flex gap-4 mb-6">
-                <select
-                    value={selectedSubject}
-                    onChange={(e) => setSelectedSubject(e.target.value)}
-                    className="border p-2 rounded"
-                    disabled={!hasTeachingAssignment}
-                >
-                    <option value="">Select Subject</option>
-                    {userSubjects.map(sub => <option key={sub} value={sub}>{sub}</option>)}
-                </select>
-
-                <select
-                    value={selectedClass}
-                    onChange={(e) => setSelectedClass(e.target.value)}
-                    className="border p-2 rounded"
-                    disabled={user.role === 'Form Master'} // Form Masters can't change class
-                >
-                    <option value="">Select Class</option>
-                    {userClasses.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+          {/* Class and Subject Selection */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+              <label className="block text-white font-semibold mb-3">Select Class</label>
+              <select
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+                className="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Choose a class</option>
+                {assignedClasses.map(cls => (
+                  <option key={cls} value={cls} className="text-gray-900">{cls}</option>
+                ))}
+              </select>
+              <p className="text-blue-200 text-xs mt-2">
+                Your assigned classes: {assignedClasses.join(', ')}
+              </p>
             </div>
 
-            {/* FIXED: Complete the ternary operator with proper JSX */}
-            {selectedSubject && selectedClass && studentRoster.length > 0 && isAuthorizedToEdit ? (
+            <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+              <label className="block text-white font-semibold mb-3">Select Subject</label>
+              <select
+                value={selectedSubject}
+                onChange={(e) => setSelectedSubject(e.target.value)}
+                className="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Choose a subject</option>
+                {assignedSubjects.map(subject => (
+                  <option key={subject} value={subject} className="text-gray-900">{subject}</option>
+                ))}
+              </select>
+              <p className="text-blue-200 text-xs mt-2">
+                Your assigned subjects: {assignedSubjects.join(', ')}
+              </p>
+            </div>
+          </div>
+
+          {/* Rest of component remains the same */}
+          {selectedClass && (
+            <div className="bg-blue-500/20 border border-blue-400/30 rounded-xl p-4 mb-6">
+              <div className="flex items-center justify-between">
                 <div>
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full bg-white border rounded-lg">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-4 py-2 border">Student Name</th>
-                                    <th className="px-4 py-2 border">CA Score</th>
-                                    <th className="px-4 py-2 border">Exam Score</th>
-                                    <th className="px-4 py-2 border">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {studentRoster.map(studentName => (
-                                    <tr key={studentName}>
-                                        <td className="px-4 py-2 border font-medium">{studentName}</td>
-                                        <td className="px-4 py-2 border">
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                max="30"
-                                                value={scores[studentName]?.ca || ''}
-                                                onChange={(e) => handleScoreChange(studentName, 'ca', parseInt(e.target.value) || 0)}
-                                                className="w-20 px-2 py-1 border rounded"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-2 border">
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                max="70"
-                                                value={scores[studentName]?.exam || ''}
-                                                onChange={(e) => handleScoreChange(studentName, 'exam', parseInt(e.target.value) || 0)}
-                                                className="w-20 px-2 py-1 border rounded"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-2 border font-bold">
-                                            {((scores[studentName]?.ca || 0) + (scores[studentName]?.exam || 0))}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <button
-                        onClick={saveScores}
-                        className="mt-4 px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                    >
-                        💾 Save All Scores
-                    </button>
+                  <h3 className="text-white font-semibold">
+                    {selectedClass} - {studentRoster.length} Students
+                  </h3>
+                  <p className="text-blue-200 text-sm">
+                    {selectedSubject ? `Scoring for: ${selectedSubject}` : 'Select a subject to begin scoring'}
+                  </p>
                 </div>
+                {studentRoster.length === 0 && (
+                  <p className="text-yellow-300 text-sm">
+                    💡 No students in this class. Ask VP Admin to enroll students.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Score Entry Table */}
+          {selectedClass && selectedSubject ? (
+            studentRoster.length > 0 ? (
+              <ScoreEntryTable
+                students={studentRoster}
+                selectedSubject={selectedSubject}
+                examData={examData}
+                updateScore={updateScore}
+                currentClass={selectedClass}
+              />
             ) : (
-                <div className="p-4 bg-yellow-100 text-yellow-800 rounded-lg">
-                    {!isAuthorizedToEdit && selectedSubject
-                        ? "You are not authorized to score this subject/class combination."
-                        : "Select a subject and class to begin score entry."
-                    }
-                </div>
-            )}
+              <div className="text-center py-12 bg-white/5 rounded-xl border border-white/10">
+                <div className="text-yellow-400 text-6xl mb-4">🎓</div>
+                <h3 className="text-white text-xl font-semibold mb-2">No Students Found</h3>
+                <p className="text-blue-200">
+                  There are no students enrolled in {selectedClass}.<br />
+                  Please ask the VP Admin to enroll students in this class.
+                </p>
+              </div>
+            )
+          ) : (
+            <div className="text-center py-12 bg-white/5 rounded-xl border border-white/10">
+              <div className="text-blue-400 text-6xl mb-4">📝</div>
+              <h3 className="text-white text-xl font-semibold mb-2">Ready to Score</h3>
+              <p className="text-blue-200">
+                Select a class and subject from your assignments to begin score entry.
+              </p>
+            </div>
+          )}
         </div>
-    );
+      </div>
+    </div>
+  );
 }

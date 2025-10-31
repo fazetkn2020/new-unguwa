@@ -1,3 +1,4 @@
+cat > src/data/roleMenus.js << 'EOF'
 export const roleMenus = {
   "Admin": [
     { name: "Dashboard", path: "/dashboard/admin" },
@@ -5,7 +6,7 @@ export const roleMenus = {
     { name: "📊 Exam Bank", path: "/dashboard/exambank" },
     { name: "System Settings", path: "/dashboard/admin/settings" }
   ],
-  
+
   "Form Master": [
     { name: "🏠 Dashboard", path: "/dashboard/form-master" },
     { name: "👥 Class Students", path: "/dashboard/form-master/students" },
@@ -22,7 +23,7 @@ export const roleMenus = {
     { name: "📚 Add to E-Library", path: "/dashboard/teacher/elibrary-upload" },
     { name: "🏫 Exam Bank", path: "/dashboard/exambank" }
   ],
-  
+
   "Principal": [
     { name: "🏠 Dashboard", path: "/dashboard/principal" },
     { name: "📊 School Analytics", path: "/dashboard/principal/analytics" },
@@ -51,15 +52,21 @@ export const roleMenus = {
     { name: "⚡ Bulk Operations", path: "/dashboard/exam-officer/bulk" },
     { name: "🏫 Exam Bank", path: "/dashboard/exambank" }
   ],
-  
+
   "VP Admin": [
     { name: "Dashboard", path: "/dashboard/vp-admin" },
+    { name: "🎓 Student Enrollment", path: "/dashboard/vp-admin/enrollment" },
+    { name: "👥 User Management", path: "/dashboard/vp-admin/users" },
+    { name: "📊 School Analytics", path: "/dashboard/vp-admin/analytics" },
     { name: "E-Library", path: "/dashboard/elibrary" }
   ],
-  
+
   "VP Academic": [
     { name: "Dashboard", path: "/dashboard/vp-academic" },
     { name: "📊 Exam Bank", path: "/dashboard/exambank" },
+    { name: "📚 Academic Materials", path: "/dashboard/vp-academic/materials" },
+    { name: "📊 Performance Analytics", path: "/dashboard/vp-academic/analytics" },
     { name: "E-Library", path: "/dashboard/elibrary" }
   ]
 };
+EOF

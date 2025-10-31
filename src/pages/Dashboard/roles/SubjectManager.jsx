@@ -3,82 +3,164 @@ import React, { useState, useEffect } from 'react';
 export default function SubjectManager() {
   const [subjects, setSubjects] = useState([]);
   const [newSubject, setNewSubject] = useState('');
+  const [editingSubject, setEditingSubject] = useState(null);
+  const [editSubjectName, setEditSubjectName] = useState('');
 
   useEffect(() => {
     loadSubjects();
   }, []);
 
   const loadSubjects = () => {
-    const savedSubjects = JSON.parse(localStorage.getItem('schoolSubjects')) || [];
-    setSubjects(savedSubjects);
+    const schoolSubjects = JSON.parse(localStorage.getItem('schoolSubjects')) || [];
+    setSubjects(schoolSubjects);
   };
 
-  const addSubject = () => {
+  const createSubject = () => {
     if (!newSubject.trim()) {
       alert('Please enter a subject name');
       return;
     }
 
-    const updatedSubjects = [...subjects, newSubject.trim()];
-    localStorage.setItem('schoolSubjects', JSON.stringify(updatedSubjects));
-    setSubjects(updatedSubjects);
+    const schoolSubjects = JSON.parse(localStorage.getItem('schoolSubjects')) || [];
+    
+    if (schoolSubjects.includes(newSubject)) {
+      alert('Subject already exists!');
+      return;
+    }
+
+    schoolSubjects.push(newSubject);
+    localStorage.setItem('schoolSubjects', JSON.stringify(schoolSubjects));
+    
+    alert(`Subject "${newSubject}" created successfully!`);
     setNewSubject('');
-    alert(`✅ Subject "${newSubject}" added successfully!`);
+    loadSubjects();
   };
 
-  const removeSubject = (index) => {
-    if (!window.confirm(`Remove "${subjects[index]}" from subjects?`)) return;
+  const startEditSubject = (subject) => {
+    setEditingSubject(subject);
+    setEditSubjectName(subject);
+  };
+
+  const updateSubject = () => {
+    if (!editSubjectName.trim()) {
+      alert('Please enter a subject name');
+      return;
+    }
+
+    const schoolSubjects = JSON.parse(localStorage.getItem('schoolSubjects')) || [];
     
-    const updatedSubjects = subjects.filter((_, i) => i !== index);
+    // If name changed, check if new name exists
+    if (editSubjectName !== editingSubject && schoolSubjects.includes(editSubjectName)) {
+      alert('Subject name already exists!');
+      return;
+    }
+
+    // Update the subject name
+    const updatedSubjects = schoolSubjects.map(sub => 
+      sub === editingSubject ? editSubjectName : sub
+    );
+
     localStorage.setItem('schoolSubjects', JSON.stringify(updatedSubjects));
-    setSubjects(updatedSubjects);
-    alert('✅ Subject removed successfully!');
+    
+    alert(`Subject updated successfully!`);
+    setEditingSubject(null);
+    setEditSubjectName('');
+    loadSubjects();
+  };
+
+  const deleteSubject = (subject) => {
+    if (!confirm(`Are you sure you want to delete subject "${subject}"?`)) {
+      return;
+    }
+
+    const schoolSubjects = JSON.parse(localStorage.getItem('schoolSubjects')) || [];
+    const updatedSubjects = schoolSubjects.filter(sub => sub !== subject);
+    localStorage.setItem('schoolSubjects', JSON.stringify(updatedSubjects));
+    
+    alert(`Subject "${subject}" deleted successfully!`);
+    loadSubjects();
+  };
+
+  const cancelEdit = () => {
+    setEditingSubject(null);
+    setEditSubjectName('');
   };
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-bold mb-4">Manage School Subjects</h2>
-      
-      {/* Add Subject Form */}
-      <div className="mb-6 p-4 border rounded">
-        <h3 className="font-semibold mb-3">Add New Subject</h3>
-        <div className="flex gap-2">
+      <h2 className="text-xl font-bold mb-6">Manage Subjects - VP Academic</h2>
+
+      {/* Create Subject Form */}
+      <div className="mb-6 p-4 bg-blue-50 rounded">
+        <h3 className="font-semibold mb-3">Create New Subject</h3>
+        <div className="flex gap-3">
           <input
             type="text"
-            placeholder="Enter subject name (e.g., Mathematics)"
             value={newSubject}
             onChange={(e) => setNewSubject(e.target.value)}
-            className="flex-1 border p-2 rounded"
+            placeholder="e.g., Mathematics, English, Physics, etc."
+            className="flex-1 p-2 border rounded"
           />
           <button
-            onClick={addSubject}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            onClick={createSubject}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
           >
-            Add Subject
+            Create Subject
           </button>
         </div>
       </div>
 
       {/* Subjects List */}
       <div>
-        <h3 className="font-semibold mb-3">Current Subjects ({subjects.length})</h3>
+        <h3 className="font-semibold mb-3">School Subjects</h3>
         {subjects.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 bg-gray-50 rounded">
-            <div className="text-4xl mb-2">📚</div>
-            <p>No subjects added yet.</p>
-            <p className="text-sm text-gray-400 mt-1">Add subjects using the form above</p>
-          </div>
+          <p className="text-gray-500">No subjects created yet</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {subjects.map((subject, index) => (
-              <div key={index} className="bg-gray-50 border rounded p-3 flex justify-between items-center">
-                <span className="font-medium">{subject}</span>
-                <button
-                  onClick={() => removeSubject(index)}
-                  className="text-red-600 hover:text-red-800 text-sm"
-                >
-                  Remove
-                </button>
+          <div className="space-y-3">
+            {subjects.map(subject => (
+              <div key={subject} className="flex items-center justify-between p-4 border rounded bg-gray-50">
+                {editingSubject === subject ? (
+                  <div className="flex items-center gap-3 flex-1">
+                    <input
+                      type="text"
+                      value={editSubjectName}
+                      onChange={(e) => setEditSubjectName(e.target.value)}
+                      className="flex-1 p-2 border rounded"
+                    />
+                    <button
+                      onClick={updateSubject}
+                      className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex-1">
+                      <div className="font-semibold text-lg">{subject}</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => startEditSubject(subject)}
+                        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => deleteSubject(subject)}
+                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>

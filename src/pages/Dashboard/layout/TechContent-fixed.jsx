@@ -9,8 +9,6 @@ import SystemSettings from '../roles/SystemSettings';
 import ClassListManager from '../roles/ClassListManager';
 import StudentList from '../roles/StudentList';
 import SubjectManager from '../roles/SubjectManager'; // ADD THIS IMPORT
-import SubjectAssignments from '../roles/SubjectAssignments';
-import FormMasterAssignment from '../roles/FormMasterAssignment';
 
 // Import existing components
 import ExamBank from '../ExamBank';
@@ -21,8 +19,6 @@ import SubjectInsights from '../roles/SubjectInsights';
 
 // Import attendance modules
 import StudentEnrollment from '../roles/StudentEnrollment'; // ADD THIS IMPORT
-import FormMasterAttendance from '../roles/FormMasterAttendance';
-import ClassManager from '../roles/ClassManager';
 import VPAdminAttendance from '../roles/VPAdminAttendance';
 import TeacherAttendanceView from '../roles/TeacherAttendanceView';
 
@@ -43,6 +39,7 @@ import AutoRosterManager from '../roles/AutoRosterManager';
 import AttendanceViewer from '../roles/AttendanceViewer';
 
 import QuestionCreator from '../roles/QuestionCreator';
+import ELibraryUploader from '../roles/ELibraryUploader';
 
 import AdvancedTimetable from '../roles/AdvancedTimetable';
 import DutyRosterManager from '../roles/DutyRosterManager';
@@ -56,7 +53,30 @@ import ParentMessage from '../roles/ParentMessage';
 
 // Rest of the file remains the same...
 
+import QuestionCreator from '../roles/QuestionCreator';
+import ELibraryUploader from '../roles/ELibraryUploader';
 
+import AdvancedTimetable from '../roles/AdvancedTimetable';
+import DutyRosterManager from '../roles/DutyRosterManager';
+import DutyDisplay from '../roles/DutyDisplay';
+
+import SchoolAnalytics from '../roles/SchoolAnalytics';
+import StaffPerformance from '../roles/StaffPerformance';
+import SchoolEvents from '../roles/SchoolEvents';
+import MassCommunications from '../roles/MassCommunications';
+import ParentMessage from '../roles/ParentMessage';
+
+// Rest of the file remains the same...
+import ELibraryUploader from '../roles/ELibraryUploader';
+
+import AdvancedTimetable from '../roles/AdvancedTimetable';
+import DutyRosterManager from '../roles/DutyRosterManager';
+import DutyDisplay from '../roles/DutyDisplay';
+
+import SchoolAnalytics from '../roles/SchoolAnalytics';
+import StaffPerformance from '../roles/StaffPerformance';
+import SchoolEvents from '../roles/SchoolEvents';
+import MassCommunications from '../roles/MassCommunications';
 
 export default function TechContent({ config, activeModule, user, dashboardData }) {
 const { isAdmin } = useAuth();
@@ -68,8 +88,11 @@ case 'users':
 return <UserManagementPanel users={dashboardData.users} />;
 
 // ✅ ADD SUBJECTS MODULE CASE
-  case 'subjects':
-    return <SubjectAssignments />;
+case 'subjects':
+  if (user.role === 'Admin' || user.role === 'admin') {
+    return <SubjectManager />;
+  }
+  break;
 
 // ✅ MERGED 'assignments' case for Admin and Subject Teacher
 case 'assignments':
@@ -294,10 +317,12 @@ return <SystemSettings />;
     break;
 
   // ✅ FIXED: Allow Form Master OR Subject Teacher access
-  case 'class-attendance':
-  case 'classes':
-  case 'subjects':
-    return <SubjectAssignments />;
+  case 'scoring':
+    if ((user.role === 'Form Master' || user.role === 'Subject Teacher') &&
+        user.assignedClasses && user.assignedSubjects) {
+      return <ScoreCenter />;
+    }
+    break;
 
   // 🧑‍🏫 Subject Teacher modules
   case 'questions':
