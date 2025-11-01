@@ -10,28 +10,41 @@ export default function ClassManager() {
     loadClasses();
   }, []);
 
+  const validateClassName = (className) => {
+    // Allowed patterns: pre, nur, pri, js, ss followed by number and optional letter
+    const pattern = /^(pre|nur|pri|js|ss)\d+[a-z]?$/i;
+    return pattern.test(className.trim());
+  };
+
   const loadClasses = () => {
     const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
     setClasses(Object.keys(classLists));
   };
 
   const createClass = () => {
-    if (!newClassName.trim()) {
+    const className = newClassName.trim();
+    
+    if (!className) {
       alert('Please enter a class name');
+      return;
+    }
+
+    if (!validateClassName(className)) {
+      alert('Invalid class name! Use format: pre, nur, pri, js, or ss followed by number and optional letter\nExamples: pre1, nur2a, pri3, js1b, ss2');
       return;
     }
 
     const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
 
-    if (classLists[newClassName]) {
+    if (classLists[className]) {
       alert('Class already exists!');
       return;
     }
 
-    classLists[newClassName] = [];
+    classLists[className] = [];
     localStorage.setItem('classLists', JSON.stringify(classLists));
 
-    alert(`Class ${newClassName} created successfully!`);
+    alert(`Class ${className} created successfully!`);
     setNewClassName('');
     loadClasses();
   };
@@ -42,20 +55,27 @@ export default function ClassManager() {
   };
 
   const updateClass = () => {
-    if (!editClassName.trim()) {
+    const className = editClassName.trim();
+    
+    if (!className) {
       alert('Please enter a class name');
+      return;
+    }
+
+    if (!validateClassName(className)) {
+      alert('Invalid class name! Use format: pre, nur, pri, js, or ss followed by number and optional letter\nExamples: pre1, nur2a, pri3, js1b, ss2');
       return;
     }
 
     const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
 
-    if (editClassName !== editingClass && classLists[editClassName]) {
+    if (className !== editingClass && classLists[className]) {
       alert('Class name already exists!');
       return;
     }
 
-    if (editClassName !== editingClass) {
-      classLists[editClassName] = classLists[editingClass];
+    if (className !== editingClass) {
+      classLists[className] = classLists[editingClass];
       delete classLists[editingClass];
     }
 
@@ -93,13 +113,19 @@ export default function ClassManager() {
       <div className="mb-6 p-4 bg-blue-50 rounded-lg">
         <h3 className="font-semibold mb-3 text-lg">Create New Class</h3>
         <div className="space-y-3">
-          <input
-            type="text"
-            value={newClassName}
-            onChange={(e) => setNewClassName(e.target.value)}
-            placeholder="e.g., JSS1, SS2, etc."
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-          />
+          <div>
+            <input
+              type="text"
+              value={newClassName}
+              onChange={(e) => setNewClassName(e.target.value)}
+              placeholder="e.g., pre1, nur2a, pri3, js1b, ss2"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+            />
+            <div className="mt-2 text-sm text-gray-600">
+              Format: pre, nur, pri, js, or ss + number + optional letter<br/>
+              Examples: pre1, nur2a, pri3, js1b, ss2
+            </div>
+          </div>
           <button
             onClick={createClass}
             className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 text-base font-medium"
@@ -128,6 +154,7 @@ export default function ClassManager() {
                       value={editClassName}
                       onChange={(e) => setEditClassName(e.target.value)}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+                      placeholder="e.g., pre1, nur2a, pri3, js1b, ss2"
                     />
                     <div className="flex gap-2">
                       <button

@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { schoolConfig } from "../data/schoolConfig";
 import { getStudentPosition } from "../utils/positionCalculator";
 import { getStudentSubjects } from "../data/subjects";
@@ -22,12 +23,42 @@ const ReportSheet = ({
     );
   }
 
-  const studentPosition = getStudentPosition(
-    students,
-    examData,
-    currentClass,
-    student.fullName
-  );
+  // FIXED: Use the same student identifier format as ExamBank
+  const getStudentIdentifier = (student, className) => {
+    if (!student) return "";
+    return `${student.id}-${className}`;
+  };
+
+  const studentIdentifier = getStudentIdentifier(student, currentClass);
+  
+  // FIXED: Calculate position based on total scores
+  const calculateStudentPosition = () => {
+    const studentsWithScores = students
+      .map(s => {
+        const sid = getStudentIdentifier(s, currentClass);
+        const scores = examData[sid] || {};
+        const totalMarks = Object.values(scores).reduce((sum, subject) => 
+          sum + (subject.total || 0), 0
+        );
+        return { ...s, totalMarks };
+      })
+      .filter(s => s.totalMarks > 0)
+      .sort((a, b) => b.totalMarks - a.totalMarks);
+
+    const currentStudentIndex = studentsWithScores.findIndex(
+      s => s.id === student.id
+    );
+
+    if (currentStudentIndex === -1) return null;
+
+    return {
+      position: currentStudentIndex + 1,
+      totalStudents: studentsWithScores.length,
+      totalMarks: studentsWithScores[currentStudentIndex].totalMarks
+    };
+  };
+
+  const studentPosition = calculateStudentPosition();
 
   const getGrade = (total) => {
     if (total >= 70) return { grade: "A", remark: "Excellent" };
@@ -38,12 +69,12 @@ const ReportSheet = ({
     return { grade: "F", remark: "Fail" };
   };
 
-  const studentIdentifier = `${currentClass}_${student.fullName.replace(/\s+/g, "_")}`;
+  // FIXED: Use the correct student identifier
   const studentScores = examData[studentIdentifier] || {};
-  
-  // Get ALL 9 subjects for the class, not just those with scores
+
+  // Get ALL subjects for the class
   const allSubjects = getStudentSubjects(student.id, currentClass);
-  
+
   const subjectResults = allSubjects.map((subject) => {
     const scores = studentScores[subject] || { ca: "", exam: "", total: 0 };
     const total = scores.total || 0;
@@ -62,30 +93,56 @@ const ReportSheet = ({
   // Calculate totals only for subjects with actual scores
   const subjectsWithScores = subjectResults.filter(subj => subj.ca !== "-" && subj.exam !== "-");
   const totalScore = subjectsWithScores.reduce((sum, r) => sum + r.total, 0);
-  const average = subjectsWithScores.length > 0 
-    ? (totalScore / subjectsWithScores.length).toFixed(1) 
+  const average = subjectsWithScores.length > 0
+    ? (totalScore / subjectsWithScores.length).toFixed(1)
     : 0;
+
+  // FIXED: Calculate maximum possible marks
+  const maxPossibleMarks = allSubjects.length * 100;
 
   const handlePrint = () => {
     window.print();
   };
 
+  // FIXED: Optimized PDF generation for smaller file size
   const handleSavePDF = async () => {
     try {
       const element = reportRef.current;
       
-      const canvas = await html2canvas(element, { 
-        scale: 2,
+      // Optimize canvas settings for smaller file size
+      const canvas = await html2canvas(element, {
+        scale: 1.5, // Reduced from 2 to 1.5
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        removeContainer: true,
+        imageTimeout: 0
       });
+
+      // Convert to JPEG with lower quality for smaller file size
+      const imgData = canvas.toDataURL('image/jpeg', 0.8); // 80% quality
       
-      const link = document.createElement('a');
-      link.download = `${student.fullName}_report.png`;
-      link.href = canvas.toDataURL();
-      link.click();
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
       
+      // Calculate image dimensions to fit A4
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 0;
+      
+      // Add image to PDF with compression
+      pdf.addImage(imgData, 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio, undefined, 'FAST');
+      
+      // Save PDF with proper filename
+      const fileName = `${student.fullName}_${currentClass}_Report_${term}_Term_${year}.pdf`;
+      pdf.save(fileName);
+
     } catch (error) {
       console.error('PDF generation failed:', error);
       alert('Failed to generate PDF. Please use the Print button instead.');
@@ -105,14 +162,14 @@ const ReportSheet = ({
           onClick={handleSavePDF}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
         >
-          Save as Image
+          Save as PDF
         </button>
       </div>
 
       <div
         ref={reportRef}
         className="bg-white border border-gray-400 shadow-lg mx-auto w-full p-4 print:shadow-none print:border print:p-2 report-sheet-container"
-        style={{ 
+        style={{
           width: '210mm',
           minHeight: '297mm',
           pageBreakInside: 'avoid',
@@ -130,7 +187,7 @@ const ReportSheet = ({
           </h2>
         </div>
 
-        {/* Student Information */}
+        {/* Student Information - FIXED: Added Total Marks */}
         <div className="grid grid-cols-2 gap-2 text-sm mb-4">
           <div>
             <p><strong>Name:</strong> {student.fullName}</p>
@@ -141,11 +198,30 @@ const ReportSheet = ({
             <p>
               <strong>Position:</strong>{" "}
               {studentPosition
-                ? `${studentPosition.displayPosition} of ${studentPosition.totalStudents}`
+                ? `${studentPosition.position} of ${studentPosition.totalStudents}`
                 : "N/A"}
             </p>
             <p><strong>Average Score:</strong> {average}%</p>
-            <p><strong>Total Subjects:</strong> {allSubjects.length}</p>
+            <p><strong>Total Marks:</strong> {totalScore} / {maxPossibleMarks}</p>
+          </div>
+        </div>
+
+        {/* Performance Summary - NEW: Added performance indicators */}
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+          <h3 className="font-semibold text-blue-800 mb-2">Performance Summary</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+            <div>
+              <strong>Subjects Taken:</strong> {allSubjects.length}
+            </div>
+            <div>
+              <strong>Subjects Scored:</strong> {subjectsWithScores.length}
+            </div>
+            <div>
+              <strong>Total Marks:</strong> {totalScore}
+            </div>
+            <div>
+              <strong>Class Position:</strong> {studentPosition ? studentPosition.position : 'N/A'}
+            </div>
           </div>
         </div>
 
@@ -175,6 +251,24 @@ const ReportSheet = ({
               </tr>
             ))}
           </tbody>
+          {/* Footer with totals - NEW */}
+          <tfoot className="bg-gray-100 font-semibold">
+            <tr>
+              <td className="border border-gray-400 p-1 text-right">TOTAL:</td>
+              <td className="border border-gray-400 p-1 text-center">
+                {subjectResults.reduce((sum, r) => sum + (parseInt(r.ca) || 0), 0)}
+              </td>
+              <td className="border border-gray-400 p-1 text-center">
+                {subjectResults.reduce((sum, r) => sum + (parseInt(r.exam) || 0), 0)}
+              </td>
+              <td className="border border-gray-400 p-1 text-center bg-blue-100">
+                {totalScore}
+              </td>
+              <td className="border border-gray-400 p-1 text-center" colSpan="2">
+                Average: {average}%
+              </td>
+            </tr>
+          </tfoot>
         </table>
 
         {/* Grading Legend */}

@@ -13,10 +13,10 @@ export default function TeacherAssignmentPanel() {
   }, []);
 
   const loadData = () => {
-    // Load users (teachers only)
+    // Load users (teachers only) - INCLUDING "Teacher" role
     const allUsers = JSON.parse(localStorage.getItem('users')) || [];
     const teachers = allUsers.filter(user =>
-      ['Subject Teacher', 'Form Master', 'Senior Master', 'Principal', 'VP Academic', 'VP Admin', 'Exam Officer'].includes(user.role)
+      ['Teacher', 'Subject Teacher', 'Form Master', 'Senior Master', 'Principal', 'VP Academic', 'VP Admin', 'Exam Officer'].includes(user.role)
     );
     setUsers(teachers);
 
@@ -46,12 +46,13 @@ export default function TeacherAssignmentPanel() {
       return;
     }
 
-    // Update teacher assignments
+    // Update teacher assignments and set role to "Subject Teacher" if currently "Teacher"
     const updatedUsers = users.map(user => {
       if (user.id === selectedTeacher) {
         const updatedAssignments = {
           assignedClasses: [...new Set([...(user.assignedClasses || []), selectedClass])],
-          assignedSubjects: [...new Set([...(user.assignedSubjects || []), selectedSubject])]
+          assignedSubjects: [...new Set([...(user.assignedSubjects || []), selectedSubject])],
+          role: user.role === 'Teacher' ? 'Subject Teacher' : user.role // Upgrade role if needed
         };
         return { ...user, ...updatedAssignments };
       }

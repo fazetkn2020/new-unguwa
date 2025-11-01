@@ -11,10 +11,10 @@ export default function FormMasterAssignment() {
   }, []);
 
   const loadData = () => {
-    // Load ALL staff (not just Form Masters)
+    // Load ALL staff (including "Teacher" role)
     const users = JSON.parse(localStorage.getItem('users')) || [];
     const allStaff = users.filter(u => 
-      ['Subject Teacher', 'Form Master', 'Senior Master', 'VP Academic', 'VP Admin', 'Exam Officer'].includes(u.role)
+      ['Teacher', 'Subject Teacher', 'Form Master', 'Senior Master', 'VP Academic', 'VP Admin', 'Exam Officer'].includes(u.role)
     );
     setStaff(allStaff);
 
