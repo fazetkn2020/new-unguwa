@@ -5,6 +5,7 @@ import UserManagementTabs from './components/UserManagement/UserManagementTabs';
 import AllUsersTab from './components/UserManagement/AllUsersTab';
 import PendingApprovalTab from './components/UserManagement/PendingApprovalTab';
 import ActiveUsersTab from './components/UserManagement/ActiveUsersTab';
+import BulkRegistration from './components/UserManagement/BulkRegistration';
 import { useUserManagement } from './components/UserManagement/useUserManagement';
 
 function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
@@ -19,52 +20,67 @@ function UserManagementPanel({ users: propUsers, onUsersUpdate }) {
     loadUsers,
     deleteUser,
     approveUser,
-    approveStudent
+    approveStudent,
+    updateUserRole
   } = useUserManagement(propUsers, onUsersUpdate);
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "all":
+        return (
+          <AllUsersTab
+            users={users}
+            loadingStates={loadingStates}
+            onDeleteUser={deleteUser}
+            onApproveUser={approveUser}
+            onApproveStudent={approveStudent}
+            onUpdateRole={updateUserRole}
+          />
+        );
+      case "pending":
+        return (
+          <PendingApprovalTab
+            users={users}
+            loadingStates={loadingStates}
+            onDeleteUser={deleteUser}
+            onApproveUser={approveUser}
+            onApproveStudent={approveStudent}
+          />
+        );
+      case "active":
+        return (
+          <ActiveUsersTab
+            users={users}
+            loadingStates={loadingStates}
+            onDeleteUser={deleteUser}
+            onUpdateRole={updateUserRole}
+          />
+        );
+      case "bulk":
+        return <BulkRegistration onUsersAdded={loadUsers} />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="p-4 bg-white min-h-screen">
-      <UserManagementHeader 
+      <UserManagementHeader
         users={users}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         onRefresh={loadUsers}
       />
-      
-      <UserManagementTabs 
+
+      <UserManagementTabs
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         users={users}
       />
 
-      {/* Render Active Tab */}
-      {activeTab === "all" && (
-        <AllUsersTab 
-          users={users}
-          loadingStates={loadingStates}
-          onDeleteUser={deleteUser}
-          onApproveUser={approveUser}
-          onApproveStudent={approveStudent}
-        />
-      )}
-
-      {activeTab === "pending" && (
-        <PendingApprovalTab 
-          users={users}
-          loadingStates={loadingStates}
-          onDeleteUser={deleteUser}
-          onApproveUser={approveUser}
-          onApproveStudent={approveStudent}
-        />
-      )}
-
-      {activeTab === "active" && (
-        <ActiveUsersTab 
-          users={users}
-          loadingStates={loadingStates}
-          onDeleteUser={deleteUser}
-        />
-      )}
+      <div className="mt-4">
+        {renderTabContent()}
+      </div>
     </div>
   );
 }

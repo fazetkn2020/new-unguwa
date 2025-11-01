@@ -49,7 +49,7 @@ export const useUserManagement = (propUsers, onUsersUpdate) => {
     try {
       const updatedUsers = users.filter((user) => user.id !== userId);
       const success = saveUsers(updatedUsers);
-      
+
       if (success) {
         alert("✅ User deleted successfully");
       }
@@ -60,7 +60,7 @@ export const useUserManagement = (propUsers, onUsersUpdate) => {
     }
   };
 
-  const approveUser = async (userId) => {
+  const approveUser = async (userId, role = "Subject Teacher") => {
     setLoading(userId, true);
 
     try {
@@ -75,7 +75,7 @@ export const useUserManagement = (propUsers, onUsersUpdate) => {
         user.id === userId
           ? {
               ...user,
-              role: "Subject Teacher", // Always set to Subject Teacher for staff
+              role: role, // Use the selected role instead of hardcoded "Subject Teacher"
               status: "active",
               approvedAt: new Date().toISOString(),
             }
@@ -83,12 +83,45 @@ export const useUserManagement = (propUsers, onUsersUpdate) => {
       );
 
       const success = saveUsers(updatedUsers);
-      
+
       if (success) {
-        alert(`✅ ${userToApprove.name || userToApprove.fullName || 'User'} has been approved as Teacher!`);
+        alert(`✅ ${userToApprove.name || userToApprove.fullName || 'User'} has been approved as ${role}!`);
       }
     } catch (error) {
       alert("Error approving user");
+    } finally {
+      setLoading(userId, false);
+    }
+  };
+
+  const updateUserRole = async (userId, newRole) => {
+    setLoading(userId, true);
+
+    try {
+      const userToUpdate = users.find((user) => user.id === userId);
+
+      if (!userToUpdate) {
+        alert("User not found");
+        return;
+      }
+
+      const updatedUsers = users.map((user) =>
+        user.id === userId
+          ? {
+              ...user,
+              role: newRole,
+              roleUpdatedAt: new Date().toISOString(),
+            }
+          : user
+      );
+
+      const success = saveUsers(updatedUsers);
+
+      if (success) {
+        alert(`✅ ${userToUpdate.name || userToUpdate.fullName || 'User'} role updated to ${newRole}!`);
+      }
+    } catch (error) {
+      alert("Error updating user role");
     } finally {
       setLoading(userId, false);
     }
@@ -142,7 +175,7 @@ export const useUserManagement = (propUsers, onUsersUpdate) => {
       );
 
       const success = saveUsers(updatedUsers);
-      
+
       if (success) {
         alert(`✅ ${studentToApprove.name || studentToApprove.fullName || 'Student'} approved as Student!`);
       }
@@ -183,6 +216,7 @@ export const useUserManagement = (propUsers, onUsersUpdate) => {
     loadUsers,
     deleteUser,
     approveUser,
-    approveStudent
+    approveStudent,
+    updateUserRole
   };
 };

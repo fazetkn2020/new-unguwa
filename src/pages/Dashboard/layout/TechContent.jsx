@@ -16,7 +16,7 @@ import ScoreCenter from '../ScoreCenter';
 import BulkReportCenter from '../BulkReportCenter';
 import TeacherReminder from '../roles/TeacherReminder';
 import SubjectInsights from '../roles/SubjectInsights';
-import ReportPrintingCenter from '../ReportPrintingCenter'; // ADD THIS IMPORT
+import ReportPrintingCenter from '../ReportPrintingCenter';
 
 // Import attendance modules
 import StudentEnrollment from '../roles/StudentEnrollment';
@@ -51,6 +51,10 @@ import StaffPerformance from '../roles/StaffPerformance';
 import SchoolEvents from '../roles/SchoolEvents';
 import MassCommunications from '../roles/MassCommunications';
 import ParentMessage from '../roles/ParentMessage';
+
+// Import VP Academic specific components
+import ClassManager from '../roles/ClassManager';
+import FormMasterAssignment from '../roles/FormMasterAssignment';
 
 export default function TechContent({ config, activeModule, user, dashboardData }) {
 const { isAdmin } = useAuth();
@@ -93,6 +97,31 @@ case 'roles':
 return <RoleManagementPanel />;
 case 'settings':
 return <SystemSettings />;
+
+// 🧩 VP Academic modules - ADDED MISSING CASES
+case 'add-subjects':
+  if (user.role === 'VP Academic') {
+    return <SubjectManager />;
+  }
+  break;
+
+case 'manage-classes':
+  if (user.role === 'VP Academic') {
+    return <ClassManager />;
+  }
+  break;
+
+case 'teacher-assignment':
+  if (user.role === 'VP Academic') {
+    return <TeacherAssignmentPanel />;
+  }
+  break;
+
+case 'form-master-assignment':
+  if (user.role === 'VP Academic') {
+    return <FormMasterAssignment />;
+  }
+  break;
 
 // 🧭 Principal modules
   case 'overview':
@@ -301,13 +330,13 @@ return <SystemSettings />;
   // 🧩 Exam Officer modules - UPDATED
   case 'reports':
     if (user.role === 'Exam Officer') {
-      return <ReportPrintingCenter />; // CHANGED to unified component
+      return <ReportPrintingCenter />;
     }
     break;
 
   case 'bulk':
     if (user.role === 'Exam Officer') {
-      return <ReportPrintingCenter />; // CHANGED to unified component
+      return <ReportPrintingCenter />;
     }
     break;
 

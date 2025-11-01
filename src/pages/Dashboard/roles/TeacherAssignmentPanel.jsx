@@ -7,57 +7,31 @@ export default function TeacherAssignmentPanel() {
   const [selectedTeacher, setSelectedTeacher] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
-  const [forceRefresh, setForceRefresh] = useState(0);
 
-  // FIXED: Empty dependency array to prevent infinite loops
   useEffect(() => {
-    console.log('🔄 TeacherAssignmentPanel mounted - Force refresh:', forceRefresh);
     loadData();
-  }, []); // ← FIXED: Empty dependency array
+  }, []);
 
   const loadData = () => {
-    console.log('=== DEBUG: Loading Teacher Assignment Data ===');
-    
     // Load users (teachers only)
     const allUsers = JSON.parse(localStorage.getItem('users')) || [];
-    console.log('📋 All users from localStorage:', allUsers);
-    
     const teachers = allUsers.filter(user =>
       ['Subject Teacher', 'Form Master', 'Senior Master', 'Principal', 'VP Academic', 'VP Admin', 'Exam Officer'].includes(user.role)
     );
-    console.log('👨‍🏫 Teachers found:', teachers);
     setUsers(teachers);
 
-    // Load ONLY admin-created classes from localStorage
-    // Load classes properly from schoolClasses
-const storedClasses = JSON.parse(localStorage.getItem('schoolClasses')) || [];
-console.log('📚 schoolClasses from localStorage:', storedClasses);
+    // Load classes from classLists (created by VP Academic)
+    const classLists = JSON.parse(localStorage.getItem('classLists')) || {};
+    const adminClasses = Object.keys(classLists);
+    setClasses(adminClasses);
 
-const adminClasses = storedClasses.map(cls => cls.name);
-console.log('🏫 Admin classes extracted:', adminClasses);
-setClasses(adminClasses);
-
-    // Load subjects from localStorage (dynamic)
+    // Load subjects from localStorage
     const savedSubjects = JSON.parse(localStorage.getItem('schoolSubjects')) || [];
-    console.log('📖 Saved subjects from localStorage:', savedSubjects);
     setSubjects(savedSubjects);
-
-    console.log('=== DEBUG END ===');
   };
 
-  // FIXED: Manual refresh without infinite loop
   const manualRefresh = () => {
-    console.log('🔄 Manual refresh triggered');
     loadData();
-  };
-
-  const clearCacheAndRefresh = () => {
-    if (window.confirm('Clear cache and refresh? This will reset all data.')) {
-      localStorage.clear();
-      // FIXED: Use manual refresh instead of forceRefresh to prevent loops
-      manualRefresh();
-      alert('Cache cleared! Data refreshed.');
-    }
   };
 
   const assignTeacher = () => {
@@ -72,7 +46,7 @@ setClasses(adminClasses);
       return;
     }
 
-    // Update teacher assignments (allow multiple subjects/classes)
+    // Update teacher assignments
     const updatedUsers = users.map(user => {
       if (user.id === selectedTeacher) {
         const updatedAssignments = {
@@ -98,7 +72,7 @@ setClasses(adminClasses);
     // Reset form and refresh data
     setSelectedClass('');
     setSelectedSubject('');
-    manualRefresh(); // FIXED: Use manual refresh instead of loadData
+    manualRefresh();
   };
 
   const removeAssignment = (teacherId, className, subjectName) => {
@@ -117,43 +91,17 @@ setClasses(adminClasses);
     });
 
     localStorage.setItem('users', JSON.stringify(updatedUsers));
-    manualRefresh(); // FIXED: Use manual refresh instead of loadData
+    manualRefresh();
     alert('✅ Assignment removed successfully');
   };
 
   return (
-    <div className="space-y-6">
-      {/* Debug Header */}
-      <div className="bg-red-50 border border-red-200 rounded p-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold text-red-800">Debug Info</h3>
-            <p className="text-sm text-red-600">
-              Classes loaded: {classes.length} | Subjects loaded: {subjects.length}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={manualRefresh}
-              className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
-            >
-              Refresh Data
-            </button>
-            <button
-              onClick={clearCacheAndRefresh}
-              className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
-            >
-              Clear Cache
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Assignment Form */}
-      <div className="bg-white rounded-lg shadow p-6">
+    <div className="space-y-4 p-2">
+      {/* Assignment Form - Mobile Friendly */}
+      <div className="bg-white rounded-lg shadow p-4">
         <h2 className="text-xl font-bold mb-4">Assign Teacher to Class & Subject</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Select Teacher
@@ -161,7 +109,7 @@ setClasses(adminClasses);
             <select
               value={selectedTeacher}
               onChange={(e) => setSelectedTeacher(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
             >
               <option value="">Choose teacher...</option>
               {users.map(teacher => (
@@ -179,7 +127,7 @@ setClasses(adminClasses);
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
             >
               <option value="">Choose class...</option>
               {classes.map(className => (
@@ -187,9 +135,9 @@ setClasses(adminClasses);
               ))}
             </select>
             {classes.length === 0 && (
-              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+              <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-sm text-yellow-800">
-                  ⚠️ No classes available. Please create classes first in <strong>Class Management</strong>.
+                  ⚠️ No classes available. Create classes in "Manage Classes" first.
                 </p>
               </div>
             )}
@@ -202,7 +150,7 @@ setClasses(adminClasses);
             <select
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
             >
               <option value="">Choose subject...</option>
               {subjects.map(subject => (
@@ -210,9 +158,9 @@ setClasses(adminClasses);
               ))}
             </select>
             {subjects.length === 0 && (
-              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+              <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-sm text-yellow-800">
-                  ⚠️ No subjects available. Please create subjects first in <strong>Subject Management</strong>.
+                  ⚠️ No subjects available. Create subjects in "Add Subjects" first.
                 </p>
               </div>
             )}
@@ -222,15 +170,15 @@ setClasses(adminClasses);
         <button
           onClick={assignTeacher}
           disabled={!selectedTeacher || !selectedClass || !selectedSubject}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+          className="w-full mt-4 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 text-base font-medium"
         >
           Assign Teacher
         </button>
       </div>
 
-      {/* Current Assignments */}
+      {/* Current Assignments - Mobile Friendly */}
       <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b">
+        <div className="p-4 border-b">
           <h3 className="text-lg font-semibold">Current Teacher Assignments</h3>
           <p className="text-sm text-gray-600">
             Teachers can be assigned to multiple subjects and classes
@@ -249,8 +197,8 @@ setClasses(adminClasses);
           ) : (
             users.map(teacher => (
               (teacher.assignedClasses?.length > 0 || teacher.assignedSubjects?.length > 0) && (
-                <div key={teacher.id} className="p-6">
-                  <div className="flex justify-between items-start mb-4">
+                <div key={teacher.id} className="p-4">
+                  <div className="flex justify-between items-start mb-3">
                     <div>
                       <h4 className="font-semibold text-lg">{teacher.name}</h4>
                       <p className="text-sm text-gray-600">{teacher.role}</p>
@@ -260,12 +208,12 @@ setClasses(adminClasses);
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
                     <div>
                       <h5 className="font-medium mb-2">Assigned Classes:</h5>
                       <div className="flex flex-wrap gap-2">
                         {teacher.assignedClasses?.map(className => (
-                          <span key={className} className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
+                          <span key={className} className="bg-green-100 text-green-800 px-3 py-1 rounded text-sm">
                             {className}
                           </span>
                         )) || <span className="text-gray-500">None</span>}
@@ -277,12 +225,12 @@ setClasses(adminClasses);
                       <div className="flex flex-wrap gap-2">
                         {teacher.assignedSubjects?.map(subject => (
                           <div key={subject} className="flex items-center gap-1">
-                            <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">
+                            <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded text-sm">
                               {subject}
                             </span>
                             <button
                               onClick={() => removeAssignment(teacher.id, teacher.assignedClasses?.[0], subject)}
-                              className="text-red-500 hover:text-red-700 text-xs"
+                              className="text-red-500 hover:text-red-700 text-sm font-bold ml-1"
                               title={`Remove ${subject} assignment`}
                             >
                               ×

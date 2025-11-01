@@ -2,7 +2,7 @@
 export const rolePermissions = {
   // Who can create which roles
   roleCreation: {
-    'Admin': ['Principal', 'VP Admin', 'VP Academic', 'Senior Master', 'Exam Officer', 'Form Master', 'Subject Teacher', 'Student'],
+    'Admin': ['Principal', 'VP Admin', 'VP Academic', 'Senior Master', 'Exam Officer', 'Subject Teacher', 'Student'],
     'Principal': ['VP Admin', 'VP Academic', 'Senior Master', 'Exam Officer', 'Form Master', 'Subject Teacher'],
     'VP Admin': ['Form Master', 'Subject Teacher'],
     'Senior Master': ['Form Master', 'Subject Teacher'],
