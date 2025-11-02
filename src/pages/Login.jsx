@@ -1,12 +1,10 @@
-// src/pages/Login.jsx - COMPLETE FIXED VERSION
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-// ✅ Make sure this is a function declaration
 function Login() {
     const navigate = useNavigate();
-    const { setUser } = useAuth();
+    const { login } = useAuth(); // Changed from setUser to login
 
     const [formData, setFormData] = useState({
         email: "",
@@ -32,25 +30,25 @@ function Login() {
             return;
         }
 
-        // ✅ ADDED: Check if user is pending approval
+        // Check if user is pending approval
         if (existingUser.role === "pending" || existingUser.status === "pending") {
             alert("Your account is pending admin approval. Please contact administrator.");
             return;
         }
 
-        // ✅ ADDED: Check if user is inactive
+        // Check if user is inactive
         if (existingUser.status === "inactive") {
             alert("Your account has been deactivated. Please contact administrator.");
             return;
         }
 
-        // Set the current user in context & localStorage
-        setUser(existingUser);
+        // Use the login function from context
+        login(existingUser);
 
         // Redirect based on specific role
         const roleRedirects = {
             "admin": "/dashboard/admin",
-            "Principal": "/dashboard/principal", 
+            "Principal": "/dashboard/principal",
             "VP Admin": "/dashboard/vp-admin",
             "VP Academic": "/dashboard/vp-academic",
             "Senior Master": "/dashboard/senior-master",
@@ -103,7 +101,7 @@ function Login() {
                 </a>
             </p>
 
-            {/* ✅ ADDED: Demo admin credentials hint */}
+            {/* Demo admin credentials hint */}
             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
                 <strong>Demo Admin Access:</strong><br/>
                 Email: admin@school.edu<br/>
@@ -113,5 +111,4 @@ function Login() {
     );
 }
 
-// ✅ CRITICAL: This default export must be present at the end
 export default Login;

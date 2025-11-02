@@ -1,0 +1,58 @@
+import React, { useState, useMemo } from 'react';
+import { useFinance } from '../../../context/FinanceContext';
+
+const FinancialReports = () => {
+  const { feePayments, staffSalaries, expenses, feeStructure } = useFinance();
+  const [reportType, setReportType] = useState('monthly');
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [selectedTerm, setSelectedTerm] = useState('first-term');
+
+  // Generate monthly report
+  const monthlyReport = useMemo(() => {
+    const month = selectedMonth;
+    
+    const monthlyFees = feePayments.filter(payment => 
+      payment.date.startsWith(month)
+    );
+    
+    const monthlySalaries = staffSalaries.filter(salary => 
+      salary.month === month
+    );
+    
+    const monthlyExpenses = expenses.filter(expense => 
+      expense.date.startsWith(month)
+    );
+
+    const totalFeeIncome = monthlyFees.reduce((sum, fee) => sum + fee.amount, 0);
+    const totalSalaryExpense = monthlySalaries.reduce((sum, salary) => sum + salary.netSalary, 0);
+    const totalOtherExpenses = monthlyExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+    const totalExpenses = totalSalaryExpense + totalOtherExpenses;
+    const netIncome = totalFeeIncome - totalExpenses;
+
+    // Category breakdown
+    const feeByClass = monthlyFees.reduce((acc, fee) => {
+      acc[fee.className] = (acc[fee.className] || 0) + fee.amount;
+      return acc;
+    }, {});
+
+    const expenseByCategory = monthlyExpenses.reduce((acc, expense) => {
+      acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
+      return acc;
+    }, {});
+
+    return {
+      period: month,
+      totalFeeIncome,
+      totalSalaryExpense,
+      totalOtherExpenses,
+      totalExpenses,
+      netIncome,
+      feeByClass,
+      expenseByCategory,
+      feeTransactions: monthlyFees.length,
+      salaryTransactions: monthlySalaries.length,
+      expenseTransactions: monthlyExpenses.length
+    };
+  }, [feePayments, staffSalaries, expenses, selectedMonth]);
+
+  // ... rest of the original file content

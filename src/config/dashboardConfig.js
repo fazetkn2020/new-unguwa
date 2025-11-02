@@ -7,11 +7,54 @@ export const getRoleConfig = (role) => {
     }
   };
 
-  // Normalize role - handle both "admin" and "Admin"
-  const normalizedRole = role === 'admin' ? 'Admin' : role;
+  // Comprehensive role normalization
+  const normalizeRole = (role) => {
+    if (!role) return null;
+    
+    // Handle all possible role formats
+    const roleMap = {
+      // Lowercase variations
+      'admin': 'Admin',
+      'principal': 'Principal', 
+      'vp admin': 'VP Admin',
+      'vp-admin': 'VP Admin',
+      'vp academic': 'VP Academic', 
+      'vp-academic': 'VP Academic',
+      'senior master': 'Senior Master',
+      'senior-master': 'Senior Master',
+      'exam officer': 'Exam Officer',
+      'exam-officer': 'Exam Officer',
+      'form master': 'Form Master',
+      'form-master': 'Form Master',
+      'subject teacher': 'Subject Teacher',
+      'subject-teacher': 'Subject Teacher',
+      'teacher': 'Subject Teacher',
+      
+      // Already correct formats (return as-is)
+      'Admin': 'Admin',
+      'Principal': 'Principal',
+      'VP Admin': 'VP Admin', 
+      'VP Academic': 'VP Academic',
+      'Senior Master': 'Senior Master',
+      'Exam Officer': 'Exam Officer',
+      'Form Master': 'Form Master',
+      'Subject Teacher': 'Subject Teacher'
+    };
+    
+    const normalized = roleMap[role] || 'Subject Teacher';
+    console.log("🔧 Role normalization:", role, "→", normalized);
+    return normalized;
+  };
+
+  const normalizedRole = normalizeRole(role);
+  
+  // If no role found, return null to show loading state
+  if (!normalizedRole) {
+    console.warn("⚠️ No valid role found for:", role);
+    return null;
+  }
 
   const roleConfigs = {
-    // Add this to Admin modules:
     Admin: {
       title: "Admin Control Center",
       subtitle: "System Administration",
@@ -130,8 +173,21 @@ export const getRoleConfig = (role) => {
     }
   };
 
+  const config = roleConfigs[normalizedRole];
+  
+  if (!config) {
+    console.error("❌ No dashboard config found for role:", normalizedRole);
+    // Fallback to Subject Teacher if role not found
+    return {
+      ...baseConfig,
+      ...roleConfigs['Subject Teacher'],
+      title: `${role} Dashboard`,
+      subtitle: "User Dashboard"
+    };
+  }
+
   return {
     ...baseConfig,
-    ...roleConfigs[normalizedRole]
+    ...config
   };
 };

@@ -9,17 +9,30 @@ export const rolePermissions = {
     'VP Academic': [] // Cannot create users
   },
 
-  // Dashboard access permissions
+  // Dashboard access permissions - UPDATED with finance
   dashboardAccess: {
-    'Admin': ['users', 'roles', 'settings', 'system', 'reports'],
+    'Admin': ['users', 'roles', 'settings', 'system', 'reports', 'finance'],
     'VP Admin': ['staff', 'students', 'enrollment', 'attendance', 'communications'],
     'VP Academic': ['subjects', 'classes', 'assignments', 'timetable', 'academic-reports'],
-    'Principal': ['overview', 'staff', 'analytics', 'reports', 'messages'],
+    'Principal': ['overview', 'staff', 'analytics', 'reports', 'messages', 'finance'],
     'Senior Master': ['staff', 'attendance', 'duty-roster'],
     'Exam Officer': ['exams', 'reports', 'submissions', 'question-bank'],
     'Form Master': ['students', 'attendance', 'scores', 'class-management'],
     'Subject Teacher': ['scores', 'attendance', 'subjects', 'students'],
     'Student': ['scores', 'attendance', 'subjects']
+  },
+
+  // Finance access permissions - ADDED
+  financeAccess: {
+    'Admin': true,
+    'Principal': true,
+    'VP Admin': false,
+    'VP Academic': false,
+    'Senior Master': false,
+    'Exam Officer': false,
+    'Form Master': false,
+    'Subject Teacher': false,
+    'Student': false
   },
 
   // Can assign roles to others
@@ -30,5 +43,10 @@ export const rolePermissions = {
   // Check if user can access a module
   canAccessModule: (userRole, module) => {
     return rolePermissions.dashboardAccess[userRole]?.includes(module) || false;
+  },
+
+  // Check if user can access finance - ADDED
+  canAccessFinance: (userRole) => {
+    return rolePermissions.financeAccess[userRole] || false;
   }
 };

@@ -1,64 +1,63 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const AuthContext = createContext({
-  user: null,
-  setUser: () => {},
-  logout: () => {},
-  isAdmin: false,
-});
-
-export const useAuth = () => useContext(AuthContext);
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUserState] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem("currentUser");
-      if (!savedUser) return null;
-      
-      const userData = JSON.parse(savedUser);
-      // FIX: Normalize role to Title Case
-      if (userData.role) {
-        userData.role = userData.role === 'admin' ? 'Admin' : 
-                       userData.role.charAt(0).toUpperCase() + userData.role.slice(1);
-      }
-      return userData;
-    } catch (error) {
-      console.error("Failed to load user from localStorage:", error);
-      return null;
-    }
-  });
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [financeAccessEnabled, setFinanceAccessEnabled] = useState(false);
 
-  const [isAdmin, setIsAdmin] = useState(false);
-
+  // Load auth state and finance access from localStorage
   useEffect(() => {
-    // FIX: Consistent role checking
-    setIsAdmin(user?.role === "Admin");
-  }, [user]);
+    const savedUser = localStorage.getItem('currentUser');
+    const savedFinanceAccess = localStorage.getItem('financeAccessEnabled');
 
-  const setUser = (userData) => {
-    // FIX: Normalize role when setting new user
-    if (userData && userData.role) {
-      userData.role = userData.role === 'admin' ? 'Admin' : 
-                     userData.role.charAt(0).toUpperCase() + userData.role.slice(1);
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
     }
-    
-    setUserState(userData);
-    if (userData) {
-      localStorage.setItem("currentUser", JSON.stringify(userData));
-    } else {
-      localStorage.removeItem("currentUser");
+
+    if (savedFinanceAccess) {
+      setFinanceAccessEnabled(JSON.parse(savedFinanceAccess));
     }
+
+    setLoading(false);
+  }, []);
+
+  const login = (userData) => {
+    setUser(userData);
+    localStorage.setItem('currentUser', JSON.stringify(userData));
   };
 
   const logout = () => {
-    setUserState(null);
-    setIsAdmin(false);
-    localStorage.removeItem("currentUser");
+    setUser(null);
+    localStorage.removeItem('currentUser');
+  };
+
+  const toggleFinanceAccess = (enabled) => {
+    setFinanceAccessEnabled(enabled);
+    localStorage.setItem('financeAccessEnabled', JSON.stringify(enabled));
+  };
+
+  const value = {
+    user,
+    login, // This is what Login component expects
+    logout,
+    loading,
+    financeAccessEnabled,
+    toggleFinanceAccess
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, logout, isAdmin }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

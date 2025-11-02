@@ -3,10 +3,11 @@ import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "r
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ExamProvider } from "./context/ExamContext";
 import { BulkPrintProvider } from "./context/BulkPrintContext";
+import { FinanceProvider } from "./context/FinanceContext";
 import AppLoader from "./components/AppLoader";
 import Navbar from "./components/Navbar";
 
-// Lazy load components for better performance
+// Lazy load components
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const AboutSchool = lazy(() => import("./menu/AboutSchool"));
 const DutyRoster = lazy(() => import("./menu/DutyRoster"));
@@ -27,30 +28,37 @@ const ProfileCard = lazy(() => import("./pages/Dashboard/ProfileCard"));
 const ReportCardDashboard = lazy(() => import("./pages/Dashboard/ReportCardDashboard"));
 const BulkReportCenter = lazy(() => import("./pages/Dashboard/BulkReportCenter"));
 const TeachingPortal = lazy(() => import("./pages/Dashboard/TeachingPortal"));
+const FinanceLayout = lazy(() => import("./pages/Finance/FinanceLayout"));
 
-// Async initialization - doesn't block app loading
+// Async initialization
 const initializeAppData = async () => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      // Initialize users if not exists
       if (!localStorage.getItem("users")) {
         localStorage.setItem("users", JSON.stringify([]));
       }
-      
-      // Initialize class data if not exists
       if (!localStorage.getItem('classLists')) {
         localStorage.setItem('classLists', JSON.stringify({}));
       }
-
-      // Initialize attendance data if not exists
       if (!localStorage.getItem('attendanceData')) {
         localStorage.setItem('attendanceData', JSON.stringify({}));
       }
+      if (!localStorage.getItem('schoolFinanceData')) {
+        localStorage.setItem('schoolFinanceData', JSON.stringify({
+          feePayments: [],
+          feeStructure: {},
+          staffSalaries: [],
+          expenses: [],
+          deductionSettings: { lateComing: 500, absence: 2000 },
+          financePassword: 'school123'
+        }));
+      }
+      if (!localStorage.getItem('schoolStaff')) {
+        localStorage.setItem('schoolStaff', JSON.stringify([]));
+      }
 
-      // Initialize admin user if no users exist
       const users = JSON.parse(localStorage.getItem("users")) || [];
       const adminExists = users.some(user => user.role === "admin");
-
       if (!adminExists) {
         const adminUser = {
           id: "admin-001",
@@ -62,14 +70,11 @@ const initializeAppData = async () => {
           createdAt: new Date().toISOString(),
           status: "active"
         };
-
         users.push(adminUser);
         localStorage.setItem("users", JSON.stringify(users));
-        console.log("Default admin user created: admin@school.edu / admin123");
       }
-
       resolve(true);
-    }, 100); // Small delay to avoid blocking main thread
+    }, 100);
   });
 };
 
@@ -79,13 +84,11 @@ function AppContent() {
   const [appInitialized, setAppInitialized] = useState(false);
 
   useEffect(() => {
-    // Initialize app data in background without blocking UI
     initializeAppData().then(() => {
       setAppInitialized(true);
     });
   }, []);
 
-  // Show loader while initializing
   if (!appInitialized) {
     return <AppLoader />;
   }
@@ -93,10 +96,9 @@ function AppContent() {
   return (
     <>
       {!isDashboard && <Navbar />}
-
       <Suspense fallback={<AppLoader />}>
         <Routes>
-          {/* ===================== Public Routes ===================== */}
+          {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/about-school" element={<AboutSchool />} />
           <Route path="/duty-roster" element={<DutyRoster />} />
@@ -107,15 +109,23 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* ===================== Attendance Routes ===================== */}
+          {/* Attendance Routes */}
           <Route path="/attendance/general" element={<GeneralAttendance />} />
           <Route path="/attendance/staff" element={<MyAttendance />} />
           <Route path="/attendance/admin" element={<EnterAttendance />} />
 
-          {/* ===================== Dashboard Routes ===================== */}
+          {/* Dashboard Routes - FIXED ORDER */}
           <Route path="/dashboard" element={<DashboardLayout />}>
-            {/* ALL role-specific dashboards use UnifiedDashboard */}
-            <Route index element={<UnifiedDashboard />} />
+            {/* Specific routes first */}
+            <Route path="finance" element={<FinanceLayout />} />
+            <Route path="profile" element={<ProfileCard />} />
+            <Route path="exambank" element={<ExamBank />} />
+            <Route path="score-center" element={<ScoreCenter />} />
+            <Route path="bulk-reports" element={<BulkReportCenter />} />
+            <Route path="exam-officer/report-cards" element={<ReportCardDashboard />} />
+            <Route path="teaching-portal" element={<TeachingPortal />} />
+            
+            {/* Role-specific dashboards - these should come after specific routes */}
             <Route path="principal" element={<UnifiedDashboard />} />
             <Route path="vp-admin" element={<UnifiedDashboard />} />
             <Route path="vp-academic" element={<UnifiedDashboard />} />
@@ -124,14 +134,9 @@ function AppContent() {
             <Route path="form-master" element={<UnifiedDashboard />} />
             <Route path="teacher" element={<UnifiedDashboard />} />
             <Route path="admin" element={<UnifiedDashboard />} />
-
-            {/* Dashboard utility pages */}
-            <Route path="profile" element={<ProfileCard />} />
-            <Route path="exambank" element={<ExamBank />} />
-            <Route path="score-center" element={<ScoreCenter />} />
-            <Route path="bulk-reports" element={<BulkReportCenter />} />
-            <Route path="exam-officer/report-cards" element={<ReportCardDashboard />} />
-            <Route path="teaching-portal" element={<TeachingPortal />} />
+            
+            {/* Index route last */}
+            <Route index element={<UnifiedDashboard />} />
           </Route>
 
           {/* 404 Page */}
@@ -150,33 +155,15 @@ function AppContent() {
   );
 }
 
-// Protected Route Component
-const ProtectedRoute = ({ requiredRole, children }) => {
-  const { user } = useAuth();
-  const location = useLocation();
-
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  // Normalize roles for comparison
-  const userRole = user.role === 'admin' ? 'Admin' : user.role;
-  const requiredRoleNormalized = requiredRole === 'admin' ? 'Admin' : requiredRole;
-
-  if (userRole !== requiredRoleNormalized) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return children;
-};
-
 export default function App() {
   return (
     <Router>
       <AuthProvider>
         <ExamProvider>
           <BulkPrintProvider>
-            <AppContent />
+            <FinanceProvider>
+              <AppContent />
+            </FinanceProvider>
           </BulkPrintProvider>
         </ExamProvider>
       </AuthProvider>
