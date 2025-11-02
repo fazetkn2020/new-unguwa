@@ -1,5 +1,5 @@
 import React, { useEffect, useState, lazy, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ExamProvider } from "./context/ExamContext";
 import { BulkPrintProvider } from "./context/BulkPrintContext";
@@ -114,9 +114,9 @@ function AppContent() {
           <Route path="/attendance/staff" element={<MyAttendance />} />
           <Route path="/attendance/admin" element={<EnterAttendance />} />
 
-          {/* Dashboard Routes - FIXED ORDER */}
+          {/* Dashboard Routes - FIXED: Clear hierarchy with no conflicts */}
           <Route path="/dashboard" element={<DashboardLayout />}>
-            {/* Specific routes first */}
+            {/* All specific functional routes */}
             <Route path="finance" element={<FinanceLayout />} />
             <Route path="profile" element={<ProfileCard />} />
             <Route path="exambank" element={<ExamBank />} />
@@ -125,7 +125,7 @@ function AppContent() {
             <Route path="exam-officer/report-cards" element={<ReportCardDashboard />} />
             <Route path="teaching-portal" element={<TeachingPortal />} />
             
-            {/* Role-specific dashboards - these should come after specific routes */}
+            {/* Role-specific dashboard overview pages */}
             <Route path="principal" element={<UnifiedDashboard />} />
             <Route path="vp-admin" element={<UnifiedDashboard />} />
             <Route path="vp-academic" element={<UnifiedDashboard />} />
@@ -135,7 +135,7 @@ function AppContent() {
             <Route path="teacher" element={<UnifiedDashboard />} />
             <Route path="admin" element={<UnifiedDashboard />} />
             
-            {/* Index route last */}
+            {/* Default dashboard - show UnifiedDashboard */}
             <Route index element={<UnifiedDashboard />} />
           </Route>
 

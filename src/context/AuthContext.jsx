@@ -40,9 +40,10 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
-    login, // This is what Login component expects
+    login,
     logout,
-    loading,
+    isLoading: loading, // Add this - DashboardLayout expects "isLoading"
+    loading, // Keep both for compatibility
     financeAccessEnabled,
     toggleFinanceAccess
   };
