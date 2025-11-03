@@ -118,8 +118,8 @@ const TransactionHistory = () => {
                     {transaction.description}
                   </td>
                   <td className="amount-cell">
-                    <span className={`amount ${transaction.amount < 0 ? 'negative' : 'positive'}`}>
-                      ${Math.abs(transaction.amount).toLocaleString()}
+                    <span className={`amount ₦{transaction.amount < 0 ? 'negative' : 'positive'}`}>
+                      ₦{Math.abs(transaction.amount).toLocaleString()}
                     </span>
                   </td>
                   <td className="status-cell">
@@ -175,7 +175,7 @@ const TransactionHistory = () => {
           <div className="card-icon">💵</div>
           <div className="card-content">
             <h3>Total Amount</h3>
-            <p>${filteredTransactions.reduce((sum, t) => sum + t.amount, 0).toLocaleString()}</p>
+            <p>₦{filteredTransactions.reduce((sum, t) => sum + t.amount, 0).toLocaleString()}</p>
           </div>
         </div>
       </div>
