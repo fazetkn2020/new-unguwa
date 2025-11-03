@@ -20,7 +20,7 @@ const initialState = {
   financeAccess: false,
   financePassword: 'school123', // Default password - proprietor can change
 
-  // UI state - REMOVED: loading state to prevent infinite loading
+  // UI state
   currentView: 'school-fees'
 };
 
@@ -107,13 +107,15 @@ function financeReducer(state, action) {
 export const FinanceProvider = ({ children }) => {
   const [state, dispatch] = useReducer(financeReducer, initialState);
 
-  // Load data from localStorage on startup - SIMPLIFIED to prevent loading issues
+  // Load data from localStorage on startup
   useEffect(() => {
+    console.log('🔄 FinanceContext: Loading data...');
     try {
       const savedData = localStorage.getItem('schoolFinanceData');
       if (savedData) {
         const parsedData = JSON.parse(savedData);
         if (parsedData && typeof parsedData === 'object') {
+          console.log('✅ FinanceContext: Data loaded successfully');
           if (parsedData.feePayments) dispatch({ type: 'SET_FEE_PAYMENTS', payload: parsedData.feePayments });
           if (parsedData.feeStructure) dispatch({ type: 'SET_FEE_STRUCTURE', payload: parsedData.feeStructure });
           if (parsedData.staffSalaries) dispatch({ type: 'SET_STAFF_SALARIES', payload: parsedData.staffSalaries });
@@ -122,13 +124,15 @@ export const FinanceProvider = ({ children }) => {
           if (parsedData.financePassword) dispatch({ type: 'CHANGE_FINANCE_PASSWORD', payload: parsedData.financePassword });
           if (parsedData.financeAccess) dispatch({ type: 'SET_FINANCE_ACCESS', payload: parsedData.financeAccess });
         }
+      } else {
+        console.log('ℹ️ FinanceContext: No saved data found, using defaults');
       }
     } catch (error) {
-      console.error('Error loading finance data:', error);
+      console.error('❌ FinanceContext: Error loading data:', error);
     }
-  }, []);
+  }, []); // Only run once on mount
 
-  // Save to localStorage whenever state changes
+  // Save to localStorage - FIXED: Only save specific state changes, not all state
   useEffect(() => {
     const dataToSave = {
       feePayments: state.feePayments,
@@ -139,8 +143,18 @@ export const FinanceProvider = ({ children }) => {
       financePassword: state.financePassword,
       financeAccess: state.financeAccess
     };
+    
     localStorage.setItem('schoolFinanceData', JSON.stringify(dataToSave));
-  }, [state]);
+    console.log('💾 FinanceContext: Data saved to localStorage');
+  }, [
+    state.feePayments, 
+    state.feeStructure, 
+    state.staffSalaries, 
+    state.expenses, 
+    state.deductionSettings,
+    state.financePassword,
+    state.financeAccess
+  ]); // Only save when these specific properties change
 
   // Verify finance password
   const verifyFinancePassword = (password) => {
@@ -150,9 +164,7 @@ export const FinanceProvider = ({ children }) => {
   const value = {
     ...state,
     dispatch,
-    verifyFinancePassword,
-    // ADDED: Simple loading state that's always false to prevent infinite loading
-    loading: false
+    verifyFinancePassword
   };
 
   return (

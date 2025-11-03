@@ -9,26 +9,42 @@ export const AuthProvider = ({ children }) => {
 
   // Load auth state and finance access from localStorage
   useEffect(() => {
+    console.log('🔄 AuthContext: Loading from localStorage...');
+    
     const savedUser = localStorage.getItem('currentUser');
     const savedFinanceAccess = localStorage.getItem('financeAccessEnabled');
 
+    console.log('📁 Saved user from localStorage:', savedUser);
+    
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        const userData = JSON.parse(savedUser);
+        console.log('✅ AuthContext: User loaded:', userData);
+        setUser(userData);
+      } catch (error) {
+        console.error('❌ AuthContext: Error parsing user data:', error);
+        localStorage.removeItem('currentUser');
+      }
+    } else {
+      console.log('ℹ️ AuthContext: No saved user found');
     }
 
     if (savedFinanceAccess) {
       setFinanceAccessEnabled(JSON.parse(savedFinanceAccess));
     }
 
+    console.log('🏁 AuthContext: Loading complete');
     setLoading(false);
   }, []);
 
   const login = (userData) => {
+    console.log('🔐 AuthContext: Logging in user:', userData);
     setUser(userData);
     localStorage.setItem('currentUser', JSON.stringify(userData));
   };
 
   const logout = () => {
+    console.log('🚪 AuthContext: Logging out');
     setUser(null);
     localStorage.removeItem('currentUser');
   };
@@ -42,11 +58,12 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     logout,
-    isLoading: loading, // Add this - DashboardLayout expects "isLoading"
-    loading, // Keep both for compatibility
+    loading,
     financeAccessEnabled,
     toggleFinanceAccess
   };
+
+  console.log('🎯 AuthContext: Providing value:', { user, loading });
 
   return (
     <AuthContext.Provider value={value}>

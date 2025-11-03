@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext"; 
+import { useAuth } from "../../context/AuthContext";
 
 // Layout Components
 import TopBar from "./layout/TopBar";
@@ -8,9 +8,9 @@ import WelcomeSection from "./layout/WelcomeSection";
 import ProfileSummary from "./layout/ProfileSummary";
 
 export default function DashboardLayout() {
-    const { user, logout, loading } = useAuth(); // Use "loading" instead of "isLoading"
+    const { user, logout, loading } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation(); 
+    const location = useLocation();
     const [detailsExpanded, setDetailsExpanded] = useState(false);
 
     const toggleDetails = useCallback(() => setDetailsExpanded((prev) => !prev), []);
@@ -20,10 +20,22 @@ export default function DashboardLayout() {
         navigate("/dashboard/profile");
     }, [navigate]);
 
+    // FIXED: Only redirect if NOT on finance route
     useEffect(() => {
-        // Only run if we have location state
+        console.log('🔍 DashboardLayout Debug:');
+        console.log(' - Path:', location.pathname);
+        console.log(' - User:', user);
+        console.log(' - Loading:', loading);
+        
+        if (!loading && !user && !location.pathname.includes('/finance')) {
+            console.log('🔄 Redirecting to login (not finance route)');
+            navigate("/login");
+        }
+    }, [user, loading, navigate, location.pathname]);
+
+    useEffect(() => {
         if (location.state?.profileUpdated) {
-            setDetailsExpanded(false); 
+            setDetailsExpanded(false);
         }
     }, [location.state]);
 
@@ -44,12 +56,8 @@ export default function DashboardLayout() {
         );
     }
 
-    // Redirect to login if no user
-    if (!user) {
-        useEffect(() => {
-            navigate("/login");
-        }, [navigate]);
-        
+    // Show redirect message if no user (but allow finance route)
+    if (!user && !location.pathname.includes('/finance')) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <p className="text-gray-600">Redirecting to login...</p>
@@ -60,17 +68,19 @@ export default function DashboardLayout() {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
             {/* === Top Navigation Bar === */}
-            <TopBar userProfile={user} onTogglePanel={handleProfileNavigation} />
+            {user && <TopBar userProfile={user} onTogglePanel={handleProfileNavigation} />}
 
             {/* === Welcome Banner === */}
-            <WelcomeSection userProfile={user} />
+            {user && <WelcomeSection userProfile={user} />}
 
             {/* === Profile Summary Section === */}
-            <ProfileSummary
-                userProfile={user}
-                detailsExpanded={detailsExpanded}
-                toggleDetails={toggleDetails}
-            />
+            {user && (
+                <ProfileSummary
+                    userProfile={user}
+                    detailsExpanded={detailsExpanded}
+                    toggleDetails={toggleDetails}
+                />
+            )}
 
             {/* === Main Content Area === */}
             <main className="flex-1 p-6">
@@ -80,14 +90,16 @@ export default function DashboardLayout() {
             </main>
 
             {/* === Logout Button === */}
-            <div className="fixed bottom-6 right-6 z-20">
-                <button
-                    onClick={handleLogout}
-                    className="bg-red-500 hover:bg-red-600 text-white py-2 px-5 rounded-lg shadow font-medium transition-colors duration-200"
-                >
-                    Sign Out
-                </button>
-            </div>
+            {user && (
+                <div className="fixed bottom-6 right-6 z-20">
+                    <button
+                        onClick={handleLogout}
+                        className="bg-red-500 hover:bg-red-600 text-white py-2 px-5 rounded-lg shadow font-medium transition-colors duration-200"
+                    >
+                        Sign Out
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

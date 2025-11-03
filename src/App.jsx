@@ -1,11 +1,12 @@
 import React, { useEffect, useState, lazy, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ExamProvider } from "./context/ExamContext";
 import { BulkPrintProvider } from "./context/BulkPrintContext";
 import { FinanceProvider } from "./context/FinanceContext";
 import AppLoader from "./components/AppLoader";
 import Navbar from "./components/Navbar";
+import { initializeUsers } from "./utils/ensureAdminUser";
 
 // Lazy load components
 const LandingPage = lazy(() => import("./pages/LandingPage"));
@@ -34,9 +35,9 @@ const FinanceLayout = lazy(() => import("./pages/Finance/FinanceLayout"));
 const initializeAppData = async () => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      if (!localStorage.getItem("users")) {
-        localStorage.setItem("users", JSON.stringify([]));
-      }
+      // Initialize users first
+      initializeUsers();
+      
       if (!localStorage.getItem('classLists')) {
         localStorage.setItem('classLists', JSON.stringify({}));
       }
@@ -57,22 +58,6 @@ const initializeAppData = async () => {
         localStorage.setItem('schoolStaff', JSON.stringify([]));
       }
 
-      const users = JSON.parse(localStorage.getItem("users")) || [];
-      const adminExists = users.some(user => user.role === "admin");
-      if (!adminExists) {
-        const adminUser = {
-          id: "admin-001",
-          role: "admin",
-          fullName: "System Administrator",
-          name: "System Administrator",
-          email: "admin@school.edu",
-          password: "admin123",
-          createdAt: new Date().toISOString(),
-          status: "active"
-        };
-        users.push(adminUser);
-        localStorage.setItem("users", JSON.stringify(users));
-      }
       resolve(true);
     }, 100);
   });
@@ -114,9 +99,8 @@ function AppContent() {
           <Route path="/attendance/staff" element={<MyAttendance />} />
           <Route path="/attendance/admin" element={<EnterAttendance />} />
 
-          {/* Dashboard Routes - FIXED: Clear hierarchy with no conflicts */}
+          {/* Dashboard Routes */}
           <Route path="/dashboard" element={<DashboardLayout />}>
-            {/* All specific functional routes */}
             <Route path="finance" element={<FinanceLayout />} />
             <Route path="profile" element={<ProfileCard />} />
             <Route path="exambank" element={<ExamBank />} />
@@ -124,8 +108,6 @@ function AppContent() {
             <Route path="bulk-reports" element={<BulkReportCenter />} />
             <Route path="exam-officer/report-cards" element={<ReportCardDashboard />} />
             <Route path="teaching-portal" element={<TeachingPortal />} />
-            
-            {/* Role-specific dashboard overview pages */}
             <Route path="principal" element={<UnifiedDashboard />} />
             <Route path="vp-admin" element={<UnifiedDashboard />} />
             <Route path="vp-academic" element={<UnifiedDashboard />} />
@@ -134,8 +116,6 @@ function AppContent() {
             <Route path="form-master" element={<UnifiedDashboard />} />
             <Route path="teacher" element={<UnifiedDashboard />} />
             <Route path="admin" element={<UnifiedDashboard />} />
-            
-            {/* Default dashboard - show UnifiedDashboard */}
             <Route index element={<UnifiedDashboard />} />
           </Route>
 
