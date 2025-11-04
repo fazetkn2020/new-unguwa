@@ -1,26 +1,29 @@
 import React, { useState } from 'react';
+import { FUNCTION_DEFINITIONS, loadRoleTemplates } from '../../../../../data/functionDefinitions';
 
-const UserCard = ({ user, type, onApprove, onDelete, loadingStates, onUpdateRole }) => {
+const UserCard = ({ user, type, onApprove, onDelete, loadingStates, onUpdateRole, onUpdateFunctions }) => {
   const isPending = type === 'pending';
   const isActive = type === 'active' || type === 'all';
   const [selectedRole, setSelectedRole] = useState('');
   const [isEditingRole, setIsEditingRole] = useState(false);
   const [editedRole, setEditedRole] = useState(user.role || '');
-  
+  const [isEditingFunctions, setIsEditingFunctions] = useState(false);
+  const [editedFunctions, setEditedFunctions] = useState(user.functions || []);
+
   // Staff detection: users without class/formClass/studentId
   const isStaffUser = !user.formClass && !user.class && !user.studentId;
-  
-  // The 5 leadership roles admin can assign
-  const leadershipRoles = [
+
+  // All available roles
+  const allRoles = [
     'Principal',
     'VP Academic', 
     'VP Admin',
     'Senior Master',
-    'Exam Officer'
+    'Exam Officer',
+    'Form Master',
+    'Subject Teacher',
+    'Student'
   ];
-
-  // All roles that can be selected (leadership + Teacher)
-  const allSelectableRoles = [...leadershipRoles, 'Teacher'];
 
   const handleApprove = () => {
     onApprove(user.id, selectedRole);
@@ -32,14 +35,40 @@ const UserCard = ({ user, type, onApprove, onDelete, loadingStates, onUpdateRole
 
   const handleRoleUpdate = () => {
     if (editedRole && editedRole !== user.role) {
+      // Apply role template functions when role changes
+      const roleTemplates = loadRoleTemplates();
+      const templateFunctions = roleTemplates[editedRole] || [];
+      
       onUpdateRole(user.id, editedRole);
+      onUpdateFunctions(user.id, templateFunctions);
       setIsEditingRole(false);
     }
   };
 
+  const handleFunctionsUpdate = () => {
+    onUpdateFunctions(user.id, editedFunctions);
+    setIsEditingFunctions(false);
+  };
+
+  const toggleFunction = (functionKey) => {
+    const newFunctions = editedFunctions.includes(functionKey)
+      ? editedFunctions.filter(f => f !== functionKey)
+      : [...editedFunctions, functionKey];
+    setEditedFunctions(newFunctions);
+  };
+
+  const applyRoleTemplate = (role) => {
+    const roleTemplates = loadRoleTemplates();
+    const templateFunctions = roleTemplates[role] || [];
+    setEditedFunctions(templateFunctions);
+    setEditedRole(role);
+  };
+
   const handleCancelEdit = () => {
     setEditedRole(user.role);
+    setEditedFunctions(user.functions || []);
     setIsEditingRole(false);
+    setIsEditingFunctions(false);
   };
 
   // Show edit button for ALL active staff users (any role except Student/pending)
@@ -57,29 +86,33 @@ const UserCard = ({ user, type, onApprove, onDelete, loadingStates, onUpdateRole
             {user.studentId && <div>🎫 ID: {user.studentId}</div>}
             {user.class && <div>🏫 Class: {user.class}</div>}
 
+            {/* Role Editing */}
             {isEditingRole ? (
-              <div className="flex items-center gap-2 mt-2">
-                <select
-                  value={editedRole}
-                  onChange={(e) => setEditedRole(e.target.value)}
-                  className="border border-gray-300 rounded p-1 text-sm"
-                >
-                  {allSelectableRoles.map(role => (
-                    <option key={role} value={role}>{role}</option>
-                  ))}
-                </select>
-                <button
-                  onClick={handleRoleUpdate}
-                  className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700"
-                >
-                  ✅ Save
-                </button>
-                <button
-                  onClick={handleCancelEdit}
-                  className="bg-gray-600 text-white px-2 py-1 rounded text-xs hover:bg-gray-700"
-                >
-                  ❌ Cancel
-                </button>
+              <div className="mt-2 space-y-2">
+                <div className="flex items-center gap-2">
+                  <select
+                    value={editedRole}
+                    onChange={(e) => applyRoleTemplate(e.target.value)}
+                    className="border border-gray-300 rounded p-1 text-sm"
+                  >
+                    <option value="">Select Role</option>
+                    {allRoles.map(role => (
+                      <option key={role} value={role}>{role}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={handleRoleUpdate}
+                    className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700"
+                  >
+                    ✅ Save Role
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="bg-gray-600 text-white px-2 py-1 rounded text-xs hover:bg-gray-700"
+                  >
+                    ❌ Cancel
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -92,6 +125,71 @@ const UserCard = ({ user, type, onApprove, onDelete, loadingStates, onUpdateRole
                     ✏️ Edit Role
                   </button>
                 )}
+              </div>
+            )}
+
+            {/* Functions Display */}
+            {!isEditingRole && !isEditingFunctions && (
+              <div className="mt-2">
+                <div className="flex items-center gap-2">
+                  <span>🎯 Functions: {user.functions?.length || 0}</span>
+                  {showEditButton && (
+                    <button
+                      onClick={() => setIsEditingFunctions(true)}
+                      className="text-blue-600 hover:text-blue-800 text-xs underline"
+                    >
+                      ✨ Edit Functions
+                    </button>
+                  )}
+                </div>
+                {user.functions?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {user.functions.slice(0, 3).map(funcKey => (
+                      <span key={funcKey} className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+                        {FUNCTION_DEFINITIONS[funcKey]?.name || funcKey}
+                      </span>
+                    ))}
+                    {user.functions.length > 3 && (
+                      <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
+                        +{user.functions.length - 3} more
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Functions Editing */}
+            {isEditingFunctions && (
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                <h5 className="font-medium mb-2">Select Functions:</h5>
+                <div className="max-h-40 overflow-y-auto space-y-2">
+                  {Object.entries(FUNCTION_DEFINITIONS).map(([key, func]) => (
+                    <label key={key} className="flex items-center space-x-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={editedFunctions.includes(key)}
+                        onChange={() => toggleFunction(key)}
+                        className="rounded"
+                      />
+                      <span>{func.name}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={handleFunctionsUpdate}
+                    className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                  >
+                    💾 Save Functions
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700"
+                  >
+                    ❌ Cancel
+                  </button>
+                </div>
               </div>
             )}
 
@@ -119,7 +217,7 @@ const UserCard = ({ user, type, onApprove, onDelete, loadingStates, onUpdateRole
                   className="border border-gray-300 rounded p-2 text-sm mb-2"
                 >
                   <option value="">Approve as Teacher</option>
-                  {leadershipRoles.map(role => (
+                  {allRoles.filter(role => role !== 'Student').map(role => (
                     <option key={role} value={role}>{role}</option>
                   ))}
                 </select>
@@ -136,7 +234,7 @@ const UserCard = ({ user, type, onApprove, onDelete, loadingStates, onUpdateRole
                 onClick={handleDelete}
                 disabled={loadingStates[user.id]}
                 className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 disabled:bg-gray-400 min-w-20"
-                >
+              >
                 {loadingStates[user.id] ? "⏳" : "❌"} Delete
               </button>
             </>

@@ -1,7 +1,9 @@
-// src/pages/Dashboard/layout/TechContent.jsx
+// src/pages/Dashboard/layout/TechContent.jsx - FULLY FUNCTION-BASED
 import React from 'react';
 import { useAuth } from '../../../context/AuthContext';
-// Import existing role panels
+import { hasFunction, canAccessFinance } from '../../../utils/functionPermissions';
+
+// Import ALL available modules
 import UserManagementPanel from '../roles/UserManagementPanel';
 import TeacherAssignmentPanel from '../roles/TeacherAssignmentPanel';
 import RoleManagementPanel from '../roles/RoleManagementPanel';
@@ -9,21 +11,17 @@ import SystemSettings from '../roles/SystemSettings';
 import ClassListManager from '../roles/ClassListManager';
 import StudentList from '../roles/StudentList';
 import SubjectManager from '../roles/SubjectManager';
-
-// Import existing components
+import FinanceControlPanel from '../roles/FinanceControlPanel';
+import RoleTemplatesPanel from '../roles/RoleTemplatesPanel';
 import ExamBank from '../ExamBank';
 import ScoreCenter from '../ScoreCenter';
 import BulkReportCenter from '../BulkReportCenter';
 import TeacherReminder from '../roles/TeacherReminder';
 import SubjectInsights from '../roles/SubjectInsights';
 import ReportPrintingCenter from '../ReportPrintingCenter';
-
-// Import attendance modules
 import StudentEnrollment from '../roles/StudentEnrollment';
 import VPAdminAttendance from '../roles/VPAdminAttendance';
 import TeacherAttendanceView from '../roles/TeacherAttendanceView';
-
-// Import new role modules
 import AcademicMaterials from '../roles/AcademicMaterials';
 import SchoolCommunications from '../roles/SchoolCommunications';
 import ExamOfficerReports from '../roles/ExamOfficerReports';
@@ -33,355 +31,360 @@ import StudentDashboard from '../roles/StudentDashboard';
 import QuestionReview from '../roles/QuestionReview';
 import TeacherPerformance from '../roles/TeacherPerformance';
 import PrincipalMessages from '../roles/PrincipalMessages';
-
-// Import Form Master components
 import AttendanceRegistration from '../roles/AttendanceRegistration';
 import AutoRosterManager from '../roles/AutoRosterManager';
 import AttendanceViewer from '../roles/AttendanceViewer';
-
 import QuestionCreator from '../roles/QuestionCreator';
 import ELibraryUploader from '../roles/ELibraryUploader';
-
 import AdvancedTimetable from '../roles/AdvancedTimetable';
 import DutyRosterManager from '../roles/DutyRosterManager';
 import DutyDisplay from '../roles/DutyDisplay';
-
 import SchoolAnalytics from '../roles/SchoolAnalytics';
 import StaffPerformance from '../roles/StaffPerformance';
 import SchoolEvents from '../roles/SchoolEvents';
 import MassCommunications from '../roles/MassCommunications';
 import ParentMessage from '../roles/ParentMessage';
-
-// Import VP Academic specific components
 import ClassManager from '../roles/ClassManager';
 import FormMasterAssignment from '../roles/FormMasterAssignment';
 
 export default function TechContent({ config, activeModule, user, dashboardData }) {
-const { isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
 
-const renderModuleContent = () => {
-switch (activeModule) {
-// 🧩 Admin modules
-case 'users':
-return <UserManagementPanel users={dashboardData.users} />;
-
-// ✅ ADD SUBJECTS MODULE CASE
-case 'subjects':
-  if (user.role === 'Admin' || user.role === 'admin') {
-    return <SubjectManager />;
-  }
-  break;
-
-// ✅ MERGED 'assignments' case for Admin and Subject Teacher
-case 'assignments':
-  if (user.role === 'Subject Teacher') {
+  const getDefaultView = () => {
     return (
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold mb-4">My Teaching Assignments</h2>
-        <div className="space-y-3">
-          <div>
-            <h3 className="font-semibold text-gray-700">Assigned Subjects:</h3>
-            <p className="text-blue-600">{user.assignedSubjects?.join(', ') || 'None assigned'}</p>
+        <h2 className="text-xl font-bold mb-4">Welcome to Dashboard</h2>
+        <p className="text-gray-600">
+          {user?.role === 'Admin' || user?.role === 'admin' 
+            ? "You have full administrative access to all modules."
+            : user?.functions?.length > 0 
+              ? "Select a module from the sidebar to get started."
+              : "No functions assigned yet. Contact admin to get access to modules."
+          }
+        </p>
+        {(user?.role === 'Admin' || user?.role === 'admin') && (
+          <div className="mt-4 p-4 bg-green-50 rounded-lg">
+            <p className="text-green-800 text-sm">
+              🛡️ <strong>Administrator Access:</strong> You have full access to all system modules.
+            </p>
           </div>
-          <div>
-            <h3 className="font-semibold text-gray-700">Assigned Classes:</h3>
-            <p className="text-green-600">{user.assignedClasses?.join(', ') || 'None assigned'}</p>
-          </div>
-        </div>
+        )}
       </div>
     );
-  }
-  return <TeacherAssignmentPanel />;
+  };
 
-case 'roles':
-return <RoleManagementPanel />;
-case 'settings':
-return <SystemSettings />;
+  // 🔥 ADMIN HAS UNCONDITIONAL ACCESS TO EVERYTHING
+  const isUserAdmin = user?.role === 'Admin' || user?.role === 'admin';
 
-// 🧩 VP Academic modules - ADDED MISSING CASES
-case 'add-subjects':
-  if (user.role === 'VP Academic') {
-    return <SubjectManager />;
-  }
-  break;
+  const renderModuleContent = () => {
+    // If no active module, show default view
+    if (!activeModule) {
+      return getDefaultView();
+    }
 
-case 'manage-classes':
-  if (user.role === 'VP Academic') {
-    return <ClassManager />;
-  }
-  break;
+    // Function-based module access
+    switch (activeModule) {
+      // 👥 User Management
+      case 'users':
+        if (isUserAdmin || hasFunction(user, 'user_management')) {
+          return <UserManagementPanel users={dashboardData.users} />;
+        }
+        break;
 
-case 'teacher-assignment':
-  if (user.role === 'VP Academic') {
-    return <TeacherAssignmentPanel />;
-  }
-  break;
+      // 🎯 Role Management
+      case 'roles':
+        if (isUserAdmin || hasFunction(user, 'role_management')) {
+          return <RoleManagementPanel />;
+        }
+        break;
 
-case 'form-master-assignment':
-  if (user.role === 'VP Academic') {
-    return <FormMasterAssignment />;
-  }
-  break;
+      // 🎯 Role Templates
+      case 'templates':
+        if (isUserAdmin || hasFunction(user, 'role_management')) {
+          return <RoleTemplatesPanel />;
+        }
+        break;
 
-// 🧭 Principal modules
-  case 'overview':
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-700">Total Students</h3>
-            <p className="text-3xl font-bold text-blue-600">
-              {dashboardData.users?.filter(u => u.role === 'Student').length || 0}
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-700">Total Staff</h3>
-            <p className="text-3xl font-bold text-green-600">
-              {dashboardData.users?.filter(u => u.role !== 'Student' && u.role !== 'Admin').length || 0}
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-700">Classes</h3>
-            <p className="text-3xl font-bold text-purple-600">
-              {Object.keys(dashboardData.classLists || {}).length}
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-700">Attendance Rate</h3>
-            <p className="text-3xl font-bold text-orange-600">85%</p>
-          </div>
-        </div>
+      // ⚙️ System Settings
+      case 'settings':
+        if (isUserAdmin || hasFunction(user, 'system_settings')) {
+          return <SystemSettings />;
+        }
+        break;
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold mb-4">Staff Overview</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full table-auto">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-4 py-2 text-left">Name</th>
-                  <th className="px-4 py-2 text-left">Role</th>
-                  <th className="px-4 py-2 text-left">Assigned Classes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dashboardData.users
-                  ?.filter(u => u.role !== 'Student' && u.role !== 'Admin')
-                  .slice(0, 5)
-                  .map(staff => (
-                    <tr key={staff.id} className="border-t">
-                      <td className="px-4 py-2">{staff.name}</td>
-                      <td className="px-4 py-2">{staff.role}</td>
-                      <td className="px-4 py-2">{staff.assignedClasses?.join(', ') || 'None'}</td>
+      // 💰 Finance Control
+      case 'finance':
+        if (isUserAdmin || canAccessFinance(user)) {
+          return <FinanceControlPanel />;
+        }
+        break;
+
+      // 📚 Subject Management
+      case 'subjects':
+        if (isUserAdmin || hasFunction(user, 'subject_management')) {
+          return <SubjectManager />;
+        }
+        break;
+
+      // 🎯 Teacher Assignments
+      case 'assignments':
+        if (isUserAdmin || hasFunction(user, 'teacher_assignments')) {
+          return <TeacherAssignmentPanel />;
+        }
+        break;
+
+      // 📊 Principal Overview
+      case 'overview':
+        if (isUserAdmin || hasFunction(user, 'principal_overview')) {
+          return (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h3 className="text-lg font-semibold text-gray-700">Total Students</h3>
+                  <p className="text-3xl font-bold text-blue-600">
+                    {dashboardData.users?.filter(u => u.role === 'Student').length || 0}
+                  </p>
+                </div>
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h3 className="text-lg font-semibold text-gray-700">Total Staff</h3>
+                  <p className="text-3xl font-bold text-green-600">
+                    {dashboardData.users?.filter(u => u.role !== 'Student' && u.role !== 'Admin').length || 0}
+                  </p>
+                </div>
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h3 className="text-lg font-semibold text-gray-700">Classes</h3>
+                  <p className="text-3xl font-bold text-purple-600">
+                    {Object.keys(dashboardData.classLists || {}).length}
+                  </p>
+                </div>
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h3 className="text-lg font-semibold text-gray-700">Attendance Rate</h3>
+                  <p className="text-3xl font-bold text-orange-600">85%</p>
+                </div>
+              </div>
+            </div>
+          );
+        }
+        break;
+
+      // 👥 Staff Management
+      case 'staff':
+        if (isUserAdmin || hasFunction(user, 'staff_management')) {
+          return (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-bold mb-4">Staff Overview</h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full table-auto">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-4 py-2 text-left">Name</th>
+                      <th className="px-4 py-2 text-left">Role</th>
+                      <th className="px-4 py-2 text-left">Assigned Classes</th>
                     </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    );
+                  </thead>
+                  <tbody>
+                    {dashboardData.users
+                      ?.filter(u => u.role !== 'Student' && u.role !== 'Admin')
+                      .map(staff => (
+                        <tr key={staff.id} className="border-t">
+                          <td className="px-4 py-2">{staff.name}</td>
+                          <td className="px-4 py-2">{staff.role}</td>
+                          <td className="px-4 py-2">{staff.assignedClasses?.join(', ') || 'None'}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        }
+        break;
 
-  case 'staff':
+      // 📈 Analytics
+      case 'analytics':
+        if (isUserAdmin || hasFunction(user, 'school_analytics')) {
+          return <SchoolAnalytics />;
+        }
+        break;
+
+      // 📊 Staff Performance
+      case 'staff-performance':
+        if (isUserAdmin || hasFunction(user, 'staff_performance')) {
+          return <StaffPerformance />;
+        }
+        break;
+
+      // 📨 Messages
+      case 'messages':
+        if (isUserAdmin || hasFunction(user, 'principal_messages')) {
+          return <PrincipalMessages />;
+        }
+        break;
+
+      // 📨 Communications
+      case 'communications':
+        if (isUserAdmin || hasFunction(user, 'staff_communications')) {
+          return <SchoolCommunications />;
+        }
+        break;
+
+      // 📅 Calendar
+      case 'calendar':
+        if (isUserAdmin || hasFunction(user, 'calendar_access')) {
+          return (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-bold mb-4">School Calendar</h2>
+              <p className="text-gray-600">View and manage school events and schedules.</p>
+            </div>
+          );
+        }
+        break;
+
+      // 📊 Student Enrollment
+      case 'enrollment':
+        if (isUserAdmin || hasFunction(user, 'student_enrollment')) {
+          return <StudentEnrollment />;
+        }
+        break;
+
+      // 📝 Attendance
+      case 'attendance':
+        if (isUserAdmin || hasFunction(user, 'attendance_manage')) {
+          return <VPAdminAttendance />;
+        } else if (isUserAdmin || hasFunction(user, 'attendance_view')) {
+          return <TeacherAttendanceView />;
+        } else if (isUserAdmin || hasFunction(user, 'attendance_mark')) {
+          return <AttendanceRegistration class={user.assignedClasses?.[0]} />;
+        } else if (isUserAdmin || hasFunction(user, 'student_attendance')) {
+          return <StudentDashboard />;
+        } else {
+          return (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-bold mb-4">Attendance Overview</h2>
+              <p className="text-gray-600">General attendance statistics view.</p>
+            </div>
+          );
+        }
+
+      // 📧 Teacher Reminder
+      case 'reminder':
+        if (isUserAdmin || hasFunction(user, 'teacher_reminders')) {
+          return <TeacherReminder />;
+        }
+        break;
+
+      // 📊 Subject Insights
+      case 'insights':
+        if (isUserAdmin || hasFunction(user, 'subject_insights')) {
+          return <SubjectInsights />;
+        }
+        break;
+
+      // 📚 Academic Materials
+      case 'materials':
+        if (isUserAdmin || hasFunction(user, 'academic_materials')) {
+          return <AcademicMaterials />;
+        }
+        break;
+
+      // 👥 Student Management
+      case 'students':
+        if (isUserAdmin || hasFunction(user, 'student_management')) {
+          return <ClassListManager className={user.assignedClasses?.[0]} />;
+        }
+        break;
+
+      // 📅 Duty Roster
+      case 'roster':
+        if (isUserAdmin || hasFunction(user, 'duty_roster')) {
+          return <AutoRosterManager class={user.assignedClasses?.[0]} />;
+        } else if (isUserAdmin || hasFunction(user, 'duty_roster_manage')) {
+          return <DutyRosterManager />;
+        }
+        break;
+
+      // 👀 Attendance View
+      case 'attendance-view':
+        if (isUserAdmin || hasFunction(user, 'attendance_view')) {
+          return <AttendanceViewer class={user.assignedClasses?.[0]} />;
+        }
+        break;
+
+      // 📊 Scoring
+      case 'scoring':
+        if (isUserAdmin || hasFunction(user, 'scoring_enter')) {
+          return <ScoreCenter />;
+        }
+        break;
+
+      // ❓ Question Creation
+      case 'questions':
+        if (isUserAdmin || hasFunction(user, 'question_creation')) {
+          return <QuestionCreator />;
+        }
+        break;
+
+      // 📚 E-Library
+      case 'elibrary':
+        if (isUserAdmin || hasFunction(user, 'elibrary_manage')) {
+          return <ELibraryUploader />;
+        }
+        break;
+
+      // 🖨️ Reports
+      case 'reports':
+        if (isUserAdmin || hasFunction(user, 'exam_reports')) {
+          return <ReportPrintingCenter />;
+        }
+        break;
+
+      // 📋 Submission Tracking
+      case 'submissions':
+        if (isUserAdmin || hasFunction(user, 'submission_tracking')) {
+          return <SubmissionTracking />;
+        }
+        break;
+
+      // 📅 Timetable
+      case 'advanced-timetable':
+        if (isUserAdmin || hasFunction(user, 'timetable_manage')) {
+          return <AdvancedTimetable />;
+        }
+        break;
+
+      // 📊 Performance
+      case 'performance':
+        if (isUserAdmin || hasFunction(user, 'staff_performance')) {
+          return <TeacherPerformance />;
+        }
+        break;
+
+      // 📊 Student Scores
+      case 'scores':
+        if (isUserAdmin || hasFunction(user, 'student_dashboard')) {
+          return <StudentDashboard />;
+        }
+        break;
+
+      // 📚 Exam Bank - AVAILABLE TO EVERYONE
+      case 'exambank':
+        return <ExamBank isAdmin={isAdmin} />;
+
+      default:
+        return getDefaultView();
+    }
+
+    // If user doesn't have the required function, show access denied
     return (
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold mb-4">Staff Overview</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full table-auto">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="px-4 py-2 text-left">Name</th>
-                <th className="px-4 py-2 text-left">Role</th>
-                <th className="px-4 py-2 text-left">Assigned Classes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dashboardData.users
-                ?.filter(u => u.role !== 'Student' && u.role !== 'Admin')
-                .map(staff => (
-                  <tr key={staff.id} className="border-t">
-                    <td className="px-4 py-2">{staff.name}</td>
-                    <td className="px-4 py-2">{staff.role}</td>
-                    <td className="px-4 py-2">{staff.assignedClasses?.join(', ') || 'None'}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
+        <h2 className="text-xl font-bold mb-4 text-red-600">Access Denied</h2>
+        <p className="text-gray-600">You don't have permission to access this module.</p>
+        <p className="text-sm text-gray-500 mt-2">
+          Contact administrator to get the required functions assigned.
+        </p>
       </div>
     );
+  };
 
-  case 'analytics':
-    if (user.role === 'Principal') {
-      return <SchoolAnalytics />;
-    }
-    break;
-
-  case 'staff-performance':
-    if (user.role === 'Principal') {
-      return <StaffPerformance />;
-    }
-    break;
-
-  case 'messages':
-    if (user.role === 'Principal') {
-      return <PrincipalMessages />;
-    }
-    break;
-
-  // 🧩 VP Admin modules
-  case 'communications':
-    if (user.role === 'VP Admin') {
-      return <SchoolCommunications />;
-    }
-    break;
-
-  case 'calendar':
-    if (user.role === 'VP Admin') {
-      return (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold mb-4">School Calendar</h2>
-          <p className="text-gray-600">View and manage school events and schedules.</p>
-        </div>
-      );
-    }
-    break;
-
-  case 'enrollment':
-    if (user.role === 'VP Admin') {
-      return <StudentEnrollment />;
-    }
-    break;
-
-  case 'attendance':
-    if (user.role === 'VP Admin') {
-      return <VPAdminAttendance />;
-    } else if (user.role === 'VP Academic') {
-      return <TeacherAttendanceView />;
-    } else if (user.role === 'Student') {
-      return <StudentDashboard />;
-    } else if (user.role === 'Form Master') {
-      return <AttendanceRegistration class={user.assignedClasses?.[0]} />;
-    } else {
-      return (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold mb-4">Attendance Overview</h2>
-          <p className="text-gray-600">General attendance statistics view.</p>
-        </div>
-      );
-    }
-
-  case 'reminder':
-    if (user.role === 'Exam Officer') {
-      return <TeacherReminder />;
-    }
-    break;
-
-  case 'insights':
-    if (user.role === 'Exam Officer') {
-      return <SubjectInsights />;
-    }
-    break;
-
-  case 'materials':
-    return <AcademicMaterials />;
-
-  // 🧩 Form Master modules
-  case 'students':
-    if (user.role === 'Form Master') {
-      return <ClassListManager className={user.assignedClasses?.[0]} />;
-    }
-    break;
-
-  case 'roster':
-    if (user.role === 'Form Master') {
-      return <AutoRosterManager class={user.assignedClasses?.[0]} />;
-    } else if (user.role === 'Senior Master') {
-      return <DutyRosterManager />;
-    }
-    break;
-
-  case 'attendance-view':
-    if (user.role === 'Form Master') {
-      return <AttendanceViewer class={user.assignedClasses?.[0]} />;
-    }
-    break;
-
-  // ✅ FIXED: Allow Form Master OR Subject Teacher access
-  case 'scoring':
-    if ((user.role === 'Form Master' || user.role === 'Subject Teacher') &&
-        user.assignedClasses && user.assignedSubjects) {
-      return <ScoreCenter />;
-    }
-    break;
-
-  // 🧑‍🏫 Subject Teacher modules
-  case 'questions':
-    if (user.role === 'Subject Teacher') {
-      return <QuestionCreator />;
-    }
-    break;
-
-  case 'elibrary':
-    if (user.role === 'Subject Teacher') {
-      return <ELibraryUploader />;
-    }
-    break;
-
-  // 🧩 Exam Officer modules - UPDATED
-  case 'reports':
-    if (user.role === 'Exam Officer') {
-      return <ReportPrintingCenter />;
-    }
-    break;
-
-  case 'bulk':
-    if (user.role === 'Exam Officer') {
-      return <ReportPrintingCenter />;
-    }
-    break;
-
-  case 'submissions':
-    if (user.role === 'Exam Officer') {
-      return <SubmissionTracking />;
-    }
-    break;
-
-  case 'advanced-timetable':
-    if (user.role === 'Senior Master') {
-      return <AdvancedTimetable />;
-    }
-    break;
-
-  case 'performance':
-    if (user.role === 'Senior Master') {
-      return <TeacherPerformance />;
-    }
-    break;
-
-  case 'scores':
-    if (user.role === 'Student') {
-      return <StudentDashboard />;
-    }
-    break;
-
-  // Shared modules
-  case 'exambank':
-    return <ExamBank isAdmin={isAdmin} />;
-
-  default:
-    if (user.role === 'Student') {
-      return <StudentDashboard />;
-    }
-
-    return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold mb-4">{config.title}</h2>
-        <p className="text-gray-600">Module content coming soon...</p>
-      </div>
-    );
-}
-
-};
-
-return <div className="mt-6">{renderModuleContent()}</div>;
+  return <div className="mt-6">{renderModuleContent()}</div>;
 }

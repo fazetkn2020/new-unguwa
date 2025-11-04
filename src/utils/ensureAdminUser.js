@@ -21,7 +21,16 @@ export const ensureAdminUser = () => {
   return false;
 };
 
-// Run this on app startup
-export const initializeUsers = () => {
+// Import and run function migration
+import { initializeFunctionMigration } from './migrateToFunctions';
+
+// Enhanced initialization that includes function migration
+export const initializeSystem = () => {
   ensureAdminUser();
+  initializeFunctionMigration();
+};
+
+// Update the existing initializeUsers to use the enhanced version
+export const initializeUsers = () => {
+  initializeSystem();
 };

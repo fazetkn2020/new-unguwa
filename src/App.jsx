@@ -6,7 +6,7 @@ import { BulkPrintProvider } from "./context/BulkPrintContext";
 import { FinanceProvider } from "./context/FinanceContext";
 import AppLoader from "./components/AppLoader";
 import Navbar from "./components/Navbar";
-import { initializeUsers } from "./utils/ensureAdminUser";
+import { initializeSystem } from "./utils/ensureAdminUser";
 
 // Lazy load components
 const LandingPage = lazy(() => import("./pages/LandingPage"));
@@ -36,7 +36,7 @@ const initializeAppData = async () => {
   return new Promise((resolve) => {
     setTimeout(() => {
       // Initialize users first
-      initializeUsers();
+      initializeSystem();
       
       if (!localStorage.getItem('classLists')) {
         localStorage.setItem('classLists', JSON.stringify({}));

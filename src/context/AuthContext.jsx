@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { canAccessFinance as canAccessFinanceFunctions } from '../utils/functionPermissions';
 
 const AuthContext = createContext();
 
@@ -10,12 +11,12 @@ export const AuthProvider = ({ children }) => {
   // Load auth state and finance access from localStorage
   useEffect(() => {
     console.log('🔄 AuthContext: Loading from localStorage...');
-    
+
     const savedUser = localStorage.getItem('currentUser');
     const savedFinanceAccess = localStorage.getItem('financeAccessEnabled');
 
     console.log('📁 Saved user from localStorage:', savedUser);
-    
+
     if (savedUser) {
       try {
         const userData = JSON.parse(savedUser);
@@ -54,13 +55,26 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('financeAccessEnabled', JSON.stringify(enabled));
   };
 
+  // Enhanced permission checks
+  const hasFunction = (functionKey) => {
+    if (!user) return false;
+    return user.functions && user.functions.includes(functionKey);
+  };
+
+  const canAccessFinance = () => {
+    return canAccessFinanceFunctions(user) || financeAccessEnabled;
+  };
+
   const value = {
     user,
     login,
     logout,
     loading,
     financeAccessEnabled,
-    toggleFinanceAccess
+    toggleFinanceAccess,
+    // Enhanced permission methods
+    hasFunction,
+    canAccessFinance: canAccessFinance()
   };
 
   console.log('🎯 AuthContext: Providing value:', { user, loading });
