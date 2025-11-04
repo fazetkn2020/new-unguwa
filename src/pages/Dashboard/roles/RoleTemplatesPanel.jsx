@@ -4,24 +4,36 @@ import RoleTemplateManager from './components/RoleTemplateManager';
 const RoleTemplatesPanel = () => {
   return (
     <div className="role-templates-panel">
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-2xl font-bold mb-2 text-gray-800">🎯 Role Template Manager</h2>
-        <p className="text-gray-600 mb-6">Create custom function templates for each role</p>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 text-white">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="text-xl font-bold mb-1">🎯 Role Template Manager</h1> {/* Smaller text */}
+            <p className="text-blue-100 text-sm opacity-90"> {/* Smaller, semi-transparent */}
+              Create custom function templates for each role
+            </p>
+          </div>
+        </div>
         
-        <RoleTemplateManager />
+        {/* Content */}
+        <div className="max-w-6xl mx-auto p-3"> {/* Reduced padding */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-4"> {/* Reduced padding */}
+              <RoleTemplateManager />
+            </div>
+          </div>
+        </div>
       </div>
 
       <style jsx>{`
         .role-templates-panel {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 16px;
+          background: #f8fafc;
         }
 
-        /* Mobile responsiveness */
-        @media (max-width: 768px) {
+        /* Extra small phones */
+        @media (max-width: 360px) {
           .role-templates-panel {
-            padding: 8px;
+            font-size: 14px;
           }
         }
       `}</style>
