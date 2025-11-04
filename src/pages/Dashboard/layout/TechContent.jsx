@@ -1,4 +1,4 @@
-// src/pages/Dashboard/layout/TechContent.jsx - FULLY FUNCTION-BASED
+// src/pages/Dashboard/layout/TechContent.jsx - FIXED DEFAULT VIEW
 import React from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { hasFunction, canAccessFinance } from '../../../utils/functionPermissions';
@@ -51,21 +51,55 @@ export default function TechContent({ config, activeModule, user, dashboardData 
   const { isAdmin } = useAuth();
 
   const getDefaultView = () => {
-    return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold mb-4">Welcome to Dashboard</h2>
-        <p className="text-gray-600">
-          {user?.role === 'Admin' || user?.role === 'admin' 
-            ? "You have full administrative access to all modules."
-            : user?.functions?.length > 0 
-              ? "Select a module from the sidebar to get started."
-              : "No functions assigned yet. Contact admin to get access to modules."
-          }
-        </p>
-        {(user?.role === 'Admin' || user?.role === 'admin') && (
+    // 🔥 FIXED: Show proper welcome message, not Access Denied
+    const isUserAdmin = user?.role === 'Admin' || user?.role === 'admin';
+    
+    if (isUserAdmin) {
+      return (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-bold mb-4">Admin Dashboard</h2>
+          <p className="text-gray-600">You have full administrative access to all modules.</p>
           <div className="mt-4 p-4 bg-green-50 rounded-lg">
             <p className="text-green-800 text-sm">
               🛡️ <strong>Administrator Access:</strong> You have full access to all system modules.
+            </p>
+          </div>
+        </div>
+      );
+    }
+    
+    // For non-admin users, show welcome message based on their functions
+    const hasFunctions = user?.functions && user.functions.length > 0;
+    
+    return (
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-xl font-bold mb-4">Welcome, {user?.name || 'User'}!</h2>
+        <p className="text-gray-600 mb-4">
+          {hasFunctions 
+            ? "Select a module from the sidebar to get started."
+            : "You don't have any specific functions assigned yet."
+          }
+        </p>
+        
+        {!hasFunctions && (
+          <div className="space-y-3">
+            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <p className="text-yellow-800 text-sm">
+                ℹ️ <strong>No functions assigned:</strong> Contact the administrator to get access to specific modules.
+              </p>
+            </div>
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-blue-800 text-sm">
+                📚 <strong>Exam Bank available:</strong> You can access the exam bank to view questions and materials.
+              </p>
+            </div>
+          </div>
+        )}
+        
+        {hasFunctions && (
+          <div className="p-4 bg-green-50 rounded-lg border border-green-200 mt-4">
+            <p className="text-green-800 text-sm">
+              ✅ <strong>You have {user.functions.length} function(s) assigned:</strong> Check the sidebar for available modules.
             </p>
           </div>
         )}
@@ -77,7 +111,7 @@ export default function TechContent({ config, activeModule, user, dashboardData 
   const isUserAdmin = user?.role === 'Admin' || user?.role === 'admin';
 
   const renderModuleContent = () => {
-    // If no active module, show default view
+    // If no active module, show default view (NOT Access Denied)
     if (!activeModule) {
       return getDefaultView();
     }
@@ -374,14 +408,20 @@ export default function TechContent({ config, activeModule, user, dashboardData 
         return getDefaultView();
     }
 
-    // If user doesn't have the required function, show access denied
+    // 🔥 ONLY show Access Denied when trying to access specific modules without permission
     return (
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-bold mb-4 text-red-600">Access Denied</h2>
-        <p className="text-gray-600">You don't have permission to access this module.</p>
+        <p className="text-gray-600">You don't have permission to access the "{activeModule}" module.</p>
         <p className="text-sm text-gray-500 mt-2">
           Contact administrator to get the required functions assigned.
         </p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          Return to Dashboard
+        </button>
       </div>
     );
   };
