@@ -267,3 +267,109 @@ nav.bg-gray-900 {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   min-height: 500px;
 }
+
+/* Mobile Responsive Styles for Finance Layout */
+@media (max-width: 768px) {
+  .finance-layout {
+    padding: 10px;
+  }
+
+  .finance-header {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+
+  .finance-header h1 {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .finance-header p {
+    text-align: center;
+    font-size: 14px;
+  }
+
+  .main-tabs {
+    flex-direction: column;
+    gap: 8px;
+    padding: 15px;
+  }
+
+  .main-tab {
+    padding: 12px 15px;
+    font-size: 16px; /* Larger touch targets */
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .tab-icon {
+    font-size: 18px;
+    min-width: 24px; /* Consistent icon spacing */
+  }
+
+  .sub-tabs {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .sub-tab {
+    flex: 1;
+    min-width: calc(50% - 8px); /* 2 columns on mobile */
+    padding: 10px 12px;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .finance-content {
+    padding: 15px;
+    margin: 0 -10px; /* Full width on mobile */
+    border-radius: 0;
+    min-height: 400px;
+    box-shadow: none;
+    border-top: 1px solid #e9ecef;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  .finance-header h1 {
+    font-size: 18px;
+  }
+
+  .main-tab {
+    padding: 15px 12px;
+    font-size: 15px;
+  }
+
+  .sub-tab {
+    min-width: 100%; /* Stack vertically on very small screens */
+    margin-bottom: 5px;
+  }
+
+  .sub-tab:last-child {
+    margin-bottom: 0;
+  }
+
+  .finance-content {
+    padding: 12px;
+    min-height: 350px;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .finance-layout {
+    padding: 15px;
+  }
+
+  .main-tab {
+    padding: 12px 8px;
+    font-size: 13px;
+  }
+
+  .sub-tab {
+    padding: 10px 15px;
+    font-size: 13px;
+  }
+}

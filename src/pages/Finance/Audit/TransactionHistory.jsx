@@ -1,21 +1,56 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useFinance } from '../../../context/FinanceContext';
 
 const TransactionHistory = () => {
-  const { transactions, getTransactions } = useFinance();
+  const { feePayments, staffSalaries, expenses } = useFinance();
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    // Load transactions when component mounts
-    getTransactions();
-  }, []);
+  // Combine all financial data into transactions
+  const transactions = useMemo(() => {
+    const feeTransactions = feePayments.map(payment => ({
+      id: payment.id || payment.receiptNumber,
+      date: payment.date || payment.timestamp,
+      reference: payment.receiptNumber,
+      studentName: payment.studentName,
+      type: 'payment',
+      description: `Fee payment - ${payment.term}`,
+      amount: payment.amount,
+      status: 'completed'
+    }));
+
+    const salaryTransactions = staffSalaries.map(salary => ({
+      id: salary.id || `salary-${salary.month}-${salary.staffId}`,
+      date: salary.timestamp,
+      reference: `SAL-${salary.month}`,
+      staffName: salary.staffName,
+      type: 'salary',
+      description: `Salary - ${salary.staffRole}`,
+      amount: -salary.netSalary, // Negative for expenses
+      status: 'completed'
+    }));
+
+    const expenseTransactions = expenses.map(expense => ({
+      id: expense.id,
+      date: expense.date,
+      reference: expense.receiptNumber || `EXP-${expense.date}`,
+      type: 'expense',
+      description: `${expense.category} - ${expense.description}`,
+      amount: -expense.amount, // Negative for expenses
+      status: 'completed'
+    }));
+
+    return [...feeTransactions, ...salaryTransactions, ...expenseTransactions]
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [feePayments, staffSalaries, expenses]);
 
   // Filter transactions based on filter and search
   const filteredTransactions = transactions.filter(transaction => {
     const matchesFilter = filter === 'all' || transaction.type === filter;
     const matchesSearch = transaction.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         transaction.reference?.toLowerCase().includes(searchTerm.toLowerCase());
+                         transaction.staffName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         transaction.reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         transaction.description?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
@@ -50,24 +85,23 @@ const TransactionHistory = () => {
         <div className="search-box">
           <input
             type="text"
-            placeholder="Search by student name or reference..."
+            placeholder="Search by name, reference, or description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
           />
         </div>
-        
+
         <div className="filter-group">
-          <select 
-            value={filter} 
+          <select
+            value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="filter-select"
           >
             <option value="all">All Transactions</option>
-            <option value="payment">Payments</option>
+            <option value="payment">Fee Payments</option>
             <option value="salary">Salaries</option>
             <option value="expense">Expenses</option>
-            <option value="refund">Refunds</option>
           </select>
         </div>
       </div>
@@ -86,12 +120,11 @@ const TransactionHistory = () => {
               <tr>
                 <th>Date</th>
                 <th>Reference</th>
-                <th>Student/Staff</th>
+                <th>Name</th>
                 <th>Type</th>
                 <th>Description</th>
                 <th>Amount</th>
                 <th>Status</th>
-                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -107,7 +140,7 @@ const TransactionHistory = () => {
                     {transaction.studentName || transaction.staffName || 'N/A'}
                   </td>
                   <td className="type-cell">
-                    <span 
+                    <span
                       className="type-badge"
                       style={{ backgroundColor: getTypeColor(transaction.type) }}
                     >
@@ -118,25 +151,17 @@ const TransactionHistory = () => {
                     {transaction.description}
                   </td>
                   <td className="amount-cell">
-                    <span className={`amount ₦{transaction.amount < 0 ? 'negative' : 'positive'}`}>
+                    <span className={`amount ${transaction.amount < 0 ? 'negative' : 'positive'}`}>
                       ₦{Math.abs(transaction.amount).toLocaleString()}
                     </span>
                   </td>
                   <td className="status-cell">
-                    <span 
+                    <span
                       className="status-badge"
                       style={{ backgroundColor: getStatusColor(transaction.status) }}
                     >
                       {transaction.status}
                     </span>
-                  </td>
-                  <td className="actions-cell">
-                    <button className="action-btn view-btn" title="View Details">
-                      👁️
-                    </button>
-                    <button className="action-btn receipt-btn" title="Download Receipt">
-                      🧾
-                    </button>
                   </td>
                 </tr>
               ))}
@@ -154,7 +179,7 @@ const TransactionHistory = () => {
             <p>{filteredTransactions.length}</p>
           </div>
         </div>
-        
+
         <div className="summary-card completed">
           <div className="card-icon">✅</div>
           <div className="card-content">
@@ -162,20 +187,20 @@ const TransactionHistory = () => {
             <p>{filteredTransactions.filter(t => t.status === 'completed').length}</p>
           </div>
         </div>
-        
-        <div className="summary-card pending">
-          <div className="card-icon">⏳</div>
+
+        <div className="summary-card income">
+          <div className="card-icon">📈</div>
           <div className="card-content">
-            <h3>Pending</h3>
-            <p>{filteredTransactions.filter(t => t.status === 'pending').length}</p>
+            <h3>Total Income</h3>
+            <p>₦{filteredTransactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0).toLocaleString()}</p>
           </div>
-               </div>
-        
-        <div className="summary-card amount">
-          <div className="card-icon">💵</div>
+        </div>
+
+        <div className="summary-card expense">
+          <div className="card-icon">📉</div>
           <div className="card-content">
-            <h3>Total Amount</h3>
-            <p>₦{filteredTransactions.reduce((sum, t) => sum + t.amount, 0).toLocaleString()}</p>
+            <h3>Total Expenses</h3>
+            <p>₦{Math.abs(filteredTransactions.filter(t => t.amount < 0).reduce((sum, t) => sum + t.amount, 0)).toLocaleString()}</p>
           </div>
         </div>
       </div>
@@ -287,25 +312,6 @@ const TransactionHistory = () => {
           font-weight: 600;
         }
 
-        .actions-cell {
-          display: flex;
-          gap: 5px;
-        }
-
-        .action-btn {
-          padding: 6px;
-          border: none;
-          background: #f8f9fa;
-          border-radius: 6px;
-          cursor: pointer;
-          font-size: 12px;
-          transition: background 0.3s ease;
-        }
-
-        .action-btn:hover {
-          background: #e9ecef;
-        }
-
         .empty-state {
           text-align: center;
           padding: 60px 20px;
@@ -361,17 +367,31 @@ const TransactionHistory = () => {
           .controls-row {
             flex-direction: column;
           }
-          
+
           .filter-select {
             min-width: 100%;
           }
-          
+
           .transactions-table {
             overflow-x: auto;
           }
-          
+
           table {
             min-width: 800px;
+          }
+
+          .summary-cards {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+          }
+
+          .summary-card {
+            padding: 15px;
+            gap: 10px;
+          }
+
+          .card-content p {
+            font-size: 20px;
           }
         }
       `}</style>
