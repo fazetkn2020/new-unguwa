@@ -29,7 +29,7 @@ import SubmissionTracking from '../roles/SubmissionTracking';
 import TimetableManager from '../roles/TimetableManager';
 import StudentDashboard from '../roles/StudentDashboard';
 import QuestionReview from '../roles/QuestionReview';
-import TeacherPerformance from '../roles/TeacherPerformance';
+import TeacherPerformance from "../roles/TeacherPerformance";
 import PrincipalMessages from '../roles/PrincipalMessages';
 import AttendanceRegistration from '../roles/AttendanceRegistration';
 import AutoRosterManager from '../roles/AutoRosterManager';
@@ -53,7 +53,7 @@ export default function TechContent({ config, activeModule, user, dashboardData 
   const getDefaultView = () => {
     // 🔥 FIXED: Show proper welcome message, not Access Denied
     const isUserAdmin = user?.role === 'Admin' || user?.role === 'admin';
-    
+
     if (isUserAdmin) {
       return (
         <div className="bg-white rounded-lg shadow p-6">
@@ -67,20 +67,20 @@ export default function TechContent({ config, activeModule, user, dashboardData 
         </div>
       );
     }
-    
+
     // For non-admin users, show welcome message based on their functions
     const hasFunctions = user?.functions && user.functions.length > 0;
-    
+
     return (
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-bold mb-4">Welcome, {user?.name || 'User'}!</h2>
         <p className="text-gray-600 mb-4">
-          {hasFunctions 
+          {hasFunctions
             ? "Select a module from the sidebar to get started."
             : "You don't have any specific functions assigned yet."
           }
         </p>
-        
+
         {!hasFunctions && (
           <div className="space-y-3">
             <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
@@ -95,7 +95,7 @@ export default function TechContent({ config, activeModule, user, dashboardData 
             </div>
           </div>
         )}
-        
+
         {hasFunctions && (
           <div className="p-4 bg-green-50 rounded-lg border border-green-200 mt-4">
             <p className="text-green-800 text-sm">
@@ -328,6 +328,13 @@ export default function TechContent({ config, activeModule, user, dashboardData 
         }
         break;
 
+      // 🏫 Class Management - ADDED NEW CASE
+      case 'classes':
+        if (isUserAdmin || hasFunction(user, 'class_management')) {
+          return <ClassManager />;
+        }
+        break;
+
       // 📅 Duty Roster
       case 'roster':
         if (isUserAdmin || hasFunction(user, 'duty_roster')) {
@@ -416,7 +423,7 @@ export default function TechContent({ config, activeModule, user, dashboardData 
         <p className="text-sm text-gray-500 mt-2">
           Contact administrator to get the required functions assigned.
         </p>
-        <button 
+        <button
           onClick={() => window.location.reload()}
           className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >

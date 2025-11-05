@@ -38,7 +38,7 @@ const RoleTemplateManager = () => {
   // Filter functions based on search
   const filteredFunctionsByCategory = {};
   sortedCategories.forEach(category => {
-    const filtered = functionsByCategory[category].filter(func => 
+    const filtered = functionsByCategory[category].filter(func =>
       func.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       func.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -52,12 +52,12 @@ const RoleTemplateManager = () => {
     const newFunctions = currentFunctions.includes(functionKey)
       ? currentFunctions.filter(f => f !== functionKey)
       : [...currentFunctions, functionKey];
-    
+
     const updatedTemplates = {
       ...roleTemplates,
       [selectedRole]: newFunctions
     };
-    
+
     setRoleTemplates(updatedTemplates);
     saveRoleTemplates(updatedTemplates);
   };
@@ -73,12 +73,12 @@ const RoleTemplateManager = () => {
     const categoryFunctions = functionsByCategory[category].map(f => f.key);
     const currentFunctions = roleTemplates[selectedRole] || [];
     const newFunctions = [...new Set([...currentFunctions, ...categoryFunctions])];
-    
+
     const updatedTemplates = {
       ...roleTemplates,
       [selectedRole]: newFunctions
     };
-    
+
     setRoleTemplates(updatedTemplates);
     saveRoleTemplates(updatedTemplates);
   };
@@ -87,15 +87,40 @@ const RoleTemplateManager = () => {
     const categoryFunctions = functionsByCategory[category].map(f => f.key);
     const currentFunctions = roleTemplates[selectedRole] || [];
     const newFunctions = currentFunctions.filter(f => !categoryFunctions.includes(f));
-    
+
     const updatedTemplates = {
       ...roleTemplates,
       [selectedRole]: newFunctions
     };
-    
+
     setRoleTemplates(updatedTemplates);
     saveRoleTemplates(updatedTemplates);
   };
+
+  // --- START OF NEW CODE ---
+  const updateAllUsersFunctions = () => {
+    if (!confirm('This will update ALL users to match their current role templates. Continue?')) {
+      return;
+    }
+
+    const allUsers = JSON.parse(localStorage.getItem('users')) || [];
+    let updatedCount = 0;
+
+    const updatedUsers = allUsers.map(user => {
+      const roleFunctions = roleTemplates[user.role] || [];
+      
+      // Only update if functions are different
+      if (JSON.stringify(user.functions) !== JSON.stringify(roleFunctions)) {
+        updatedCount++;
+        return { ...user, functions: roleFunctions };
+      }
+      return user;
+    });
+
+    localStorage.setItem('users', JSON.stringify(updatedUsers));
+    alert(`✅ Updated functions for ${updatedCount} users!`);
+  };
+  // --- END OF NEW CODE ---
 
   const availableRoles = ['Principal', 'VP Admin', 'VP Academic', 'Exam Officer', 'Form Master', 'Subject Teacher', 'Senior Master', 'Student', 'Admin'];
 
@@ -127,6 +152,28 @@ const RoleTemplateManager = () => {
           className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500" /* Larger text */
         />
       </div>
+
+      {/* --- START OF NEW UI CODE --- */}
+      {/* Update All Users Button */}
+      <div className="bg-yellow-50 rounded-lg border border-yellow-200 p-3">
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="font-semibold text-yellow-800 text-sm">
+              Sync Users with Templates
+            </h3>
+            <p className="text-yellow-700 text-xs">
+              Update all users to match current role templates
+            </p>
+          </div>
+          <button
+            onClick={updateAllUsersFunctions}
+            className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-semibold"
+          >
+            🔄 Update All
+          </button>
+        </div>
+      </div>
+      {/* --- END OF NEW UI CODE --- */}
 
       {/* Current Selection Summary */}
       <div className="bg-blue-50 rounded-lg border border-blue-200 p-3"> {/* Reduced padding */}
@@ -163,7 +210,7 @@ const RoleTemplateManager = () => {
         {Object.entries(filteredFunctionsByCategory).map(([category, functions]) => (
           <div key={category} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             {/* Category Header */}
-            <div 
+            <div
               className="flex justify-between items-center p-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors" /* Reduced padding */
               onClick={() => toggleCategory(category)}
             >
@@ -204,7 +251,7 @@ const RoleTemplateManager = () => {
                 </span>
               </div>
             </div>
-            
+
             {/* Category Content - COLLAPSED BY DEFAULT */}
             {expandedCategories[category] && (
               <div className="p-3 border-t border-gray-200"> {/* Reduced padding */}

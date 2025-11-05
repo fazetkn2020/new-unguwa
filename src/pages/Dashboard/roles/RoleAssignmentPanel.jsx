@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { rolePermissions } from '../../../utils/rolePermissions';
+import { loadRoleTemplates } from '../../../data/functionDefinitions';
 
 export default function RoleAssignmentPanel() {
   const { user } = useAuth();
@@ -19,26 +20,33 @@ export default function RoleAssignmentPanel() {
   // Only Admin and Principal can assign high-level roles
   const canAssignRoles = ['Admin', 'Principal'].includes(user?.role);
 
-  const assignRole = (userId, newRole) => {
-    if (!canAssignRoles) {
-      alert('Only Admin and Principal can assign roles.');
-      return;
-    }
+const assignRole = (userId, newRole) => {
+  if (!canAssignRoles) {
+    alert('Only Admin and Principal can assign roles.');
+    return;
+  }
 
-    if (!rolePermissions.canAssignRole(user.role, newRole)) {
-      alert(`You cannot assign ${newRole} role.`);
-      return;
-    }
+  if (!rolePermissions.canAssignRole(user.role, newRole)) {
+    alert(`You cannot assign ${newRole} role.`);
+    return;
+  }
 
-    const updatedUsers = users.map(u => 
-      u.id === userId ? { ...u, role: newRole } : u
-    );
+  // ✅ FIX: Apply role template functions when role changes
+  const roleTemplates = loadRoleTemplates();
+  const templateFunctions = roleTemplates[newRole] || [];
 
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
-    loadUsers();
-    alert(`Role updated to ${newRole} successfully!`);
-  };
+  const updatedUsers = users.map(u =>
+    u.id === userId ? { 
+      ...u, 
+      role: newRole, 
+      functions: templateFunctions  // ✅ This applies the functions!
+    } : u
+  );
 
+  localStorage.setItem('users', JSON.stringify(updatedUsers));
+  loadUsers();
+  alert(`✅ ${newRole} assigned with ${templateFunctions.length} functions!`);
+};  
   const getAssignableRoles = () => {
     return rolePermissions.roleCreation[user.role] || [];
   };

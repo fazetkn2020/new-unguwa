@@ -1,275 +1,280 @@
-// src/data/functionDefinitions.js - Flexible Function-Based Permission System
+// src/data/functionDefinitions.js - Enterprise Function Definitions
 
 export const FUNCTION_DEFINITIONS = {
   // ==================== ADMINISTRATION FUNCTIONS ====================
-  'user_management': { 
-    name: "👥 User Management", 
+  'user_management': {
+    name: "👥 User Management",
     category: "Administration",
-    description: "Create, edit and manage user accounts",
+    description: "Manage system users, roles, and permissions",
     dependencies: [],
     path: "/dashboard/admin/users"
   },
-  'role_management': { 
-    name: "🎯 Role Management", 
-    category: "Administration", 
-    description: "Assign roles and permissions to users",
+  'role_management': {
+    name: "🎯 Role Management",
+    category: "Administration",
+    description: "Configure role templates and function assignments",
     dependencies: [],
     path: "/dashboard/admin/roles"
   },
-  'system_settings': { 
-    name: "⚙️ System Settings", 
+  'system_settings': {
+    name: "⚙️ System Settings",
     category: "Administration",
-    description: "Configure system-wide settings",
+    description: "Configure system-wide settings and preferences",
     dependencies: [],
     path: "/dashboard/admin/settings"
   },
-  'student_enrollment': { 
-    name: "📊 Student Enrollment", 
-    category: "Administration",
-    description: "Enroll new students and manage enrollment",
+
+  // ==================== STUDENT FUNCTIONS ====================
+  'student_enrollment': {
+    name: "📊 Student Enrollment",
+    category: "Students",
+    description: "Enroll new students and manage student data",
     dependencies: [],
-    path: "/dashboard/admin/enrollment"
+    path: "/dashboard/students/enrollment"
+  },
+  'student_management': {
+    name: "👤 Student Management",
+    category: "Students",
+    description: "Manage student profiles and information",
+    dependencies: [],
+    path: "/dashboard/students/manage"
+  },
+  'student_dashboard': {
+    name: "📈 Student Dashboard",
+    category: "Students",
+    description: "View student performance and progress",
+    dependencies: [],
+    path: "/dashboard/students/dashboard"
+  },
+
+  // ==================== CLASS MANAGEMENT FUNCTIONS ====================
+  'class_management': {
+    name: "🏫 Class Management",
+    category: "Academic",
+    description: "Create, edit, and delete classes",
+    dependencies: [],
+    path: "classes" // CHANGED PATH
+  },
+  'class_list_view': {
+    name: "📋 Class Lists",
+    category: "Academic",
+    description: "View student lists for classes",
+    dependencies: [],
+    path: "students" // CHANGED PATH
   },
 
   // ==================== FINANCE FUNCTIONS ====================
-  'finance_view': { 
-    name: "💰 View Finance", 
+  'finance_view': {
+    name: "💰 Finance Overview",
     category: "Finance",
-    description: "View financial reports and transactions",
+    description: "View financial reports and summaries",
     dependencies: [],
-    path: "/finance"
+    path: "/dashboard/finance/overview"
   },
-  'fees_manage': { 
-    name: "💵 Manage Fees", 
+  'fees_manage': {
+    name: "💵 Fee Management",
     category: "Finance",
-    description: "Collect and manage student fees",
-    dependencies: ["finance_view"],
-    path: "/finance/fees"
+    description: "Manage fee structures and payments",
+    dependencies: [],
+    path: "/dashboard/finance/fees"
   },
-  'budget_manage': { 
-    name: "📊 Manage Budget", 
+  'budget_manage': {
+    name: "📊 Budget Management",
     category: "Finance",
-    description: "Manage school budget and expenses",
-    dependencies: ["finance_view"],
-    path: "/finance/budget"
+    description: "Manage budgets and financial planning",
+    dependencies: [],
+    path: "/dashboard/finance/budget"
   },
-  'audit_reports': { 
-    name: "📋 Audit Reports", 
+  'audit_reports': {
+    name: "📋 Audit Reports",
     category: "Finance",
-    description: "View financial audit reports",
-    dependencies: ["finance_view"],
-    path: "/finance/audit"
+    description: "Generate and view audit reports",
+    dependencies: [],
+    path: "/dashboard/finance/audit"
   },
 
   // ==================== ACADEMIC FUNCTIONS ====================
-  'teacher_assignments': { 
-    name: "🎯 Teacher Assignments", 
+  'teacher_assignments': {
+    name: "🎯 Teacher Assignments",
     category: "Academic",
     description: "Assign teachers to subjects and classes",
     dependencies: [],
     path: "/dashboard/academic/assignments"
   },
-  'subject_management': { 
-    name: "📚 Subject Management", 
+  'subject_management': {
+    name: "📚 Subject Management",
     category: "Academic",
     description: "Manage subjects and curriculum",
     dependencies: [],
-    path: "/dashboard/admin/subjects"
+    path: "/dashboard/academic/subjects"
   },
-  'academic_materials': { 
-    name: "📚 Academic Materials", 
+  'academic_materials': {
+    name: "📖 Academic Materials",
     category: "Academic",
-    description: "Upload and manage academic materials",
+    description: "Manage teaching materials and resources",
     dependencies: [],
     path: "/dashboard/academic/materials"
   },
 
   // ==================== ATTENDANCE FUNCTIONS ====================
-  'attendance_mark': { 
-    name: "📝 Mark Attendance", 
+  'attendance_mark': {
+    name: "✅ Mark Attendance",
     category: "Attendance",
-    description: "Take attendance for students",
+    description: "Record student and teacher attendance",
     dependencies: [],
-    path: "/dashboard/form-master/attendance"
+    path: "/dashboard/attendance/mark"
   },
-  'attendance_view': { 
-    name: "👀 View Attendance", 
+  'attendance_view': {
+    name: "📊 View Attendance",
     category: "Attendance",
-    description: "View attendance records and reports",
+    description: "View attendance records and statistics",
     dependencies: [],
-    path: "/dashboard/form-master/attendance-view"
+    path: "/dashboard/attendance/view"
   },
-  'attendance_manage': { 
-    name: "📊 Manage Attendance", 
+  'attendance_manage': {
+    name: "⚙️ Manage Attendance",
     category: "Attendance",
-    description: "Manage attendance system-wide",
-    dependencies: ["attendance_view"],
-    path: "/dashboard/admin/attendance"
+    description: "Configure attendance settings and policies",
+    dependencies: [],
+    path: "/dashboard/attendance/manage"
   },
 
-  // ==================== EXAM FUNCTIONS ====================
-  'question_review': { 
-    name: "📝 Question Review", 
+  // ==================== EXAMINATION FUNCTIONS ====================
+  'question_creation': {
+    name: "📝 Create Questions",
+    category: "Examination",
+    description: "Create and manage exam questions",
+    dependencies: [],
+    path: "/dashboard/examination/questions"
+  },
+  'question_review': {
+    name: "🔍 Review Questions",
     category: "Examination",
     description: "Review and approve exam questions",
     dependencies: [],
-    path: "/dashboard/exam-officer/question-review"
+    path: "/dashboard/examination/review"
   },
-  'exam_reports': { 
-    name: "🖨️ Exam Reports", 
+  'exam_reports': {
+    name: "📋 Exam Reports",
     category: "Examination",
-    description: "Generate and print exam reports",
+    description: "Generate exam reports and analytics",
     dependencies: [],
-    path: "/dashboard/exam-officer/reports"
+    path: "/dashboard/examination/reports"
   },
-  'submission_tracking': { 
-    name: "📋 Submission Tracking", 
+  'submission_tracking': {
+    name: "📤 Submission Tracking",
     category: "Examination",
-    description: "Track exam paper submissions",
+    description: "Track exam submissions and progress",
     dependencies: [],
-    path: "/dashboard/exam-officer/submissions"
-  },
-  'subject_insights': { 
-    name: "📊 Subject Insights", 
-    category: "Examination",
-    description: "View subject performance analytics",
-    dependencies: [],
-    path: "/dashboard/exam-officer/insights"
+    path: "/dashboard/examination/tracking"
   },
 
   // ==================== SCORING FUNCTIONS ====================
-  'scoring_enter': { 
-    name: "📊 Enter Scores", 
+  'scoring_enter': {
+    name: "📊 Enter Scores",
     category: "Scoring",
-    description: "Enter student scores and grades",
+    description: "Enter and manage student scores",
     dependencies: [],
-    path: "/dashboard/teacher/scoring"
+    path: "/dashboard/scoring/enter"
   },
-  'question_creation': { 
-    name: "❓ Create Questions", 
+  'subject_insights': {
+    name: "📈 Subject Insights",
     category: "Scoring",
-    description: "Create exam questions and assignments",
+    description: "View subject performance analytics",
     dependencies: [],
-    path: "/dashboard/teacher/questions"
+    path: "/dashboard/scoring/insights"
   },
 
   // ==================== COMMUNICATION FUNCTIONS ====================
-  'staff_communications': { 
-    name: "📨 Staff Communications", 
+  'staff_communications': {
+    name: "💬 Staff Communications",
     category: "Communication",
-    description: "Send messages to staff members",
+    description: "Communicate with teaching staff",
     dependencies: [],
-    path: "/dashboard/admin/communications"
+    path: "/dashboard/communication/staff"
   },
-  'teacher_reminders': { 
-    name: "📧 Teacher Reminders", 
+  'teacher_reminders': {
+    name: "⏰ Teacher Reminders",
     category: "Communication",
     description: "Send reminders to teachers",
     dependencies: [],
-    path: "/dashboard/exam-officer/reminder"
+    path: "/dashboard/communication/reminders"
   },
-  'principal_messages': { 
-    name: "📨 Principal Messages", 
+  'principal_messages': {
+    name: "📨 Principal Messages",
     category: "Communication",
     description: "Send messages as principal",
     dependencies: [],
-    path: "/dashboard/principal/messages"
+    path: "/dashboard/communication/principal"
   },
 
   // ==================== MANAGEMENT FUNCTIONS ====================
-  'principal_overview': { 
-    name: "📊 Principal Overview", 
+  'principal_overview': {
+    name: "🏢 Principal Overview",
     category: "Management",
-    description: "View school overview and analytics",
+    description: "School-wide overview and analytics",
     dependencies: [],
-    path: "/dashboard/principal/overview"
+    path: "/dashboard/management/principal"
   },
-  'staff_performance': { 
-    name: "📊 Staff Performance", 
+  'staff_performance': {
+    name: "📊 Staff Performance",
     category: "Management",
     description: "Monitor staff performance metrics",
     dependencies: [],
-    path: "/dashboard/principal/staff-performance"
+    path: "/dashboard/management/staff"
   },
-  'school_analytics': { 
-    name: "📈 School Analytics", 
+  'school_analytics': {
+    name: "📈 School Analytics",
     category: "Management",
-    description: "View detailed school analytics",
+    description: "Comprehensive school analytics",
     dependencies: [],
-    path: "/dashboard/principal/analytics"
-  },
-  'staff_management': { 
-    name: "👥 Staff Management", 
-    category: "Management",
-    description: "Manage staff members and assignments",
-    dependencies: [],
-    path: "/dashboard/principal/staff"
+    path: "/dashboard/management/analytics"
   },
 
-  // ==================== STUDENT FUNCTIONS ====================
-  'student_management': { 
-    name: "👥 Student Management", 
-    category: "Students",
-    description: "Manage student records and information",
+  // ==================== OPERATIONS FUNCTIONS ====================
+  'staff_management': {
+    name: "👨‍🏫 Staff Management",
+    category: "Operations",
+    description: "Manage teaching and non-teaching staff",
     dependencies: [],
-    path: "/dashboard/form-master/students"
+    path: "/dashboard/operations/staff"
   },
-  'student_dashboard': { 
-    name: "📊 Student Dashboard", 
-    category: "Students",
-    description: "View student dashboard and scores",
+  'duty_roster': {
+    name: "📅 Duty Roster",
+    category: "Operations",
+    description: "Manage staff duty schedules",
     dependencies: [],
-    path: "/dashboard/student/scores"
+    path: "/dashboard/operations/duty"
   },
-  'student_attendance': { 
-    name: "📝 Student Attendance", 
+  'timetable_manage': {
+    name: "⏰ Timetable Management",
+    category: "Operations",
+    description: "Create and manage school timetables",
+    dependencies: [],
+    path: "/dashboard/operations/timetable"
+  },
+  'elibrary_manage': {
+    name: "📚 E-Library Management",
+    category: "Operations",
+    description: "Manage digital library resources",
+    dependencies: [],
+    path: "/dashboard/operations/elibrary"
+  },
+
+  // ==================== STUDENT-SPECIFIC FUNCTIONS ====================
+  'student_attendance': {
+    name: "📝 My Attendance",
     category: "Students",
     description: "View personal attendance records",
     dependencies: [],
     path: "/dashboard/student/attendance"
-  },
-
-  // ==================== OPERATIONAL FUNCTIONS ====================
-  'duty_roster': { 
-    name: "📅 Duty Roster", 
-    category: "Operations",
-    description: "Manage staff duty roster",
-    dependencies: [],
-    path: "/dashboard/form-master/roster"
-  },
-  'timetable_manage': { 
-    name: "📅 Timetable Management", 
-    category: "Operations",
-    description: "Manage school timetable",
-    dependencies: [],
-    path: "/dashboard/senior-master/advanced-timetable"
-  },
-  'elibrary_manage': { 
-    name: "📚 E-Library", 
-    category: "Operations",
-    description: "Manage digital library resources",
-    dependencies: [],
-    path: "/dashboard/teacher/elibrary"
   }
-};
-
-// EMPTY Role templates - Admin will customize these
-export const ROLE_TEMPLATES = {
-  'Principal': [],
-  'VP Admin': [],
-  'VP Academic': [], 
-  'Exam Officer': [],
-  'Form Master': [],
-  'Subject Teacher': [],
-  'Senior Master': [],
-  'Student': [],
-  'Admin': []
 };
 
 // Function categories for organization
 export const FUNCTION_CATEGORIES = {
   'Administration': '🏛️',
-  'Finance': '💰', 
+  'Finance': '💰',
   'Academic': '📚',
   'Attendance': '📝',
   'Examination': '📋',
@@ -288,4 +293,16 @@ export const saveRoleTemplates = (templates) => {
 export const loadRoleTemplates = () => {
   const saved = localStorage.getItem('roleTemplates');
   return saved ? JSON.parse(saved) : {...ROLE_TEMPLATES}; // Start with empty templates
+};
+
+export const ROLE_TEMPLATES = {
+  'Principal': [],
+  'VP Admin': [],
+  'VP Academic': [],
+  'Exam Officer': [],
+  'Form Master': [],
+  'Subject Teacher': [],
+  'Senior Master': [],
+  'Student': [],
+  'Admin': []
 };
