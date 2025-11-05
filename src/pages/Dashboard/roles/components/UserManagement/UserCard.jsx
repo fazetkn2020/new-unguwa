@@ -9,14 +9,13 @@ const UserCard = ({ user, type, onApprove, onDelete, loadingStates, onUpdateRole
   const [editedRole, setEditedRole] = useState(user.role || '');
   const [isEditingFunctions, setIsEditingFunctions] = useState(false);
   const [editedFunctions, setEditedFunctions] = useState(user.functions || []);
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  // Staff detection: users without class/formClass/studentId
   const isStaffUser = !user.formClass && !user.class && !user.studentId;
 
-  // All available roles
   const allRoles = [
     'Principal',
-    'VP Academic', 
+    'VP Academic',
     'VP Admin',
     'Senior Master',
     'Exam Officer',
@@ -35,10 +34,8 @@ const UserCard = ({ user, type, onApprove, onDelete, loadingStates, onUpdateRole
 
   const handleRoleUpdate = () => {
     if (editedRole && editedRole !== user.role) {
-      // Apply role template functions when role changes
       const roleTemplates = loadRoleTemplates();
       const templateFunctions = roleTemplates[editedRole] || [];
-      
       onUpdateRole(user.id, editedRole);
       onUpdateFunctions(user.id, templateFunctions);
       setIsEditingRole(false);
@@ -71,194 +68,183 @@ const UserCard = ({ user, type, onApprove, onDelete, loadingStates, onUpdateRole
     setIsEditingFunctions(false);
   };
 
-  // Show edit button for ALL active staff users (any role except Student/pending)
-  const showEditButton = isActive && isStaffUser && user.role !== 'Student' && user.role !== 'pending';
+  const showEditActions = isActive && isStaffUser && user.role !== 'Student' && user.role !== 'pending';
+
+  // Mobile-first small button
+  const baseButtonStyle = "w-full px-2 py-1.5 text-xs font-medium rounded-md transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed";
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start">
-        <div className="flex-1">
-          <h4 className="font-semibold text-gray-800">
+    <div className={`bg-white border-b border-gray-200 transition-all duration-300 ${isExpanded ? 'shadow-md bg-gray-50' : 'hover:bg-gray-50'}`}>
+      
+      {/* Header: Name + Expand/Collapse */}
+      <div 
+        className="flex items-center justify-between p-3 sm:p-4 cursor-pointer select-none"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 font-medium text-xs sm:text-sm border border-gray-300 flex-shrink-0">
+            {(user.fullName || user.name).charAt(0).toUpperCase()}
+          </div>
+          <h4 className="font-medium text-gray-800 text-sm break-words">
             {user.fullName || user.name}
           </h4>
-          <div className="text-sm text-gray-600 mt-1">
-            {user.email && <div>📧 {user.email}</div>}
-            {user.studentId && <div>🎫 ID: {user.studentId}</div>}
-            {user.class && <div>🏫 Class: {user.class}</div>}
+        </div>
 
-            {/* Role Editing */}
-            {isEditingRole ? (
-              <div className="mt-2 space-y-2">
-                <div className="flex items-center gap-2">
+        {/* Expand/Collapse - Always fits */}
+        <span className="text-gray-500 hover:text-gray-700 text-xs font-medium whitespace-nowrap ml-2">
+          {isExpanded ? '▲ Collapse' : '▼ Expand'}
+        </span>
+      </div>
+
+      {/* Expanded Content */}
+      {isExpanded && (
+        <div className="px-3 pb-3 sm:px-4 sm:pb-4 pt-0 space-y-4">
+          
+          {/* User Info */}
+          <div className="text-xs sm:text-sm space-y-1 text-gray-700">
+            <p><strong>Role:</strong> <span className="font-semibold text-blue-600">{user.role || 'N/A'}</span></p>
+            <p><strong>Email:</strong> <span className="break-all">{user.email || 'N/A'}</span></p>
+            {user.studentId && <p><strong>Student ID:</strong> {user.studentId}</p>}
+            {user.class && <p><strong>Class:</strong> {user.class}</p>}
+            {isPending && (
+              <span className="inline-block bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-medium mt-1">
+                Pending Approval
+              </span>
+            )}
+          </div>
+          
+          {/* Action Grid: 2 cols mobile, 4 cols desktop */}
+          <div className="grid grid-cols-2 gap-2">
+            
+            {isPending ? (
+              <>
+                {isStaffUser && (
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value)}
+                    className="col-span-2 border border-gray-300 rounded-md p-2 text-xs bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select Role</option>
+                    {allRoles.filter(r => r !== 'Student').map(role => (
+                      <option key={role} value={role}>{role}</option>
+                    ))}
+                  </select>
+                )}
+                <button
+                  onClick={handleApprove}
+                  disabled={loadingStates[user.id] || (isStaffUser && !selectedRole)}
+                  className={`${baseButtonStyle} ${loadingStates[user.id] ? 'bg-green-400' : 'bg-green-600 hover:bg-green-700'} text-white`}
+                >
+                  {loadingStates[user.id] ? "Approving..." : "Approve"}
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={loadingStates[user.id]}
+                  className={`${baseButtonStyle} ${loadingStates[user.id] ? 'bg-red-400' : 'bg-red-600 hover:bg-red-700'} text-white`}
+                >
+                  {loadingStates[user.id] ? "Deleting..." : "Reject"}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={handleDelete}
+                  className={`${baseButtonStyle} bg-red-600 hover:bg-red-700 text-white`}
+                >
+                  Remove
+                </button>
+                
+                {showEditActions && (
+                  <>
+                    <button
+                      onClick={() => { setIsEditingRole(true); setIsEditingFunctions(false); }}
+                      className={`${baseButtonStyle} bg-blue-600 hover:bg-blue-700 text-white`}
+                    >
+                      Change Role
+                    </button>
+                    <button
+                      onClick={() => { setIsEditingFunctions(true); setIsEditingRole(false); }}
+                      className={`${baseButtonStyle} bg-indigo-600 hover:bg-indigo-700 text-white`}
+                    >
+                      Edit Functions
+                    </button>
+                    <div className="col-span-1"></div> {/* Invisible spacer to force 2x2 */}
+                  </>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Edit Panels */}
+          {(isEditingRole || isEditingFunctions) && (
+            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+              
+              {isEditingRole && (
+                <div className="space-y-3">
+                  <h5 className="font-semibold text-blue-700 text-xs sm:text-sm border-b pb-1">Update Role</h5>
                   <select
                     value={editedRole}
                     onChange={(e) => applyRoleTemplate(e.target.value)}
-                    className="border border-gray-300 rounded p-1 text-sm"
+                    className="w-full border border-gray-300 rounded-md p-2 text-xs sm:text-sm bg-white focus:ring-1 focus:ring-blue-500"
                   >
                     <option value="">Select Role</option>
                     {allRoles.map(role => (
                       <option key={role} value={role}>{role}</option>
                     ))}
                   </select>
-                  <button
-                    onClick={handleRoleUpdate}
-                    className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700"
-                  >
-                    ✅ Save Role
-                  </button>
-                  <button
-                    onClick={handleCancelEdit}
-                    className="bg-gray-600 text-white px-2 py-1 rounded text-xs hover:bg-gray-700"
-                  >
-                    ❌ Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <div>👤 Role: {user.role}</div>
-                {showEditButton && (
-                  <button
-                    onClick={() => setIsEditingRole(true)}
-                    className="text-blue-600 hover:text-blue-800 text-xs underline ml-2"
-                  >
-                    ✏️ Edit Role
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Functions Display */}
-            {!isEditingRole && !isEditingFunctions && (
-              <div className="mt-2">
-                <div className="flex items-center gap-2">
-                  <span>🎯 Functions: {user.functions?.length || 0}</span>
-                  {showEditButton && (
+                  <div className="grid grid-cols-2 gap-2">
                     <button
-                      onClick={() => setIsEditingFunctions(true)}
-                      className="text-blue-600 hover:text-blue-800 text-xs underline"
+                      onClick={handleRoleUpdate}
+                      disabled={!editedRole || editedRole === user.role}
+                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md text-xs font-medium disabled:opacity-50"
                     >
-                      ✨ Edit Functions
+                      Save
                     </button>
-                  )}
-                </div>
-                {user.functions?.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {user.functions.slice(0, 3).map(funcKey => (
-                      <span key={funcKey} className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
-                        {FUNCTION_DEFINITIONS[funcKey]?.name || funcKey}
-                      </span>
-                    ))}
-                    {user.functions.length > 3 && (
-                      <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
-                        +{user.functions.length - 3} more
-                      </span>
-                    )}
+                    <button
+                      onClick={handleCancelEdit}
+                      className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1.5 rounded-md text-xs font-medium"
+                    >
+                      Cancel
+                    </button>
                   </div>
-                )}
-              </div>
-            )}
-
-            {/* Functions Editing */}
-            {isEditingFunctions && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                <h5 className="font-medium mb-2">Select Functions:</h5>
-                <div className="max-h-40 overflow-y-auto space-y-2">
-                  {Object.entries(FUNCTION_DEFINITIONS).map(([key, func]) => (
-                    <label key={key} className="flex items-center space-x-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={editedFunctions.includes(key)}
-                        onChange={() => toggleFunction(key)}
-                        className="rounded"
-                      />
-                      <span>{func.name}</span>
-                    </label>
-                  ))}
                 </div>
-                <div className="flex gap-2 mt-3">
-                  <button
-                    onClick={handleFunctionsUpdate}
-                    className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
-                  >
-                    💾 Save Functions
-                  </button>
-                  <button
-                    onClick={handleCancelEdit}
-                    className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700"
-                  >
-                    ❌ Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {user.status && <div>📊 Status: {user.status}</div>}
-            {user.approvedAt && (
-              <div className="text-xs text-gray-500 mt-1">
-                Approved: {new Date(user.approvedAt).toLocaleDateString()}
-              </div>
-            )}
-            {user.registeredAt && !user.approvedAt && (
-              <div className="text-xs text-gray-500 mt-1">
-                Registered: {new Date(user.registeredAt).toLocaleDateString()}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2 ml-4">
-          {isPending ? (
-            <>
-              {isStaffUser && (
-                <select
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                  className="border border-gray-300 rounded p-2 text-sm mb-2"
-                >
-                  <option value="">Approve as Teacher</option>
-                  {allRoles.filter(role => role !== 'Student').map(role => (
-                    <option key={role} value={role}>{role}</option>
-                  ))}
-                </select>
               )}
 
-              <button
-                onClick={handleApprove}
-                disabled={loadingStates[user.id]}
-                className="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 disabled:bg-gray-400 min-w-20"
-              >
-                {loadingStates[user.id] ? "⏳" : "✅"} Approve
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={loadingStates[user.id]}
-                className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 disabled:bg-gray-400 min-w-20"
-              >
-                {loadingStates[user.id] ? "⏳" : "❌"} Delete
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={handleDelete}
-              className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 min-w-20"
-            >
-              Remove
-            </button>
+              {isEditingFunctions && (
+                <div className="space-y-3">
+                  <h5 className="font-semibold text-indigo-700 text-xs sm:text-sm border-b pb-1">Permissions</h5>
+                  <div className="max-h-40 overflow-y-auto p-2 bg-white rounded border space-y-1">
+                    {Object.entries(FUNCTION_DEFINITIONS).map(([key, func]) => (
+                      <label key={key} className="flex items-center space-x-2 text-xs p-1 hover:bg-indigo-50 rounded cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editedFunctions.includes(key)}
+                          onChange={() => toggleFunction(key)}
+                          className="rounded text-indigo-600 focus:ring-indigo-500 h-3 w-3"
+                        />
+                        <span className="break-words">{func.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={handleFunctionsUpdate}
+                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md text-xs font-medium"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={handleCancelEdit}
+                      className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1.5 rounded-md text-xs font-medium"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
-        </div>
-      </div>
-
-      {isPending && (
-        <div className="mt-2 pt-2 border-t border-gray-100">
-          <span className="inline-block bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
-            ⏳ Pending Approval
-          </span>
-          {isStaffUser && (
-            <span className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs ml-2">
-              {selectedRole ? `Will assign as: ${selectedRole}` : 'Will assign as: Teacher'}
-            </span>
-          )}
+          
         </div>
       )}
     </div>

@@ -6,35 +6,39 @@ const UserManagementTabs = ({ activeTab, setActiveTab, users }) => {
   const allPendingUsers = userFilters.allPendingUsers(users);
 
   const tabs = [
-    { id: "all", label: "All Users", count: users.length, emoji: "👥" },
+    { id: "all", label: "All", count: users.length, emoji: "👥" },
     { id: "pending", label: "Pending", count: allPendingUsers.length, emoji: "⏳" },
     { id: "active", label: "Active", count: allActiveUsers.length, emoji: "✅" },
-    { id: "bulk", label: "Bulk Add", count: null, emoji: "📥" }
+    { id: "bulk", label: "Bulk", count: null, emoji: "📥" }
   ];
 
   return (
-    <div className="flex overflow-x-auto gap-1 mb-4 pb-2 scrollbar-hide">
+    <div className="grid grid-cols-2 gap-2 mb-4">
       {tabs.map(tab => (
         <button
           key={tab.id}
           onClick={() => setActiveTab(tab.id)}
-          className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium whitespace-nowrap min-w-max transition-all ${
+          className={`p-2 rounded-lg transition-all duration-200 border min-h-[60px] ${
             activeTab === tab.id
-              ? 'bg-blue-600 text-white shadow-md'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-blue-600 text-white border-blue-700 shadow-md'
+              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-blue-400'
           }`}
         >
-          <span className="text-base">{tab.emoji}</span>
-          <span className="text-sm">{tab.label}</span>
-          {tab.count !== null && (
-            <span className={`px-2 py-1 rounded-full text-xs font-bold min-w-6 text-center ${
-              activeTab === tab.id 
-                ? 'bg-white text-blue-600' 
-                : 'bg-blue-100 text-blue-700'
-            }`}>
-              {tab.count}
-            </span>
-          )}
+          <div className="flex flex-col items-center justify-center h-full space-y-1">
+            <div className="flex items-center gap-1">
+              <span className="text-sm">{tab.emoji}</span>
+              <span className="font-semibold text-xs whitespace-nowrap">{tab.label}</span>
+            </div>
+            {tab.count !== null && (
+              <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${
+                activeTab === tab.id
+                  ? 'bg-white text-blue-600'
+                  : 'bg-blue-100 text-blue-700'
+              }`}>
+                {tab.count}
+              </span>
+            )}
+          </div>
         </button>
       ))}
     </div>
